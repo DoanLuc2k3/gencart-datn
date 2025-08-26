@@ -5,6 +5,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as django_filters
 from django.db.models import Avg, Count, Q  # Added Q
 from django.utils.text import slugify  # Added slugify
+import cloudinary
+import cloudinary.uploader
+import time
 from .models import Category, Product, Review
 from .serializers import CategorySerializer, ProductSerializer, ProductListSerializer, ReviewSerializer
 from .filters import ProductFilter
@@ -95,6 +98,133 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return ProductListSerializer
         return ProductSerializer
+
+    def create(self, request, *args, **kwargs):
+        """Create a new product with image upload to Cloudinary"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Creating product with data: {request.data}")
+        logger.info(f"Files in request: {request.FILES.keys()}")
+        
+        try:
+            # Handle image upload first if present
+            primary_image_url = None
+            if 'primary_image' in request.FILES:
+                image_file = request.FILES['primary_image']
+                logger.info(f"Uploading image: {image_file.name}, size: {image_file.size}")
+                
+                try:
+                    # Upload to Cloudinary
+                    upload_result = cloudinary.uploader.upload(
+                        image_file,
+                        folder="nexcart/products",
+                        public_id=f"product_{request.data.get('name', 'unnamed')}_{int(time.time())}",
+                        overwrite=True,
+                        resource_type="image"
+                    )
+                    primary_image_url = upload_result['secure_url']
+                    logger.info(f"Image uploaded successfully: {primary_image_url}")
+                    logger.info(f"Full upload result: {upload_result}")
+                except Exception as upload_error:
+                    logger.error(f"Cloudinary upload failed: {upload_error}")
+                    return Response({
+                        'error': 'Image upload failed',
+                        'details': str(upload_error)
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                logger.info("No image file found in request")
+            
+            # Prepare data for serializer
+            product_data = request.data.copy()
+            if primary_image_url:
+                product_data['primary_image'] = primary_image_url
+                logger.info(f"Setting primary_image to: {primary_image_url}")
+            
+            logger.info(f"Final product data: {product_data}")
+            serializer = self.get_serializer(data=product_data)
+            if serializer.is_valid():
+                product = serializer.save()
+                logger.info(f"Product created successfully: {product.id} - {product.name} - Image: {product.primary_image}")
+                headers = self.get_success_headers(serializer.data)
+                return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            else:
+                logger.error(f"Product validation failed: {serializer.errors}")
+                return Response({
+                    'error': 'Validation failed',
+                    'details': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception("Error creating product")
+            return Response({
+                'error': 'Failed to create product',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def update(self, request, *args, **kwargs):
+        """Update a product with optional image upload to Cloudinary"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        logger.info(f"Updating product {instance.id} with data: {request.data}")
+        
+        try:
+            # Handle image upload if present
+            primary_image_url = instance.primary_image  # Keep existing if no new image
+            if 'primary_image' in request.FILES:
+                image_file = request.FILES['primary_image']
+                logger.info(f"Uploading new image: {image_file.name}")
+                
+                try:
+                    # Upload to Cloudinary
+                    upload_result = cloudinary.uploader.upload(
+                        image_file,
+                        folder="nexcart/products",
+                        public_id=f"product_{instance.name}_{int(time.time())}",
+                        overwrite=True,
+                        resource_type="image"
+                    )
+                    primary_image_url = upload_result['secure_url']
+                    logger.info(f"Image uploaded successfully: {primary_image_url}")
+                except Exception as upload_error:
+                    logger.error(f"Cloudinary upload failed: {upload_error}")
+                    return Response({
+                        'error': 'Image upload failed',
+                        'details': str(upload_error)
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Prepare data for serializer
+            product_data = request.data.copy()
+            if primary_image_url:
+                product_data['primary_image'] = primary_image_url
+            
+            serializer = self.get_serializer(instance, data=product_data, partial=partial)
+            if serializer.is_valid():
+                product = serializer.save()
+                logger.info(f"Product updated successfully: {product.id} - {product.name}")
+                
+                if getattr(instance, '_prefetched_objects_cache', None):
+                    instance._prefetched_objects_cache = {}
+                
+                return Response(serializer.data)
+            else:
+                logger.error(f"Product validation failed: {serializer.errors}")
+                return Response({
+                    'error': 'Validation failed',
+                    'details': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception("Error updating product")
+            return Response({
+                'error': 'Failed to update product',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Handle PATCH requests"""
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = Product.objects.all()

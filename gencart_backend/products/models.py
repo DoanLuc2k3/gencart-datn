@@ -20,7 +20,15 @@ class Category(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             from django.utils.text import slugify
-            self.slug = slugify(self.name)
+            base = slugify(self.name)
+            slug_candidate = base or 'product'
+            # Ensure uniqueness by appending -1, -2, ... if needed
+            from django.db.models import Q
+            n = 1
+            while Product.objects.filter(slug=slug_candidate).exclude(pk=self.pk).exists():
+                slug_candidate = f"{base}-{n}"
+                n += 1
+            self.slug = slug_candidate
         super().save(*args, **kwargs)
 
 class Product(models.Model):
