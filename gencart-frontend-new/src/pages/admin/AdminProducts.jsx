@@ -28,16 +28,10 @@ import {
 } from "@ant-design/icons";
 import { getValidImageUrl, handleImageError } from "../../utils/imageUtils";
 
-// Cloudinary configuration (assumptions; replace with your actual values or load from env)
-const CLOUDINARY_CLOUD_NAME =
-  import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "your_cloud_name";
-const CLOUDINARY_UNSIGNED_PRESET =
-  import.meta.env.VITE_CLOUDINARY_UNSIGNED_PRESET || "unsigned_preset";
-// If you later implement a signed upload endpoint, you can switch strategy.
-
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
@@ -52,52 +46,46 @@ const AdminProducts = () => {
   const [fileList, setFileList] = useState([]);
   const [uploading, setUploading] = useState(false);
 
-  // Fetch products and categories
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-          throw new Error("No authentication token found");
-        }
-
-        // Fetch products
-        const productsResponse = await fetch(
-          "http://localhost:8000/api/products/",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        // Fetch categories
-        const categoriesResponse = await fetch(
-          "http://localhost:8000/api/categories/",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!productsResponse.ok || !categoriesResponse.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const productsData = await productsResponse.json();
-        const categoriesData = await categoriesResponse.json();
-
-        setProducts(productsData.results);
-        setCategories(categoriesData.results);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError(error.message);
-        setLoading(false);
+  // Function to fetch products and categories
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        throw new Error("No authentication token found");
       }
-    };
 
+      // Fetch products
+      const productsResponse = await fetch(`${API_URL}/products/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Fetch categories
+      const categoriesResponse = await fetch(`${API_URL}/categories/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!productsResponse.ok || !categoriesResponse.ok) {
+        throw new Error("Failed to fetch data");
+      }
+
+      const productsData = await productsResponse.json();
+      const categoriesData = await categoriesResponse.json();
+
+      setProducts(productsData.results || productsData);
+      setCategories(categoriesData.results || categoriesData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      message.error("Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -158,52 +146,37 @@ const AdminProducts = () => {
         throw new Error("No authentication token found");
       }
 
-      // Prepare data object for JSON submission
-      let primary_image_url = editingProduct?.primary_image || null;
+      // Prepare FormData for file upload to backend
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("description", values.description);
+      formData.append("price", values.price);
+      if (values.discount_price) {
+        formData.append("discount_price", values.discount_price);
+      }
+      formData.append("category_id", values.category);
+      formData.append("inventory", values.inventory);
+      formData.append("is_active", values.is_active);
 
-      // If a new file selected, upload to Cloudinary first
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        const uploadFile = fileList[0].originFileObj;
-        const data = new FormData();
-        data.append("file", uploadFile);
-        data.append("upload_preset", CLOUDINARY_UNSIGNED_PRESET);
-        try {
-          const cloudRes = await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-            {
-              method: "POST",
-              body: data,
-            }
-          );
-          const cloudJson = await cloudRes.json();
-          if (!cloudRes.ok) {
-            throw new Error(
-              cloudJson.error?.message || "Cloudinary upload failed"
-            );
-          }
-          primary_image_url = cloudJson.secure_url;
-        } catch (e) {
-          message.error(e.message || "Image upload failed");
-          setUploading(false);
-          return;
-        }
+      // Add image file if selected
+      console.log("FileList:", fileList);
+      console.log("FileList length:", fileList.length);
+      if (fileList.length > 0) {
+        console.log("First file:", fileList[0]);
+        console.log("OriginFileObj:", fileList[0].originFileObj);
       }
 
-      const payload = {
-        name: values.name,
-        description: values.description,
-        price: values.price,
-        discount_price: values.discount_price || null,
-        category_id: values.category, // backend expects category_id via serializer mapping
-        inventory: values.inventory,
-        is_active: values.is_active,
-        primary_image: primary_image_url,
-      };
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        console.log("Adding file to FormData:", fileList[0].originFileObj);
+        formData.append("primary_image", fileList[0].originFileObj);
+      } else {
+        console.log("No file to add to FormData");
+      }
 
-      let url = "http://localhost:8000/api/products/";
+      let url = `${API_URL}/products/`;
       let method = "POST";
       if (editingProduct) {
-        url = `http://localhost:8000/api/products/${editingProduct.id}/`;
+        url = `${API_URL}/products/${editingProduct.id}/`;
         method = "PATCH";
       }
 
@@ -211,34 +184,32 @@ const AdminProducts = () => {
         method,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          // Don't set Content-Type for FormData - browser will set it with boundary
         },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save product");
+        let detail = "";
+        try {
+          const errJson = await response.json();
+          detail =
+            typeof errJson === "string" ? errJson : JSON.stringify(errJson);
+        } catch {
+          // ignore JSON parse error
+        }
+        throw new Error(`Failed to save product${detail ? `: ${detail}` : ""}`);
       }
 
       message.success(
         `Product ${editingProduct ? "updated" : "added"} successfully`
       );
       setModalVisible(false);
+      form.resetFields();
+      setFileList([]);
 
       // Refresh product list
-      const productsResponse = await fetch(
-        "http://localhost:8000/api/products/",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (productsResponse.ok) {
-        const productsData = await productsResponse.json();
-        setProducts(productsData.results);
-      }
+      fetchData();
     } catch (error) {
       console.error("Error saving product:", error);
       message.error(error.message || "Failed to save product");
@@ -255,15 +226,12 @@ const AdminProducts = () => {
         throw new Error("No authentication token found");
       }
 
-      const response = await fetch(
-        `http://localhost:8000/api/products/${id}/`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL}/products/${id}/`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Failed to delete product");
@@ -299,7 +267,7 @@ const AdminProducts = () => {
       key: "image",
       render: (image, record) => (
         <Image
-          src={getValidImageUrl(image, record.name, 50, 50)}
+          src={getValidImageUrl(record.image_url || image, record.name, 50, 50)}
           alt={record.name}
           width={50}
           height={50}

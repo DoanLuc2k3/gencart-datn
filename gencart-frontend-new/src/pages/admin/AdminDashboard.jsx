@@ -156,8 +156,22 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div>
-      <Title level={2}>Dashboard</Title>
+    <div style={{ paddingTop: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: 4,
+          marginBottom: 16,
+        }}
+      >
+        <Title level={2} style={{ margin: 10 }}>
+          Dashboard
+        </Title>
+        {/* Right-side actions (optional): e.g., filters or refresh button */}
+        <div />
+      </div>
 
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>

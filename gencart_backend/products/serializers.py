@@ -101,7 +101,7 @@ class ProductSerializer(serializers.ModelSerializer):
                   'category', 'category_id', 'inventory', 'is_active',
                   'primary_image', 'created_at', 'updated_at', 'image_url', 
                   'reviews', 'average_rating', 'total_reviews']
-        read_only_fields = ['created_at', 'updated_at']
+    read_only_fields = ['slug', 'created_at', 'updated_at']
 
     def get_image_url(self, obj):
         # Return None since we removed the image field
@@ -121,6 +121,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'name', 'slug', 'price', 'discount_price', 'category', 
                   'primary_image', 'image_url', 'inventory', 'is_active', 'average_rating', 'total_reviews']
+    read_only_fields = ['slug']
 
     def get_image_url(self, obj):
         # Return None since we removed the image field  

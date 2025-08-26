@@ -771,14 +771,14 @@ const AdminPage = () => {
             }}
           >
             <div style={{ display: "flex", alignItems: "center" }}>
-              <Title level={4} style={{ margin: 0 }}>
+              <Title level={4} style={{ marginTop: 10 }}>
                 {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </Title>
               <Button
                 type="primary"
                 icon={<HomeOutlined />}
                 onClick={() => navigate("/")}
-                style={{ marginLeft: 16 }}
+                style={{ marginLeft: 16, marginTop: 10 }}
               >
                 Home
               </Button>

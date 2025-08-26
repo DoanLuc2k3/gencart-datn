@@ -204,9 +204,52 @@ CORS_ALLOW_HEADERS = [
 STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 
+# Cloudinary settings
+try:
+    import cloudinary
+    cloudinary.config(
+        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+        api_key=os.environ.get('CLOUDINARY_API_KEY'),
+        api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+        secure=True
+    )
+except ImportError:
+    # Cloudinary not installed, skip configuration
+    pass
+
 # Custom User model
 AUTH_USER_MODEL = 'users.User'
 
 # Sentiment analysis settings
 SENTIMENT_MODEL_TYPE = os.environ.get('SENTIMENT_MODEL_TYPE', 'naive_bayes')
 SENTIMENT_TREND_DAYS_DEFAULT = int(os.environ.get('SENTIMENT_TREND_DAYS_DEFAULT', '30'))
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'products.views': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}

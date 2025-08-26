@@ -36,7 +36,7 @@ import {
   FireOutlined,
   TagOutlined,
 } from "@ant-design/icons";
-import { uploadImageToCloudinary } from "../../utils/cloudinaryConfig";
+// Cloudinary config moved to backend
 
 // Cloudinary config moved to utils/cloudinaryConfig
 
@@ -251,67 +251,89 @@ const AdminProducts = () => {
     try {
       setUploading(true);
       const token = localStorage.getItem("access_token");
-      // Upload image to Cloudinary if a new file selected
-      let primary_image_url = editingProduct?.primary_image || null;
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        try {
-          const uploadResp = await uploadImageToCloudinary(
-            fileList[0].originFileObj
-          );
-          primary_image_url = uploadResp.secure_url;
-        } catch (e) {
-          message.error(e.message || "Image upload failed");
-          setUploading(false);
-          return;
-        }
+      if (!token) {
+        throw new Error("No authentication token found");
       }
 
-      const productData = {
-        name: values.name,
-        slug: values.name
-          .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, ""),
-        description: values.description,
-        price: values.price,
-        category_id: values.category_id,
-        inventory: values.inventory,
-        is_active: values.is_active,
-        discount_price: values.discount_price || null,
-        primary_image: primary_image_url,
-      };
+      // Prepare FormData for file upload to backend
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("description", values.description);
+      formData.append("price", values.price);
+      if (values.discount_price) {
+        formData.append("discount_price", values.discount_price);
+      }
+      formData.append("category_id", values.category_id);
+      formData.append("inventory", values.inventory);
+      formData.append("is_active", values.is_active);
+
+      // Add image file if selected
+      console.log("FileList:", fileList);
+      console.log("FileList length:", fileList.length);
+      if (fileList.length > 0) {
+        console.log("First file:", fileList[0]);
+        console.log("OriginFileObj:", fileList[0].originFileObj);
+        console.log("File itself:", fileList[0]);
+
+        // Try different ways to get the file
+        const file = fileList[0].originFileObj || fileList[0];
+        if (file && file instanceof File) {
+          console.log("Adding file to FormData:", file);
+          formData.append("primary_image", file);
+        } else {
+          console.log("No valid file found in fileList");
+        }
+      } else {
+        console.log("No file to add to FormData");
+      }
+
       let url = "http://localhost:8000/api/products/";
       let method = "POST";
       if (editingProduct) {
         url = `http://localhost:8000/api/products/${editingProduct.id}/`;
         method = "PATCH";
       }
+
       const response = await fetch(url, {
         method,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          // Don't set Content-Type for FormData - browser will set it with boundary
         },
-        body: JSON.stringify(productData),
+        body: formData,
       });
+
       if (!response.ok) {
-        const t = await response.text();
-        throw new Error(t);
+        let detail = "";
+        try {
+          const errJson = await response.json();
+          detail =
+            typeof errJson === "string" ? errJson : JSON.stringify(errJson);
+        } catch {
+          // ignore JSON parse error
+        }
+        throw new Error(`Failed to save product${detail ? `: ${detail}` : ""}`);
       }
+
       const productResponse = await response.json();
       if (!editingProduct) setProducts((p) => [...p, productResponse]);
       else
         setProducts((p) =>
           p.map((pr) => (pr.id === productResponse.id ? productResponse : pr))
         );
+
       message.success(
         `Product ${editingProduct ? "updated" : "added"} successfully`
       );
       setModalVisible(false);
+      form.resetFields();
+      setFileList([]);
+
+      // Refresh product list
       await fetchProducts(pagination.current, pagination.pageSize);
     } catch (error) {
       console.error("Error saving product:", error);
-      message.error("Failed to save product");
+      message.error(error.message || "Failed to save product");
     } finally {
       setUploading(false);
     }
@@ -486,6 +508,11 @@ const AdminProducts = () => {
     );
   };
 
+  // Handle file upload change
+  const handleFileChange = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
+  };
+
   // Upload props
   const uploadProps = {
     onRemove: () => setFileList([]),
@@ -494,6 +521,7 @@ const AdminProducts = () => {
       return false;
     },
     fileList,
+    onChange: handleFileChange,
   };
 
   // Table columns (rebuilt cleanly after UX refactor)
@@ -872,8 +900,8 @@ const AdminProducts = () => {
           </Form.Item>
 
           <Form.Item
-            label="Product Image (UI Only)"
-            tooltip="Backend currently has no image field; this is a future enhancement placeholder"
+            label="Product Image"
+            tooltip="Upload images to Cloudinary via backend"
           >
             <Upload
               {...uploadProps}
@@ -885,8 +913,7 @@ const AdminProducts = () => {
             </Upload>
             <div style={{ marginTop: 6 }}>
               <Text type="secondary">
-                This will be stored client-side for preview. Add an image field
-                in backend to persist.
+                Image will be uploaded to Cloudinary when you save the product.
               </Text>
             </div>
           </Form.Item>
