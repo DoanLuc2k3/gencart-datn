@@ -233,7 +233,7 @@ const HomePage = () => {
                 />
                 <img
                   alt="Hero"
-                  src="https://placehold.co/420x320/ffffff/4f46e5?text=Featured"
+                  src="https://media.istockphoto.com/id/1428709516/photo/shopping-online-woman-hand-online-shopping-on-laptop-computer-with-virtual-graphic-icon.jpg?s=612x612&w=0&k=20&c=ROAncmFL4lbSQdU4VOhyXu-43ngzfEqHE5ZZAw5FtYk="
                   style={{
                     width: 420,
                     height: 320,
