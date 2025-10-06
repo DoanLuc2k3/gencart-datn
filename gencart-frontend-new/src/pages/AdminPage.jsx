@@ -214,10 +214,6 @@ const AdminPage = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("access_token");
-        console.log(
-          "Checking admin status with token:",
-          token ? "Token exists" : "No token"
-        );
 
         if (!token) {
           message.error("You must be logged in to access the admin page");
@@ -230,17 +226,8 @@ const AdminPage = () => {
         if (userStr) {
           try {
             const userData = JSON.parse(userStr);
-            console.log("User data from localStorage:", userData);
 
-            // Special case for username 'nvj' - your admin username
-            if (userData.username === "nvj") {
-              console.log("User is nvj, granting admin access");
-              setIsAdmin(true);
-              fetchDashboardStats();
-              return;
-            }
-
-            if (userData.is_staff || userData.is_superuser) {
+            if (userData.is_superuser) {
               console.log("User is admin according to localStorage");
               setIsAdmin(true);
               fetchDashboardStats();
@@ -262,15 +249,11 @@ const AdminPage = () => {
           }
         );
 
-        console.log("Admin check response status:", response.status);
-
         if (!response.ok) {
           throw new Error("Failed to verify admin status");
         }
 
         const data = await response.json();
-        console.log("Admin check response data:", data);
-
         if (!data.is_admin) {
           message.error("You do not have permission to access the admin page");
           navigate("/");
@@ -375,7 +358,6 @@ const AdminPage = () => {
               title: "Customer",
               key: "customer",
               render: (_, record) => {
-                console.log("Order record in AdminPage dashboard:", record);
                 if (record.user && record.user.username) {
                   return `@${record.user.username}`;
                 } else if (record.user_id) {
@@ -539,8 +521,6 @@ const AdminPage = () => {
                   mk("negative", negative_count),
                 ];
               });
-
-              console.log("Chart data:", data); // Debug log
 
               const displayMode = mode === "product" ? "percent" : chartMode;
               return (
