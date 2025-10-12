@@ -23,10 +23,14 @@ import {
 } from "@ant-design/icons";
 import { getValidImageUrl, handleImageError } from "../utils/imageUtils";
 import { useCart } from "../context/CartContext";
+import useScrollToTop from "../hooks/useScrollToTop";
 
 const { Title, Text } = Typography;
 
 const CartPage = () => {
+  // Scroll to top when page loads
+  useScrollToTop();
+
   const navigate = useNavigate();
   const { cartItems, cartTotal, updateQuantity, removeFromCart, clearCart } =
     useCart();

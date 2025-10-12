@@ -79,6 +79,6 @@ export const BREAKPOINTS = {
 // Product display limits
 export const PRODUCT_LIMITS = {
   FEATURED: 8,
-  DEALS: 6,
+  DEALS: 4,
   DEALS_TOTAL: 12,
 };

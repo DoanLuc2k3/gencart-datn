@@ -74,7 +74,7 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
         e.currentTarget.style.transform = "translateY(0) scale(1)";
       }}
     >
-      {/* Category header with gradient */}
+      {/* Category header with gradient and background image */}
       <div
         style={{
           height: compact ? 120 : 160,
@@ -96,6 +96,7 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
             height: 80,
             background: "rgba(255, 255, 255, 0.1)",
             borderRadius: "50%",
+            zIndex: 1,
           }}
         />
         <div
@@ -107,22 +108,29 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
             height: 100,
             background: "rgba(255, 255, 255, 0.05)",
             borderRadius: "50%",
+            zIndex: 1,
           }}
         />
 
-        {/* Category text */}
-        <Text
-          style={{
-            fontSize: compact ? 20 : 24,
-            fontWeight: 800,
-            color: "#fff",
-            textAlign: "center",
-            textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-            letterSpacing: "-0.02em",
+        {/* Product Image - Background */}
+        <img
+          src={
+            product.image_url ||
+            product.primary_image ||
+            "https://placehold.co/300x300/lightgray/darkgray?text=No+Image"
+          }
+          alt={product.name}
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            zIndex: 0,
+            padding: compact ? 10 : 20,
           }}
-        >
-          {categoryName}
-        </Text>
+        />
 
         {/* Wishlist button */}
         {toggleWishlist && (
@@ -149,6 +157,7 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
               backdropFilter: "blur(10px)",
               transition: "all 0.3s ease",
+              zIndex: 10,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = inWishlist
@@ -180,6 +189,7 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
               fontWeight: 700,
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
               backdropFilter: "blur(10px)",
+              zIndex: 10,
             }}
           >
             -{calculateDiscountPercentage(product)}%

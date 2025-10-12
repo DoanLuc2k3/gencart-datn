@@ -34,11 +34,15 @@ import {
   EnvironmentOutlined,
   GlobalOutlined
 } from '@ant-design/icons';
+import useScrollToTop from '../hooks/useScrollToTop';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 
 const ProfilePage = () => {
+  // Scroll to top when page loads
+  useScrollToTop();
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState({

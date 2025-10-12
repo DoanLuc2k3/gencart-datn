@@ -1,14 +1,14 @@
 import React from "react";
-import { Row, Col, Button, Typography } from "antd";
+import { Row, Col, Button, Typography, Card } from "antd";
 import { useNavigate } from "react-router-dom";
 import { PRODUCT_LIMITS } from "../constants/constants";
 
 const { Title, Paragraph, Text } = Typography;
 
-const DealsSection = ({ products, ProductCard }) => {
+const DealsSection = ({ products, loading, ProductCard }) => {
   const navigate = useNavigate();
 
-  if (products.length === 0) return null;
+  if (!loading && products.length === 0) return null;
 
   return (
     <section
@@ -162,19 +162,29 @@ const DealsSection = ({ products, ProductCard }) => {
         </div>
 
         {/* Enhanced Product Grid */}
-        <Row gutter={[24, 32]} justify="center">
-          {products.slice(0, PRODUCT_LIMITS.DEALS).map((product, index) => (
-            <Col key={product.id} xs={24} sm={12} md={8} lg={6} xl={4}>
-              <div
-                style={{
-                  animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
-                }}
-              >
-                <ProductCard product={product} compact />
-              </div>
-            </Col>
-          ))}
-        </Row>
+        {loading ? (
+          <Row gutter={[24, 32]} justify="center">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Col key={i} xs={24} sm={12} md={8} lg={5}>
+                <Card loading style={{ borderRadius: 20, height: 380 }} />
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <Row gutter={[24, 32]} justify="center">
+            {products.slice(0, PRODUCT_LIMITS.DEALS).map((product, index) => (
+              <Col key={product.id} xs={24} sm={12} md={8} lg={5}>
+                <div
+                  style={{
+                    animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
+                  }}
+                >
+                  <ProductCard product={product} compact />
+                </div>
+              </Col>
+            ))}
+          </Row>
+        )}
 
         {/* Countdown timer element */}
         <div

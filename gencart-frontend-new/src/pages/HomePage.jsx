@@ -2,6 +2,7 @@ import React from "react";
 import { Spin } from "antd";
 import { useProducts } from "../hooks/useProduct";
 import { useWishlist } from "../hooks/useWishlist";
+import useScrollToTop from "../hooks/useScrollToTop";
 import HeroSection from "../components/home/HeroSection";
 import FeaturedSection from "../components/home/FeaturedSection";
 import DealsSection from "../components/home/DealsSection";
@@ -19,27 +20,14 @@ import ProductCard from "../components/home/ProductCard";
  * - Final CTA section
  */
 const HomePage = () => {
+  // Scroll to top when page loads
+  useScrollToTop();
+
   // Fetch products data
   const { featuredProducts, discountedProducts, loading, error } = useProducts();
 
   // Manage wishlist state
   const { wishlist, toggleWishlist } = useWishlist();
-
-  // Show loading state
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "60vh",
-        }}
-      >
-        <Spin size="large" tip="Loading products..." />
-      </div>
-    );
-  }
 
   // Show error state (optional - currently just logs)
   if (error) {
@@ -56,16 +44,17 @@ const HomePage = () => {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Featured Products Section */}
+      {/* Featured Products Section - with loading state */}
       <FeaturedSection
         products={featuredProducts}
         loading={loading}
         ProductCard={ProductCardWithWishlist}
       />
 
-      {/* Hot Deals Section */}
+      {/* Hot Deals Section - with loading state */}
       <DealsSection
         products={discountedProducts}
+        loading={loading}
         ProductCard={ProductCardWithWishlist}
       />
 

@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { Card, Row, Col, Statistic, Spin, Alert, Button } from "antd";
-import { Column } from "@ant-design/plots";
+
+// Lazy load Column chart
+const Column = lazy(() => import("@ant-design/plots").then(m => ({ default: m.Column })));
 
 const SentimentAnalyticsSimple = () => {
   const [loading, setLoading] = useState(true);
@@ -236,7 +238,9 @@ const SentimentAnalyticsSimple = () => {
       {/* Trends Chart - Keep original format as requested */}
       {trendsChartData.length > 0 && (
         <Card title="Sentiment Distribution (30 days) - Product">
-          <Column {...trendsConfig} />
+          <Suspense fallback={<Spin />}>
+            <Column {...trendsConfig} />
+          </Suspense>
           <div style={{ marginTop: 16, fontSize: "12px", color: "#666" }}>
             {trendsData?.dates?.map((date, index) => {
               const positive = trendsData.positive[index] || 0;

@@ -39,6 +39,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { inventoryEvents } from "../utils/inventoryEvents";
 import useDebounce from "../hooks/useDebounce";
+import useScrollToTop from "../hooks/useScrollToTop";
 import GridProductCard from "../components/products/GridProductCard";
 import ListProductCard from "../components/products/ListProductCard";
 import { formatCurrency, discountPercent } from "../utils/format";
@@ -79,7 +80,10 @@ const saveToStorage = (key, value) => {
 };
 
 const ProductListPage = () => {
-  const [products, setProducts] = useState([]);
+  // Scroll to top when navigating to this page
+  useScrollToTop();
+
+  const [products, setProducts] = useState([]); // Current page products from server
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(""); // raw user input
@@ -88,9 +92,15 @@ const ProductListPage = () => {
   const [viewMode, setViewMode] = useState(() =>
     loadFromStorage("productViewMode", "grid")
   ); // persisted
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageButtons, setPageButtons] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const ITEMS_PER_PAGE = 12; // Match backend page_size
   // Advanced filters
-  const [priceRange, setPriceRange] = useState([0, 0]);
-  const [selectedPriceRange, setSelectedPriceRange] = useState([0, 0]);
+  const [priceRange, setPriceRange] = useState([0, 1000]); // Default max price
+  const [selectedPriceRange, setSelectedPriceRange] = useState([0, 1000]);
   const [minRating, setMinRating] = useState(0);
   const [onlyOnSale, setOnlyOnSale] = useState(false);
   const [onlyInStock, setOnlyInStock] = useState(false);
@@ -109,8 +119,22 @@ const ProductListPage = () => {
   const debouncedSearch = useDebounce(searchTerm, 250);
   // Keep a ref to abort in‑flight product fetches when a new search fires
   const activeFetchRef = useRef(null);
+  // Ref for Main Content section to scroll to when changing pages
+  const mainContentRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Helper function to scroll to top when changing pages
+  const scrollToTop = () => {
+    // Try multiple methods to ensure scroll works
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth"
+    });
+  };
 
   // Persist view mode & wishlist
   useEffect(() => {
@@ -126,10 +150,17 @@ const ProductListPage = () => {
     const search = queryParams.get("search");
     const categoryName = queryParams.get("category");
     const sort = queryParams.get("sort");
+    const page = queryParams.get("page");
 
     if (search) setSearchTerm(search);
     if (categoryName) setSelectedCategory(categoryName); // Directly use category name
     if (sort) setSortBy(sort);
+    if (page) {
+      const pageNum = parseInt(page, 10);
+      if (!isNaN(pageNum) && pageNum > 0) {
+        setCurrentPage(pageNum);
+      }
+    }
   }, [location.search]);
 
   // Fetch categories
@@ -161,36 +192,46 @@ const ProductListPage = () => {
     fetchCategories();
   }, []);
 
-  // Function to fetch all pages of products (supports abort)
-  const fetchAllProducts = async (baseUrl, abortSignal) => {
-    let allProducts = [];
-    let nextPageUrl = baseUrl;
-    let totalCount = 0;
+  // // Function to fetch a single page of products (supports abort)
+  // const fetchProductsPage = async (baseUrl, abortSignal) => {
+  //   const separator = baseUrl.includes("?") ? "&" : "?";
+  //   const urlWithTimestamp = `${baseUrl}${separator}_bust=${Date.now()}&_random=${Math.random()}`;
+  //   console.log("Fetching products from:", urlWithTimestamp);
+  //   const response = await fetch(urlWithTimestamp, { signal: abortSignal });
+  //   if (!response.ok) throw new Error("Failed to fetch products");
+  //   const data = await response.json();
+    
+  //   // Handle paginated response
+  //   if (data.results && Array.isArray(data.results)) {
+  //     return {
+  //       products: data.results,
+  //       totalCount: data.count || 0,
+  //       totalPages: data.total_pages || 1,
+  //       currentPage: data.current_page || 1,
+  //       pageButtons: data.page_buttons || [],
+  //     };
+  //   }
+  //   // Fallback for non-paginated response
+  //   if (Array.isArray(data)) {
+  //     return {
+  //       products: data,
+  //       totalCount: data.length,
+  //       totalPages: 1,
+  //       currentPage: 1,
+  //       pageButtons: [],
+  //     };
+  //   }
+  //   console.warn("Unexpected products response shape", data);
+  //   return {
+  //     products: [],
+  //     totalCount: 0,
+  //     totalPages: 1,
+  //     currentPage: 1,
+  //     pageButtons: [],
+  //   };
+  // };
 
-    while (nextPageUrl) {
-      const separator = nextPageUrl.includes("?") ? "&" : "?";
-      const urlWithTimestamp = `${nextPageUrl}${separator}_bust=${Date.now()}&_random=${Math.random()}`;
-      console.log("Fetching products from:", urlWithTimestamp);
-      const response = await fetch(urlWithTimestamp, { signal: abortSignal });
-      if (!response.ok) throw new Error("Failed to fetch products");
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        allProducts = data;
-        totalCount = data.length;
-        nextPageUrl = null;
-      } else if (data.results && Array.isArray(data.results)) {
-        allProducts = [...allProducts, ...data.results];
-        totalCount = data.count || allProducts.length;
-        nextPageUrl = data.next;
-      } else {
-        console.warn("Unexpected products response shape", data);
-        nextPageUrl = null;
-      }
-    }
-    return { products: allProducts, totalCount };
-  };
-
-  // Central fetch function (abortable + reusable)
+  // Central fetch function - server-side pagination with filters
   const fetchProducts = useCallback(
     async (overrideSearchTerm = null) => {
       console.log("ProductListPage: Starting fetchProducts...");
@@ -201,45 +242,73 @@ const ProductListPage = () => {
       activeFetchRef.current = controller;
       setLoading(true);
       try {
+        // Build URL with server-side filters
         let baseUrl = "http://localhost:8000/api/products/?";
-        baseUrl += `page_size=100&no_pagination=true&`;
-        baseUrl += `_=${Date.now()}&`;
+        
+        // Pagination parameters
+        baseUrl += `page=${currentPage}&`;
+        baseUrl += `limit=${ITEMS_PER_PAGE}&`;
+        
+        // Search
         const effectiveSearch =
           overrideSearchTerm !== null ? overrideSearchTerm : debouncedSearch;
         if (effectiveSearch)
           baseUrl += `search=${encodeURIComponent(effectiveSearch)}&`;
+        
+        // Category filter
         if (selectedCategory) {
-          const categoryObj = categories.find(
-            (cat) =>
-              cat.name === selectedCategory || cat.slug === selectedCategory
-          );
-          if (categoryObj)
-            baseUrl += `category=${encodeURIComponent(categoryObj.id)}&`;
-          else baseUrl += `category=${encodeURIComponent(selectedCategory)}&`;
+          baseUrl += `category=${encodeURIComponent(selectedCategory)}&`;
         }
-        if (sortBy) baseUrl += `ordering=${sortBy}`;
-        console.log("ProductListPage: Fetching from URL:", baseUrl);
-        const { products: allProducts } = await fetchAllProducts(
-          baseUrl,
-          controller.signal
-        );
-        setProducts(allProducts);
-        if (!initialFetched) {
-          const maxPrice = allProducts.reduce(
-            (m, p) => Math.max(m, p.price || 0, p.discount_price || 0),
-            0
-          );
-          setPriceRange([0, maxPrice]);
-          setSelectedPriceRange([0, maxPrice]);
-          setInitialFetched(true);
+        
+        // Sorting
+        if (sortBy) baseUrl += `ordering=${sortBy}&`;
+        
+        // Price range filter
+        if (selectedPriceRange[0] > 0) {
+          baseUrl += `min_price=${selectedPriceRange[0]}&`;
         }
-        console.log(
-          "ProductListPage: Products set in state, count:",
-          allProducts.length
-        );
+        if (selectedPriceRange[1] < 1000) {
+          baseUrl += `max_price=${selectedPriceRange[1]}&`;
+        }
+        
+        // Rating filter
+        if (minRating > 0) {
+          baseUrl += `min_rating=${minRating}&`;
+        }
+        
+        // On sale filter
+        if (onlyOnSale) {
+          baseUrl += `on_sale=true&`;
+        }
+        
+        // In stock filter
+        if (onlyInStock) {
+          baseUrl += `in_stock=true&`;
+        }
+        
+        // Cache buster
+        baseUrl += `_=${Date.now()}`;
+        
+        console.log("ProductListPage: Fetching products from:", baseUrl);
+        const response = await fetch(baseUrl, { signal: controller.signal });
+        if (!response.ok) throw new Error("Failed to fetch products");
+        const data = await response.json();
+        
+        console.log("ProductListPage: Response data:", data);
+        
+        // Update state with paginated results
+        const fetchedProducts = data.results || [];
+        setProducts(fetchedProducts);
+        setTotalCount(data.count || 0);
+        setTotalPages(data.total_pages || 1);
+        setPageButtons(data.page_buttons || []);
+        
+        console.log("ProductListPage: Products count:", fetchedProducts.length);
+        console.log("ProductListPage: Total pages:", data.total_pages);
+        
       } catch (error) {
         if (error.name === "AbortError") {
-          console.log("Fetch aborted (expected during rapid search updates)");
+          console.log("Fetch aborted (expected during rapid updates)");
         } else {
           console.error("Error fetching products:", error);
           message.error("Failed to load products");
@@ -252,7 +321,7 @@ const ProductListPage = () => {
         console.log("ProductListPage: fetchProducts completed");
       }
     },
-    [debouncedSearch, selectedCategory, sortBy, categories, initialFetched]
+    [currentPage, debouncedSearch, selectedCategory, sortBy, selectedPriceRange, minRating, onlyOnSale, onlyInStock]
   );
 
   // Fetch products when debounced term / filters change
@@ -270,47 +339,50 @@ const ProductListPage = () => {
     return () => unsubscribe();
   }, [fetchProducts]);
 
-  // Derived displayed products after client-side filters
-  const displayedProducts = useMemo(() => {
-    let list = products.slice();
-    list = list.filter((p) => {
-      const price = p.discount_price || p.price || 0;
-      return price >= selectedPriceRange[0] && price <= selectedPriceRange[1];
-    });
-    if (minRating > 0)
-      list = list.filter((p) => (p.average_rating || 0) >= minRating);
-    if (onlyOnSale)
-      list = list.filter((p) => p.discount_price && p.discount_price < p.price);
-    if (onlyInStock) list = list.filter((p) => (p.inventory || 0) > 0);
-    return list;
-  }, [products, selectedPriceRange, minRating, onlyOnSale, onlyInStock]);
+  // Products are already filtered and paginated by server
+  const displayedProducts = products;
 
   // Handle search
   const handleSearch = (value) => {
+    scrollToTop(); // Scroll to top immediately
     // Immediate fetch (skip debounce wait) for explicit search action
     setSearchTerm(value);
-    updateQueryParams({ search: value });
+    setCurrentPage(1); // Reset to page 1 on new search
+    updateQueryParams({ search: value, page: 1 });
     fetchProducts(value);
   };
 
   // Handle category change - now works with category names
   const handleCategoryChange = (value) => {
+    scrollToTop(); // Scroll to top immediately
     setSelectedCategory(value); // Value is now category name
-    updateQueryParams({ category: value }); // Directly use category name in URL
+    setCurrentPage(1); // Reset to page 1 on category change
+    updateQueryParams({ category: value, page: 1 }); // Directly use category name in URL
   };
 
   // Handle sort change
   const handleSortChange = (value) => {
+    scrollToTop(); // Scroll to top immediately
     setSortBy(value);
-    updateQueryParams({ sort: value });
+    setCurrentPage(1); // Reset to page 1 on sort change
+    updateQueryParams({ sort: value, page: 1 });
   };
+
+  // Reset to page 1 when filters change (price, rating, on sale, in stock)
+  useEffect(() => {
+    if (currentPage !== 1) {
+      scrollToTop(); // Scroll to top when filters change
+    }
+    setCurrentPage(1);
+    updateQueryParams({ page: 1 });
+  }, [selectedPriceRange, minRating, onlyOnSale, onlyInStock]);
 
   // Update query parameters
   const updateQueryParams = (params) => {
     const queryParams = new URLSearchParams(location.search);
 
     Object.entries(params).forEach(([key, value]) => {
-      if (value) {
+      if (value !== null && value !== undefined && value !== "") {
         queryParams.set(key, value);
       } else {
         queryParams.delete(key);
@@ -413,14 +485,14 @@ const ProductListPage = () => {
               background: "rgba(255,255,255,0.12)",
               backdropFilter: "blur(18px)",
               borderRadius: "20px",
-              padding: "20px 22px 18px", // tighter padding
+              padding: "24px",
               border: "1px solid rgba(255,255,255,0.18)",
               boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
             }}
           >
-            <Row gutter={[16, 16]} align="middle" className="filter-bar-row">
+            <Row gutter={[20, 20]} align="top" className="filter-bar-row">
               {/* Search Bar */}
-              <Col xs={24} md={12} lg={8}>
+              <Col xs={24} sm={24} md={12} lg={9} xl={9}>
                 <div className="filter-group">
                   <Text className="filter-label">
                     <SearchOutlined style={{ marginRight: 6 }} /> Search
@@ -432,7 +504,7 @@ const ProductListPage = () => {
                     allowClear
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onSearch={handleSearch}
-                    size="middle" // reduced control height
+                    size="large"
                     style={{ width: "100%" }}
                     className="modern-search"
                   />
@@ -440,7 +512,7 @@ const ProductListPage = () => {
               </Col>
 
               {/* Category Filter */}
-              <Col xs={24} md={6} lg={5}>
+              <Col xs={24} sm={12} md={6} lg={5} xl={5}>
                 <div className="filter-group">
                   <Text className="filter-label">
                     <FilterOutlined style={{ marginRight: 6 }} /> Category
@@ -448,18 +520,16 @@ const ProductListPage = () => {
                   <Select
                     placeholder="All Categories"
                     style={{ width: "100%" }}
-                    value={selectedCategory} // Now uses category name
+                    value={selectedCategory}
                     onChange={handleCategoryChange}
                     allowClear
-                    size="middle"
+                    size="large"
                     showSearch
                     className="modern-select"
                   >
                     {categories.map((category) => (
                       <Option key={category.id} value={category.name}>
-                        {" "}
-                        {/* Value is now category name */}
-                        <Space>
+                        <Space size={8}>
                           <div
                             style={{
                               width: "10px",
@@ -477,13 +547,13 @@ const ProductListPage = () => {
               </Col>
 
               {/* Sort Options */}
-              <Col xs={24} md={6} lg={5}>
+              <Col xs={24} sm={12} md={6} lg={5} xl={5}>
                 <div className="filter-group">
                   <Text className="filter-label">Sort By</Text>
                   <Select
                     value={sortBy}
                     onChange={handleSortChange}
-                    size="middle"
+                    size="large"
                     style={{ width: "100%" }}
                     className="modern-select"
                   >
@@ -500,15 +570,16 @@ const ProductListPage = () => {
               </Col>
 
               {/* View Mode Toggle */}
-              <Col xs={12} md={3} lg={2}>
+              <Col xs={12} sm={6} md={4} lg={2} xl={2}>
                 <div className="filter-group">
                   <Text className="filter-label">View</Text>
-                  <Button.Group size="middle">
+                  <Button.Group size="large" style={{ width: "100%" }}>
                     <Button
                       type={viewMode === "grid" ? "primary" : "default"}
                       icon={<AppstoreOutlined />}
                       onClick={() => setViewMode("grid")}
                       style={{
+                        flex: 1,
                         background:
                           viewMode === "grid"
                             ? "rgba(255,255,255,0.2)"
@@ -523,6 +594,7 @@ const ProductListPage = () => {
                       icon={<UnorderedListOutlined />}
                       onClick={() => setViewMode("list")}
                       style={{
+                        flex: 1,
                         background:
                           viewMode === "list"
                             ? "rgba(255,255,255,0.2)"
@@ -536,38 +608,38 @@ const ProductListPage = () => {
               </Col>
 
               {/* Refresh & Filters */}
-              <Col xs={12} md={3} lg={2}>
+              <Col xs={12} sm={6} md={4} lg={3} xl={3}>
                 <div className="filter-group">
                   <Text className="filter-label">Action</Text>
-                  <Space.Compact style={{ width: "100%" }}>
+                  <Space size={8} style={{ width: "100%", display: "flex" }}>
                     <Button
                       icon={<ReloadOutlined />}
                       onClick={handleRefresh}
-                      size="middle"
+                      size="large"
                       style={{
+                        flex: 1,
                         background: "rgba(255,255,255,0.1)",
                         borderColor: "rgba(255,255,255,0.3)",
                         color: "white",
-                        width: "100%",
                       }}
                       aria-label="Refresh products"
                     />
                     <Button
-                      size="middle"
+                      size="large"
                       onClick={() => setShowFilters((p) => !p)}
                       style={{
+                        flex: 1,
                         background: showFilters
                           ? "rgba(255,255,255,0.25)"
                           : "rgba(255,255,255,0.1)",
                         borderColor: "rgba(255,255,255,0.3)",
                         color: "white",
                         fontWeight: 600,
-                        width: 100,
                       }}
                     >
                       {showFilters ? "Hide" : "Filters"}
                     </Button>
-                  </Space.Compact>
+                  </Space>
                 </div>
               </Col>
             </Row>
@@ -675,7 +747,7 @@ const ProductListPage = () => {
                     >
                       Quick Actions
                     </Text>
-                    <Space wrap>
+                    <Space wrap direction="vertical" style={{ width: "100%" }}>
                       <Button
                         size="small"
                         onClick={() => {
@@ -684,9 +756,39 @@ const ProductListPage = () => {
                           setOnlyOnSale(false);
                           setOnlyInStock(false);
                         }}
+                        style={{
+                          background: "rgba(239, 68, 68, 0.2)",
+                          borderColor: "rgba(239, 68, 68, 0.4)",
+                          color: "white",
+                        }}
                       >
-                        Reset Filters
+                        Reset All Filters
                       </Button>
+                      {(selectedPriceRange[0] !== priceRange[0] || 
+                        selectedPriceRange[1] !== priceRange[1] || 
+                        minRating > 0 || 
+                        onlyOnSale || 
+                        onlyInStock) && (
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            color: "#fbbf24",
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <FilterOutlined /> {
+                            [
+                              selectedPriceRange[0] !== priceRange[0] || selectedPriceRange[1] !== priceRange[1] ? 1 : 0,
+                              minRating > 0 ? 1 : 0,
+                              onlyOnSale ? 1 : 0,
+                              onlyInStock ? 1 : 0
+                            ].reduce((a, b) => a + b, 0)
+                          } active filter(s)
+                        </Text>
+                      )}
                     </Space>
                   </Col>
                 </Row>
@@ -715,10 +817,14 @@ const ProductListPage = () => {
                 }}
               >
                 {displayedProducts.length === 0 ? (
-                  "No products found"
+                  totalCount === 0 ? (
+                    "No products found"
+                  ) : (
+                    "No products match your filters"
+                  )
                 ) : (
                   <>
-                    Found{" "}
+                    Showing{" "}
                     <span
                       style={{
                         color: "#fbbf24",
@@ -728,7 +834,23 @@ const ProductListPage = () => {
                     >
                       {displayedProducts.length}
                     </span>{" "}
+                    of{" "}
+                    <span
+                      style={{
+                        color: "#fbbf24",
+                        fontWeight: "800",
+                        fontSize: "20px",
+                      }}
+                    >
+                      {totalCount}
+                    </span>{" "}
                     amazing products
+                    {totalPages > 1 && (
+                      <span style={{ opacity: 0.85, fontSize: "16px" }}>
+                        {" "}
+                        (Page {currentPage} of {totalPages})
+                      </span>
+                    )}
                     {selectedCategory && (
                       <span style={{ opacity: 0.9 }}>
                         {" "}
@@ -752,12 +874,32 @@ const ProductListPage = () => {
 
       {/* Main Content */}
       <div
+        ref={mainContentRef}
         style={{
           maxWidth: "1400px",
           margin: "0 auto",
           padding: "40px 20px", // reduced vertical padding
         }}
       >
+          <Title
+            level={2}
+            style={{
+              margin: 0,
+              fontWeight: 800,
+              fontSize: "clamp(32px, 4vw, 48px)",
+              lineHeight: 1.2,
+              background:
+                "linear-gradient(135deg, #1e293b 0%, #475569 50%, #64748b 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              letterSpacing: "-0.02em",
+              marginBottom: 20,
+              textAlign: "center",
+            }}
+          >
+            Product List
+          </Title>
         {loading ? (
           <div
             style={{
@@ -787,44 +929,205 @@ const ProductListPage = () => {
           </div>
         ) : products.length > 0 ? (
           <>
-            {/* Grid View */}
-            {viewMode === "grid" && (
-              <Row gutter={[20, 28]}>
-                {displayedProducts.map((p) => (
-                  <Col xs={24} sm={12} md={8} lg={6} xl={6} key={p.id}>
-                    <GridProductCard
-                      product={p}
-                      onView={(prod) => navigate(`/products/${prod.id}`)}
-                      onAdd={addToCart}
-                      wishlist={wishlist}
-                      toggleWishlist={toggleWishlist}
-                      formatCurrency={formatCurrency}
-                      discountPercent={discountPercent}
-                      getCategoryColor={getCategoryColor}
-                    />
-                  </Col>
-                ))}
-              </Row>
+            {displayedProducts.length > 0 ? (
+              <>
+                {/* Grid View */}
+                {viewMode === "grid" && (
+                  <Row gutter={[20, 28]}>
+                    {displayedProducts.map((p) => (
+                      <Col xs={24} sm={12} md={8} lg={6} xl={6} key={p.id}>
+                        <GridProductCard
+                          product={p}
+                          onView={(prod) => navigate(`/products/${prod.id}`)}
+                          onAdd={addToCart}
+                          wishlist={wishlist}
+                          toggleWishlist={toggleWishlist}
+                          formatCurrency={formatCurrency}
+                          discountPercent={discountPercent}
+                          getCategoryColor={getCategoryColor}
+                        />
+                      </Col>
+                    ))}
+                  </Row>
+                )}
+
+                {/* List View */}
+                {viewMode === "list" && (
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 20 }}
+                  >
+                    {displayedProducts.map((p) => (
+                      <ListProductCard
+                        key={p.id}
+                        product={p}
+                        onView={(prod) => navigate(`/products/${prod.id}`)}
+                        onAdd={addToCart}
+                        wishlist={wishlist}
+                        toggleWishlist={toggleWishlist}
+                        formatCurrency={formatCurrency}
+                        discountPercent={discountPercent}
+                        getCategoryColor={getCategoryColor}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "60px 32px",
+                  background: "white",
+                  borderRadius: "20px",
+                  boxShadow: "0 6px 28px rgba(0,0,0,0.06)",
+                }}
+              >
+                <Empty
+                  description={
+                    <div>
+                      <Title
+                        level={3}
+                        style={{
+                          color: "#64748b",
+                          fontWeight: "600",
+                          margin: "16px 0 8px",
+                        }}
+                      >
+                        No Products Match Your Filters
+                      </Title>
+                      <Text style={{ color: "#94a3b8", fontSize: "16px" }}>
+                        Try adjusting your filter criteria to see more products
+                      </Text>
+                    </div>
+                  }
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
+                <Button
+                  type="primary"
+                  size="large"
+                  onClick={() => {
+                    setSelectedPriceRange(priceRange);
+                    setMinRating(0);
+                    setOnlyOnSale(false);
+                    setOnlyInStock(false);
+                  }}
+                  style={{
+                    marginTop: "20px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    border: "none",
+                    borderRadius: "10px",
+                    height: "44px",
+                    padding: "0 26px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Clear All Filters
+                </Button>
+              </div>
             )}
 
-            {/* List View */}
-            {viewMode === "list" && (
+            {/* Pagination */}
+            {totalPages > 1 && displayedProducts.length > 0 && (
               <div
-                style={{ display: "flex", flexDirection: "column", gap: 20 }}
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: "12px",
+                  marginTop: "48px",
+                  padding: "24px",
+                  background: "white",
+                  borderRadius: "16px",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+                }}
               >
-                {displayedProducts.map((p) => (
-                  <ListProductCard
-                    key={p.id}
-                    product={p}
-                    onView={(prod) => navigate(`/products/${prod.id}`)}
-                    onAdd={addToCart}
-                    wishlist={wishlist}
-                    toggleWishlist={toggleWishlist}
-                    formatCurrency={formatCurrency}
-                    discountPercent={discountPercent}
-                    getCategoryColor={getCategoryColor}
-                  />
-                ))}
+                {/* Previous Button */}
+                <Button
+                  onClick={() => {
+                    scrollToTop(); // Scroll immediately first
+                    const newPage = currentPage - 1;
+                    setCurrentPage(newPage);
+                    updateQueryParams({ page: newPage });
+                  }}
+                  disabled={currentPage === 1}
+                  style={{
+                    borderRadius: "8px",
+                    height: "40px",
+                    padding: "0 16px",
+                    fontWeight: "600",
+                    border: "2px solid #e2e8f0",
+                    background: currentPage === 1 ? "#f8fafc" : "white",
+                  }}
+                >
+                  Previous
+                </Button>
+
+                {/* Page Buttons */}
+                {pageButtons.map((btn, idx) => {
+                  if (btn === "...") {
+                    return (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        style={{
+                          padding: "0 8px",
+                          color: "#94a3b8",
+                          fontSize: "18px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  const pageNum = typeof btn === "number" ? btn : parseInt(btn);
+                  const isActive = pageNum === currentPage;
+                  return (
+                    <Button
+                      key={`page-${pageNum}`}
+                      onClick={() => {
+                        scrollToTop(); // Scroll immediately first
+                        setCurrentPage(pageNum);
+                        updateQueryParams({ page: pageNum });
+                      }}
+                      style={{
+                        borderRadius: "8px",
+                        width: "40px",
+                        height: "40px",
+                        padding: "0",
+                        fontWeight: "600",
+                        border: isActive ? "none" : "2px solid #e2e8f0",
+                        background: isActive
+                          ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                          : "white",
+                        color: isActive ? "white" : "#475569",
+                        fontSize: "15px",
+                      }}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                {/* Next Button */}
+                <Button
+                  onClick={() => {
+                    scrollToTop(); // Scroll immediately first
+                    const newPage = currentPage + 1;
+                    setCurrentPage(newPage);
+                    updateQueryParams({ page: newPage });
+                  }}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    borderRadius: "8px",
+                    height: "40px",
+                    padding: "0 16px",
+                    fontWeight: "600",
+                    border: "2px solid #e2e8f0",
+                    background: currentPage === totalPages ? "#f8fafc" : "white",
+                  }}
+                >
+                  Next
+                </Button>
               </div>
             )}
           </>
@@ -864,7 +1167,8 @@ const ProductListPage = () => {
               onClick={() => {
                 setSearchTerm("");
                 setSelectedCategory(null);
-                updateQueryParams({ search: null, category: null });
+                setCurrentPage(1);
+                updateQueryParams({ search: null, category: null, page: 1 });
               }}
               style={{
                 marginTop: "20px",
@@ -884,70 +1188,186 @@ const ProductListPage = () => {
 
       {/* Custom CSS for modern effects */}
       <style jsx>{`
-        .modern-search .ant-input-search .ant-input {
-          border-radius: 10px !important;
-          border: 1px solid rgba(255, 255, 255, 0.25) !important;
-          background: rgba(255, 255, 255, 0.12) !important;
-          color: white !important;
-          backdrop-filter: blur(10px);
-          height: 38px !important;
-          font-size: 14px;
+        /* Modern Search Input - Fixed styling */
+        .modern-search .ant-input-search-large {
+          border-radius: 12px !important;
+          overflow: visible;
+        }
+        
+        .modern-search .ant-input-search,
+        .modern-search .ant-input-search > .ant-input-group {
+          border-radius: 12px !important;
+        }
+        
+        .modern-search .ant-input-search .ant-input-group-wrapper {
+          border-radius: 12px !important;
         }
 
-        .modern-search .ant-input-search .ant-input::placeholder {
+        .modern-search .ant-input-affix-wrapper {
+          border-radius: 12px 0 0 12px !important;
+          border: 1px solid rgba(255, 255, 255, 0.25) !important;
+          border-right: none !important;
+          background: rgba(255, 255, 255, 0.12) !important;
+          backdrop-filter: blur(10px);
+          height: 44px !important;
+          padding: 0 16px !important;
+        }
+        
+        .modern-search .ant-input-affix-wrapper:hover,
+        .modern-search .ant-input-affix-wrapper:focus,
+        .modern-search .ant-input-affix-wrapper-focused {
+          border-color: rgba(255, 255, 255, 0.4) !important;
+          box-shadow: none !important;
+          background: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .modern-search .ant-input {
+          background: transparent !important;
+          color: white !important;
+          font-size: 15px !important;
+          border: none !important;
+          box-shadow: none !important;
+          height: 42px !important;
+        }
+
+        .modern-search .ant-input::placeholder {
           color: rgba(255, 255, 255, 0.6) !important;
         }
 
-        .modern-search .ant-input-search-button {
-          border-radius: 0 10px 10px 0 !important;
-          background: rgba(255, 255, 255, 0.18) !important;
-          border: 1px solid rgba(255, 255, 255, 0.25) !important;
-          backdrop-filter: blur(10px);
-          height: 38px !important;
-        }
-        /* Fix subtle misalignment between input and button */
-        .modern-search .ant-input-search {
-          overflow: hidden;
-          border-radius: 10px !important;
-        }
-        .modern-search .ant-input-search .ant-input {
-          border-right: 0 !important;
-          border-radius: 10px 0 0 10px !important;
-        }
-        .modern-search .ant-input-search .ant-input-group-addon {
-          padding: 0 !important;
+        .modern-search .ant-input:focus,
+        .modern-search .ant-input:hover {
           background: transparent !important;
-        }
-        .modern-search .ant-input-search-button {
-          border-left: 0 !important;
-          box-shadow: none !important;
-        }
-        .modern-search .ant-input-search .ant-input,
-        .modern-search .ant-input-search-button {
-          line-height: 38px !important;
-        }
-        .modern-search .ant-input-search .ant-input:focus {
           box-shadow: none !important;
         }
 
+        .modern-search .ant-input-clear-icon {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .modern-search .ant-input-clear-icon:hover {
+          color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .modern-search .ant-input-group-addon {
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
+          border-radius: 0 12px 12px 0 !important;
+        }
+
+        .modern-search .ant-input-search-button,
+        .modern-search .ant-btn.ant-input-search-button,
+        .modern-search button.ant-btn.ant-input-search-button {
+          border-radius: 0 12px 12px 0 !important;
+          background: rgba(255, 255, 255, 0.18) !important;
+          border: 1px solid rgba(255, 255, 255, 0.25) !important;
+          border-left: none !important;
+          backdrop-filter: blur(10px);
+          height: 44px !important;
+          width: 50px !important;
+          min-width: 50px !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: none !important;
+          color: white !important;
+        }
+
+        .modern-search .ant-input-search-button:hover,
+        .modern-search .ant-btn.ant-input-search-button:hover,
+        .modern-search button.ant-btn.ant-input-search-button:hover {
+          background: rgba(255, 255, 255, 0.28) !important;
+          border-color: rgba(255, 255, 255, 0.4) !important;
+          border-radius: 0 12px 12px 0 !important;
+        }
+
+        .modern-search .ant-input-search-button .anticon,
+        .modern-search .ant-btn.ant-input-search-button .anticon {
+          color: white !important;
+          font-size: 16px !important;
+        }
+
+        /* Force border radius on button right side */
+        .modern-search .ant-input-search-button::before,
+        .modern-search .ant-input-search-button::after {
+          border-radius: 0 12px 12px 0 !important;
+        }
+
+        /* Modern Select */
         .modern-select .ant-select-selector {
-          border-radius: 10px !important;
+          border-radius: 12px !important;
           border: 1px solid rgba(255, 255, 255, 0.25) !important;
           background: rgba(255, 255, 255, 0.12) !important;
           backdrop-filter: blur(10px);
-          height: 38px !important;
+          height: 44px !important;
+          display: flex;
+          align-items: center;
+          padding: 0 16px !important;
+        }
+
+        .modern-select .ant-select-selector:hover {
+          border-color: rgba(255, 255, 255, 0.4) !important;
         }
 
         .modern-select .ant-select-selection-placeholder {
           color: rgba(255, 255, 255, 0.6) !important;
+          line-height: 42px !important;
+          font-size: 15px;
         }
 
         .modern-select .ant-select-selection-item {
           color: white !important;
-          line-height: 36px !important;
-          font-size: 14px;
+          line-height: 42px !important;
+          font-size: 15px;
         }
 
+        .modern-select .ant-select-arrow {
+          color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        /* Button Groups and Buttons */
+        .filter-bar-row .ant-btn {
+          height: 44px !important;
+          border-radius: 12px !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 15px;
+        }
+
+        .filter-bar-row .ant-btn-group .ant-btn:first-child {
+          border-radius: 12px 0 0 12px !important;
+        }
+
+        .filter-bar-row .ant-btn-group .ant-btn:last-child {
+          border-radius: 0 12px 12px 0 !important;
+        }
+
+        .filter-bar-row .ant-btn:hover {
+          background: rgba(255, 255, 255, 0.2) !important;
+          border-color: rgba(255, 255, 255, 0.4) !important;
+        }
+
+        /* Filter Group Layout */
+        .filter-bar-row .filter-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          height: 100%;
+        }
+
+        .filter-label {
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 13px;
+          font-weight: 600;
+          margin: 0;
+          line-height: 1.2;
+          display: flex;
+          align-items: center;
+          white-space: nowrap;
+        }
+
+        /* Product Cards Hover Effects */
         .modern-product-card:hover .product-overlay {
           opacity: 1 !important;
         }
@@ -956,37 +1376,22 @@ const ProductListPage = () => {
           transform: translateY(-4px) !important;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
         }
-        /* Alignment helpers */
-        .filter-bar-row .filter-group {
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-start;
-          height: 100%;
-        }
-        .filter-label {
-          color: rgba(255, 255, 255, 0.8);
-          font-size: 14px;
-          font-weight: 600;
-          margin: 0 0 6px;
-          line-height: 1;
-        }
-        .filter-bar-row .ant-input-search,
-        .filter-bar-row .ant-select,
-        .filter-bar-row .ant-btn-group {
-          align-self: stretch;
-        }
-        .modern-search .ant-input-search {
-          display: flex;
-          align-items: center;
-        }
-        .modern-search .ant-input-search .ant-input {
-          height: 40px !important;
-        }
-        .modern-search .ant-input-search-button {
-          height: 40px !important;
-        }
-        .modern-select .ant-select-selector {
-          height: 40px !important;
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .modern-search .ant-input-search .ant-input,
+          .modern-select .ant-select-selector,
+          .filter-bar-row .ant-btn {
+            height: 40px !important;
+          }
+
+          .modern-search .ant-input-search-button {
+            height: 40px !important;
+          }
+
+          .filter-label {
+            font-size: 12px;
+          }
         }
       `}</style>
     </div>

@@ -28,11 +28,14 @@ import {
   ShareAltOutlined,
   HomeOutlined,
   StarOutlined,
+  StarFilled,
   UserOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons';
 import { useCart } from '../context/CartContext';
 import { inventoryEvents } from '../utils/inventoryEvents';
+import { getCategoryName, getCategoryGradient } from '../utils/productUtils';
+import useScrollToTop from '../hooks/useScrollToTop';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -53,6 +56,9 @@ const getCategoryColor = (categoryName) => {
 };
 
 const ProductDetailPage = () => {
+  // Scroll to top when page loads
+  useScrollToTop();
+  
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
@@ -253,11 +259,30 @@ const ProductDetailPage = () => {
     if (reviews.length === 0) {
       return (
         <Empty 
-          description="No reviews yet" 
+          description={
+            <Text style={{ fontSize: 16, color: '#94a3b8' }}>
+              No reviews yet. Be the first to share your experience!
+            </Text>
+          }
           image={Empty.PRESENTED_IMAGE_SIMPLE}
+          style={{
+            padding: '60px 0',
+          }}
         >
           {canReview && (
-            <Button type="primary" onClick={handleAddReview}>
+            <Button 
+              type="primary" 
+              onClick={handleAddReview}
+              size="large"
+              style={{
+                borderRadius: 24,
+                height: 44,
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
+              }}
+            >
               Be the first to review
             </Button>
           )}
@@ -269,34 +294,70 @@ const ProductDetailPage = () => {
       <div>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           {reviews.map(review => (
-            <Card key={review.id} size="small">
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <Space>
-                  <Avatar icon={<UserOutlined />} />
-                  <div>
-                    <Text strong>
-                      {review.user_first_name && review.user_last_name 
-                        ? `${review.user_first_name} ${review.user_last_name}`
-                        : review.user_name}
+            <Card 
+              key={review.id}
+              style={{
+                borderRadius: 16,
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+              }}
+              bodyStyle={{ padding: 20 }}
+            >
+              <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                <Space align="start">
+                  <Avatar 
+                    icon={<UserOutlined />}
+                    size={48}
+                    style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <Text strong style={{ fontSize: 16 }}>
+                        {review.user_first_name && review.user_last_name 
+                          ? `${review.user_first_name} ${review.user_last_name}`
+                          : review.user_name}
+                      </Text>
+                      {review.verified_purchase && (
+                        <Tag 
+                          color="success" 
+                          icon={<CheckCircleOutlined />}
+                          style={{
+                            borderRadius: 12,
+                            padding: '2px 12px',
+                            fontSize: 12,
+                            fontWeight: 600,
+                          }}
+                        >
+                          Verified Purchase
+                        </Tag>
+                      )}
+                    </div>
+                    <Text type="secondary" style={{ fontSize: 13 }}>
+                      {new Date(review.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
                     </Text>
-                    {review.verified_purchase && (
-                      <Tag color="green" icon={<CheckCircleOutlined />} style={{ marginLeft: 8 }}>
-                        Verified Purchase
-                      </Tag>
-                    )}
                   </div>
                 </Space>
                 
-                <Space>
-                  <Rate disabled value={review.rating} />
-                  <Text strong>{review.title}</Text>
-                </Space>
-                
-                <Text>{review.comment}</Text>
-                
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  {new Date(review.created_at).toLocaleDateString()}
-                </Text>
+                <div>
+                  <Rate disabled value={review.rating} style={{ fontSize: 18, marginBottom: 8 }} />
+                  <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 8 }}>
+                    {review.title}
+                  </Text>
+                  <Paragraph style={{ 
+                    fontSize: 15,
+                    lineHeight: 1.7,
+                    color: '#475569',
+                    marginBottom: 0,
+                  }}>
+                    {review.comment}
+                  </Paragraph>
+                </div>
               </Space>
             </Card>
           ))}
@@ -324,290 +385,811 @@ const ProductDetailPage = () => {
     );
   }
 
+  const categoryName = getCategoryName(product);
+  const categoryGradient = getCategoryGradient(categoryName);
+  const discountPercentage = product.discount_price 
+    ? Math.round((1 - parseFloat(product.discount_price) / parseFloat(product.price)) * 100)
+    : 0;
+
   return (
-    <div style={{ padding: '20px' }}>
-      {/* Breadcrumb */}
-      <Breadcrumb style={{ marginBottom: '20px' }}>
-        <Breadcrumb.Item>
-          <Link to="/"><HomeOutlined /> Home</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <Link to="/products">Products</Link>
-        </Breadcrumb.Item>
-        {product.category && (
+    <div style={{ 
+      background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+      minHeight: '100vh',
+      paddingBottom: '60px'
+    }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
+        {/* Breadcrumb */}
+        <Breadcrumb style={{ marginBottom: '24px' }}>
           <Breadcrumb.Item>
-            <Link to={`/products?category=${product.category.id}`}>
-              {product.category.name}
+            <Link to="/" style={{ color: '#667eea' }}>
+              <HomeOutlined /> Home
             </Link>
           </Breadcrumb.Item>
-        )}
-        <Breadcrumb.Item>{product.name}</Breadcrumb.Item>
-      </Breadcrumb>
-
-      {/* Product Details */}
-      <Row gutter={[32, 32]}>
-        {/* Product Images */}
-        <Col xs={24} md={12}>
-          <Card>
-            <Image
-              src={
-                product.image_url ||
-                product.primary_image ||
-                "https://placehold.co/500x500/lightgray/darkgray?text=No+Image"
-              }
-              alt={product.name}
-              style={{ width: '100%', height: 'auto' }}
-            />
-          </Card>
-        </Col>
-
-        {/* Product Info */}
-        <Col xs={24} md={12}>
-          <Title level={2}>{product.name}</Title>
-
-          {/* Rating */}
-          {product.total_reviews > 0 && (
-            <div style={{ margin: '10px 0' }}>
-              {renderStarRating(product.average_rating, product.total_reviews)}
-            </div>
-          )}
-
-          {/* Price */}
-          <div style={{ margin: '20px 0' }}>
-            {product.discount_price ? (
-              <>
-                <Text delete style={{ fontSize: '18px' }}>
-                  ₫{parseFloat(product.price || 0).toFixed(2)}
-                </Text>
-                <Text strong style={{ fontSize: '24px', marginLeft: 16, color: '#f5222d' }}>
-                  ₫{parseFloat(product.discount_price || 0).toFixed(2)}
-                </Text>
-              </>
-            ) : (
-              <Text strong style={{ fontSize: '24px' }}>
-                ₫{parseFloat(product.price || 0).toFixed(2)}
-              </Text>
-            )}
-          </div>
-
-          {/* Category */}
-          <div style={{ margin: '10px 0' }}>
-            <Text type="secondary">
-              Category: {product.category ? (
-                <Link to={`/products?category=${product.category.id}`}>
-                  {product.category.name}
-                </Link>
-              ) : 'Uncategorized'}
-            </Text>
-          </div>
-
-          {/* Inventory */}
-          <div style={{ margin: '10px 0' }}>
-            {product.inventory !== undefined && product.inventory > 0 ? (
-              <Text type="success">In Stock ({product.inventory} available)</Text>
-            ) : (
-              <Text type="danger">Out of Stock</Text>
-            )}
-          </div>
-
-          {/* Short Description */}
-          <Paragraph style={{ margin: '20px 0' }}>
-            {product.description ? product.description.split('\n')[0] : 'No description available.'}
-          </Paragraph>
-
-          {/* Quantity and Add to Cart */}
-          <div style={{ margin: '20px 0' }}>
-            <Row gutter={16} align="middle">
-              <Col>
-                <InputNumber
-                  min={1}
-                  max={product.inventory}
-                  defaultValue={1}
-                  value={quantity}
-                  onChange={handleQuantityChange}
-                  disabled={product.inventory <= 0}
-                />
-              </Col>
-              <Col>
-                <Button
-                  type="primary"
-                  icon={<ShoppingCartOutlined />}
-                  size="large"
-                  onClick={addToCart}
-                  disabled={product.inventory <= 0}
-                >
-                  Add to Cart
-                </Button>
-              </Col>
-            </Row>
-          </div>
-
-          {/* Review Action Button */}
-          {canReview && (
-            <div style={{ margin: '20px 0' }}>
-              <Button
-                type="default"
-                icon={<StarOutlined />}
-                onClick={handleAddReview}
+          <Breadcrumb.Item>
+            <Link to="/products" style={{ color: '#667eea' }}>
+              Products
+            </Link>
+          </Breadcrumb.Item>
+          {product.category && (
+            <Breadcrumb.Item>
+              <Link 
+                to={`/products?category=${product.category.id}`}
+                style={{ color: '#667eea' }}
               >
-                Write a Review
-              </Button>
-            </div>
+                {product.category.name}
+              </Link>
+            </Breadcrumb.Item>
           )}
+          <Breadcrumb.Item>
+            <Text strong>{product.name}</Text>
+          </Breadcrumb.Item>
+        </Breadcrumb>
 
-          {hasReviewed && (
-            <div style={{ margin: '20px 0' }}>
-              <Text type="success">
-                <CheckCircleOutlined /> You have already reviewed this product
-              </Text>
-            </div>
-          )}
+        {/* Product Details */}
+        <Card
+          style={{
+            borderRadius: 20,
+            border: 'none',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            overflow: 'hidden',
+          }}
+          bodyStyle={{ padding: 0 }}
+        >
+          <Row gutter={0}>
+            {/* Product Images with Gradient */}
+            <Col xs={24} lg={10}>
+              <div
+                style={{
+                  background: categoryGradient,
+                  minHeight: 400,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Background pattern */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -50,
+                    right: -50,
+                    width: 200,
+                    height: 200,
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '50%',
+                    zIndex: 1,
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: -80,
+                    left: -80,
+                    width: 250,
+                    height: 250,
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '50%',
+                    zIndex: 1,
+                  }}
+                />
 
-          {!hasPurchased && !canReview && !hasReviewed && (
-            <div style={{ margin: '20px 0' }}>
-              <Text type="secondary">
-                You can only review products you have purchased and received
-              </Text>
-            </div>
-          )}
-        </Col>
-      </Row>
+                {/* Discount badge */}
+                {discountPercentage > 0 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 24,
+                      top: 24,
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      color: '#dc2626',
+                      padding: '12px 24px',
+                      fontSize: 18,
+                      borderRadius: 30,
+                      fontWeight: 700,
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                      backdropFilter: 'blur(10px)',
+                      zIndex: 10,
+                    }}
+                  >
+                    {discountPercentage}% OFF
+                  </div>
+                )}
 
-      {/* Product Tabs */}
-      <div style={{ margin: '40px 0' }}>
-        <Tabs defaultActiveKey="description">
-          <Tabs.TabPane tab="Description" key="description">
-            <Paragraph style={{ whiteSpace: 'pre-line' }}>
-              {product.description || 'No description available.'}
-            </Paragraph>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Specifications" key="specifications">
-            <p>Product specifications would be displayed here.</p>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab={`Reviews (${reviews.length})`} key="reviews">
-            <div style={{ marginBottom: '20px' }}>
-              {canReview && (
-                <Button
-                  type="primary"
-                  icon={<StarOutlined />}
-                  onClick={handleAddReview}
-                  style={{ marginBottom: '20px' }}
-                >
-                  Write a Review
-                </Button>
-              )}
-            </div>
-            {renderReviews()}
-          </Tabs.TabPane>
-        </Tabs>
-      </div>
-
-      {/* Related Products */}
-      {relatedProducts.length > 0 && (
-        <div style={{ margin: '40px 0' }}>
-          <Title level={3}>Related Products</Title>
-          <Row gutter={[16, 16]}>
-            {relatedProducts.map(relatedProduct => (
-              <Col xs={24} sm={12} md={6} key={relatedProduct.id}>
-                <Card
-                  hoverable
-                  cover={
-                    <img
-                      alt={relatedProduct.name}
-                      src={
-                        relatedProduct.image_url ||
-                        relatedProduct.primary_image ||
-                        'https://placehold.co/300x200/lightgray/darkgray?text=No+Image'
-                      }
-                      style={{ height: '200px', objectFit: 'cover' }}
-                    />
+                <Image
+                  src={
+                    product.image_url ||
+                    product.primary_image ||
+                    "https://placehold.co/500x500/lightgray/darkgray?text=No+Image"
                   }
+                  alt={product.name}
+                  style={{ 
+                    maxWidth: '100%',
+                    maxHeight: 500,
+                    objectFit: 'contain',
+                    position: 'relative',
+                    zIndex: 0,
+                    padding: 40,
+                  }}
+                  preview={{
+                    mask: <div style={{ color: 'white' }}>View Full Size</div>
+                  }}
+                />
+              </div>
+            </Col>
+
+            {/* Product Info */}
+            <Col xs={24} lg={14}>
+              <div style={{ padding: '40px' }}>
+                {/* Category and Stock badges */}
+                <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+                  {/* Category badge */}
+                  <div
+                    style={{
+                      background: categoryGradient,
+                      color: '#fff',
+                      padding: '8px 20px',
+                      fontSize: 14,
+                      borderRadius: 25,
+                      fontWeight: 600,
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {categoryName}
+                  </div>
+
+                  {/* Stock badge */}
+                  {product.inventory > 0 ? (
+                    <div
+                      style={{
+                        background: '#10b981',
+                        color: '#fff',
+                        padding: '8px 20px',
+                        fontSize: 14,
+                        borderRadius: 25,
+                        fontWeight: 600,
+                        boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      {product.inventory} IN STOCK
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        background: '#ef4444',
+                        color: '#fff',
+                        padding: '8px 20px',
+                        fontSize: 14,
+                        borderRadius: 25,
+                        fontWeight: 600,
+                        boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      OUT OF STOCK
+                    </div>
+                  )}
+                </div>
+
+                <Title 
+                  level={1}
+                  style={{
+                    marginBottom: 16,
+                    fontSize: 'clamp(1.75rem, 3vw, 2.5rem)',
+                    fontWeight: 800,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    letterSpacing: '-0.02em',
+                  }}
                 >
-                  <Card.Meta
-                    title={relatedProduct.name}
-                    description={
-                      <div>
-                        {relatedProduct.average_rating > 0 && (
-                          <div style={{ marginBottom: '8px' }}>
-                            <Rate disabled value={relatedProduct.average_rating} />
-                            <Text type="secondary" style={{ marginLeft: '8px' }}>
-                              ({relatedProduct.total_reviews})
-                            </Text>
+                  {product.name}
+                </Title>
+
+                {/* Rating - same style as GridProductCard */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    margin: '16px 0',
+                  }}
+                >
+                  <div style={{ display: "flex", gap: 2 }}>
+                    {[...Array(5)].map((_, i) => (
+                      <StarFilled
+                        key={i}
+                        style={{
+                          color: i < Math.floor(product.average_rating || 0) ? "#fbbf24" : "#e2e8f0",
+                          fontSize: 20,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <Text strong style={{ fontSize: 16, color: "#374151" }}>
+                    {product.average_rating > 0 ? product.average_rating.toFixed(1) : "0.0"}
+                  </Text>
+                  <Text style={{ fontSize: 14, color: "#9ca3af" }}>
+                    ({product.total_reviews || 0} reviews)
+                  </Text>
+                </div>
+
+                {/* Price */}
+                <div style={{ 
+                  margin: '24px 0',
+                  padding: '20px',
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                  borderRadius: 16,
+                }}>
+                  {product.discount_price ? (
+                    <>
+                      <Text delete style={{ fontSize: 20, color: '#94a3b8', display: 'block', marginBottom: 8 }}>
+                        ₫{parseFloat(product.price || 0).toLocaleString()}
+                      </Text>
+                      <Text strong style={{ fontSize: 36, color: '#dc2626' }}>
+                        ₫{parseFloat(product.discount_price || 0).toLocaleString()}
+                      </Text>
+                      <Text style={{ marginLeft: 16, color: '#10b981', fontSize: 18, fontWeight: 600 }}>
+                        Save ₫{(parseFloat(product.price) - parseFloat(product.discount_price)).toLocaleString()}
+                      </Text>
+                    </>
+                  ) : (
+                    <Text strong style={{ fontSize: 36, color: '#1e293b' }}>
+                      ₫{parseFloat(product.price || 0).toLocaleString()}
+                    </Text>
+                  )}
+                </div>
+
+                {/* Short Description */}
+                <Paragraph style={{ 
+                  margin: '24px 0',
+                  fontSize: 16,
+                  lineHeight: 1.8,
+                  color: '#475569',
+                }}>
+                  {product.description ? product.description.split('\n')[0] : 'No description available.'}
+                </Paragraph>
+
+                <Divider />
+
+                {/* Quantity and Add to Cart */}
+                <div style={{ margin: '24px 0' }}>
+                  <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 12 }}>
+                    Quantity
+                  </Text>
+                  <Space size="large">
+                    <InputNumber
+                      min={1}
+                      max={product.inventory}
+                      defaultValue={1}
+                      value={quantity}
+                      onChange={handleQuantityChange}
+                      disabled={product.inventory <= 0}
+                      size="large"
+                      style={{ width: 120 }}
+                    />
+                    <Button
+                      type="primary"
+                      icon={<ShoppingCartOutlined />}
+                      size="large"
+                      onClick={addToCart}
+                      disabled={product.inventory <= 0}
+                      style={{
+                        height: 48,
+                        borderRadius: 24,
+                        fontSize: 16,
+                        fontWeight: 600,
+                        padding: '0 32px',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        border: 'none',
+                        boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
+                      }}
+                    >
+                      Add to Cart
+                    </Button>
+                  </Space>
+                </div>
+
+                {/* Review Action Button */}
+                {canReview && (
+                  <div style={{ margin: '20px 0' }}>
+                    <Button
+                      icon={<StarOutlined />}
+                      onClick={handleAddReview}
+                      size="large"
+                      style={{
+                        borderRadius: 24,
+                        height: 44,
+                        fontWeight: 600,
+                      }}
+                    >
+                      Write a Review
+                    </Button>
+                  </div>
+                )}
+
+                {hasReviewed && (
+                  <div style={{ 
+                    margin: '20px 0',
+                    padding: '12px 20px',
+                    background: '#f0fdf4',
+                    borderRadius: 12,
+                    border: '1px solid #86efac',
+                  }}>
+                    <Text style={{ color: '#16a34a', fontWeight: 600 }}>
+                      <CheckCircleOutlined /> You have already reviewed this product
+                    </Text>
+                  </div>
+                )}
+
+                {!hasPurchased && !canReview && !hasReviewed && (
+                  <div style={{ 
+                    margin: '20px 0',
+                    padding: '12px 20px',
+                    background: '#f8fafc',
+                    borderRadius: 12,
+                    border: '1px solid #e2e8f0',
+                  }}>
+                    <Text type="secondary">
+                      You can only review products you have purchased and received
+                    </Text>
+                  </div>
+                )}
+              </div>
+            </Col>
+          </Row>
+        </Card>
+
+        {/* Product Tabs */}
+        <Card
+          style={{
+            marginTop: 32,
+            borderRadius: 20,
+            border: 'none',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          <Tabs 
+            defaultActiveKey="description"
+            size="large"
+            style={{
+              '& .ant-tabs-tab': {
+                fontSize: 16,
+                fontWeight: 600,
+              }
+            }}
+          >
+            <Tabs.TabPane tab="Description" key="description">
+              <div style={{ padding: '20px 0' }}>
+                <Paragraph style={{ 
+                  whiteSpace: 'pre-line',
+                  fontSize: 16,
+                  lineHeight: 1.8,
+                  color: '#475569',
+                }}>
+                  {product.description || 'No description available.'}
+                </Paragraph>
+              </div>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Specifications" key="specifications">
+              <div style={{ padding: '20px 0' }}>
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                  <Row>
+                    <Col span={8}>
+                      <Text strong style={{ fontSize: 16 }}>Category:</Text>
+                    </Col>
+                    <Col span={16}>
+                      <Text style={{ fontSize: 16, color: '#475569' }}>{categoryName}</Text>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col span={8}>
+                      <Text strong style={{ fontSize: 16 }}>Availability:</Text>
+                    </Col>
+                    <Col span={16}>
+                      <Text style={{ fontSize: 16, color: product.inventory > 0 ? '#10b981' : '#ef4444' }}>
+                        {product.inventory > 0 ? `${product.inventory} units in stock` : 'Out of stock'}
+                      </Text>
+                    </Col>
+                  </Row>
+                  {product.average_rating > 0 && (
+                    <Row>
+                      <Col span={8}>
+                        <Text strong style={{ fontSize: 16 }}>Rating:</Text>
+                      </Col>
+                      <Col span={16}>
+                        <Space>
+                          <Rate disabled value={product.average_rating} style={{ fontSize: 16 }} />
+                          <Text style={{ fontSize: 16, color: '#475569' }}>
+                            ({product.total_reviews} reviews)
+                          </Text>
+                        </Space>
+                      </Col>
+                    </Row>
+                  )}
+                </Space>
+              </div>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab={`Reviews (${reviews.length})`} key="reviews">
+              <div style={{ padding: '20px 0' }}>
+                {canReview && (
+                  <Button
+                    type="primary"
+                    icon={<StarOutlined />}
+                    onClick={handleAddReview}
+                    size="large"
+                    style={{ 
+                      marginBottom: 24,
+                      borderRadius: 24,
+                      height: 44,
+                      fontWeight: 600,
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      border: 'none',
+                      boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
+                    }}
+                  >
+                    Write a Review
+                  </Button>
+                )}
+                {renderReviews()}
+              </div>
+            </Tabs.TabPane>
+          </Tabs>
+        </Card>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div style={{ marginTop: 40 }}>
+            <Title 
+              level={2}
+              style={{
+                marginBottom: 24,
+                fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Related Products
+            </Title>
+            <Row gutter={[24, 24]}>
+              {relatedProducts.map(relatedProduct => {
+                const relatedCategoryName = getCategoryName(relatedProduct);
+                const relatedGradient = getCategoryGradient(relatedCategoryName);
+                const hasRelatedDiscount = relatedProduct.discount_price && 
+                  parseFloat(relatedProduct.discount_price) < parseFloat(relatedProduct.price);
+                const relatedDiscountPercent = hasRelatedDiscount
+                  ? Math.round((1 - parseFloat(relatedProduct.discount_price) / parseFloat(relatedProduct.price)) * 100)
+                  : 0;
+                
+                return (
+                  <Col xs={24} sm={12} lg={6} key={relatedProduct.id}>
+                    <Card
+                      hoverable
+                      style={{
+                        borderRadius: 20,
+                        border: 'none',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                        transition: 'all 0.3s ease',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                      }}
+                      bodyStyle={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.12)';
+                        e.currentTarget.style.transform = 'translateY(-8px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: 180,
+                          background: relatedGradient,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {/* Background pattern circles */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: -15,
+                            right: -15,
+                            width: 60,
+                            height: 60,
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            borderRadius: '50%',
+                            zIndex: 1,
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: -20,
+                            left: -20,
+                            width: 80,
+                            height: 80,
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            borderRadius: '50%',
+                            zIndex: 1,
+                          }}
+                        />
+
+                        {/* Product Image - Background */}
+                        <img
+                          alt={relatedProduct.name}
+                          src={
+                            relatedProduct.image_url ||
+                            relatedProduct.primary_image ||
+                            'https://placehold.co/300x200/lightgray/darkgray?text=No+Image'
+                          }
+                          style={{ 
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            zIndex: 0,
+                            padding: 15,
+                          }}
+                        />
+
+                        {/* Discount badge */}
+                        {hasRelatedDiscount && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: 12,
+                              top: 12,
+                              background: 'rgba(255, 255, 255, 0.95)',
+                              color: '#dc2626',
+                              padding: '4px 10px',
+                              fontSize: 11,
+                              borderRadius: 16,
+                              fontWeight: 700,
+                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                              backdropFilter: 'blur(10px)',
+                              zIndex: 10,
+                            }}
+                          >
+                            {relatedDiscountPercent}% OFF
                           </div>
                         )}
-                        <Text strong>
-                          ₫{parseFloat(relatedProduct.discount_price || relatedProduct.price || 0).toFixed(2)}
-                        </Text>
+
+                        {/* Stock badge */}
+                        {relatedProduct.inventory > 0 && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: 8,
+                              right: 12,
+                              background: 'rgba(34, 197, 94, 0.95)',
+                              color: '#fff',
+                              padding: '4px 10px',
+                              fontSize: 10,
+                              borderRadius: 16,
+                              fontWeight: 700,
+                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                              backdropFilter: 'blur(10px)',
+                              zIndex: 10,
+                            }}
+                          >
+                            {relatedProduct.inventory} IN STOCK
+                          </div>
+                        )}
                       </div>
-                    }
-                  />
-                  <div style={{ marginTop: '10px' }}>
-                    <Link to={`/products/${relatedProduct.id}`}>
-                      <Button type="primary" block>View Details</Button>
-                    </Link>
-                  </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        </div>
-      )}
+                      
+                      <div style={{ 
+                        padding: 16, 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        flex: 1,
+                      }}>
+                        <Text
+                          strong
+                          style={{
+                            fontSize: 15,
+                            display: 'block',
+                            marginBottom: 10,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            color: '#1e293b',
+                            fontWeight: 600,
+                            minHeight: 21,
+                          }}
+                        >
+                          {relatedProduct.name}
+                        </Text>
+                        
+                        {/* Rating - same style as GridProductCard */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            marginBottom: 12,
+                            minHeight: 30,
+                          }}
+                        >
+                          <div style={{ display: "flex", gap: 2 }}>
+                            {[...Array(5)].map((_, i) => (
+                              <StarFilled
+                                key={i}
+                                style={{
+                                  color: i < Math.floor(relatedProduct.average_rating || 0) ? "#fbbf24" : "#e2e8f0",
+                                  fontSize: 13,
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <Text strong style={{ fontSize: 12, color: "#374151" }}>
+                            {relatedProduct.average_rating > 0 ? relatedProduct.average_rating.toFixed(1) : "0.0"}
+                          </Text>
+                          <Text style={{ fontSize: 11, color: "#9ca3af" }}>
+                            ({relatedProduct.total_reviews || 0})
+                          </Text>
+                        </div>
+                        
+                        <div style={{ marginBottom: 12, minHeight: 52 }}>
+                          {hasRelatedDiscount ? (
+                            <>
+                              <Text delete style={{ fontSize: 13, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                                ₫{parseFloat(relatedProduct.price || 0).toLocaleString()}
+                              </Text>
+                              <Text strong style={{ fontSize: 20, color: '#dc2626' }}>
+                                ₫{parseFloat(relatedProduct.discount_price || 0).toLocaleString()}
+                              </Text>
+                            </>
+                          ) : (
+                            <Text strong style={{ fontSize: 20, color: '#667eea' }}>
+                              ₫{parseFloat(relatedProduct.price || 0).toLocaleString()}
+                            </Text>
+                          )}
+                        </div>
+                        
+                        <Link to={`/products/${relatedProduct.id}`} style={{ marginTop: 'auto' }}>
+                          <Button 
+                            type="primary" 
+                            block
+                            style={{
+                              height: 38,
+                              borderRadius: 20,
+                              fontWeight: 600,
+                              fontSize: 14,
+                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                              border: 'none',
+                              boxShadow: '0 2px 12px rgba(102, 126, 234, 0.3)',
+                              transition: 'all 0.3s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.boxShadow = '0 4px 16px rgba(102, 126, 234, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = '0 2px 12px rgba(102, 126, 234, 0.3)';
+                            }}
+                          >
+                            View Details
+                          </Button>
+                        </Link>
+                      </div>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+          </div>
+        )}
 
-      {/* Review Modal */}
-      <Modal
-        title="Write a Review"
-        open={reviewModalVisible}
-        onCancel={() => setReviewModalVisible(false)}
-        footer={null}
-        width={600}
-      >
-        <Form
-          form={reviewForm}
-          layout="vertical"
-          onFinish={handleReviewSubmit}
+        {/* Review Modal */}
+        <Modal
+          title={
+            <Text strong style={{ fontSize: 20 }}>
+              Write a Review
+            </Text>
+          }
+          open={reviewModalVisible}
+          onCancel={() => setReviewModalVisible(false)}
+          footer={null}
+          width={600}
+          style={{
+            borderRadius: 20,
+          }}
         >
-          <Form.Item
-            name="rating"
-            label="Rating"
-            rules={[{ required: true, message: 'Please provide a rating!' }]}
+          <Form
+            form={reviewForm}
+            layout="vertical"
+            onFinish={handleReviewSubmit}
           >
-            <Rate />
-          </Form.Item>
+            <Form.Item
+              name="rating"
+              label={<Text strong>Rating</Text>}
+              rules={[{ required: true, message: 'Please provide a rating!' }]}
+            >
+              <Rate style={{ fontSize: 32 }} />
+            </Form.Item>
 
-          <Form.Item
-            name="title"
-            label="Review Title"
-            rules={[
-              { required: true, message: 'Please provide a review title!' },
-              { max: 200, message: 'Title must be less than 200 characters!' }
-            ]}
-          >
-            <Input placeholder="Summarize your experience" />
-          </Form.Item>
+            <Form.Item
+              name="title"
+              label={<Text strong>Review Title</Text>}
+              rules={[
+                { required: true, message: 'Please provide a review title!' },
+                { max: 200, message: 'Title must be less than 200 characters!' }
+              ]}
+            >
+              <Input 
+                placeholder="Summarize your experience"
+                size="large"
+                style={{ borderRadius: 12 }}
+              />
+            </Form.Item>
 
-          <Form.Item
-            name="comment"
-            label="Review"
-            rules={[{ required: true, message: 'Please write your review!' }]}
-          >
-            <TextArea
-              rows={4}
-              placeholder="Tell us about your experience with this product"
-            />
-          </Form.Item>
+            <Form.Item
+              name="comment"
+              label={<Text strong>Review</Text>}
+              rules={[{ required: true, message: 'Please write your review!' }]}
+            >
+              <TextArea
+                rows={6}
+                placeholder="Tell us about your experience with this product"
+                style={{ borderRadius: 12 }}
+              />
+            </Form.Item>
 
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={submittingReview}>
-                Submit Review
-              </Button>
-              <Button onClick={() => setReviewModalVisible(false)}>
-                Cancel
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+            <Form.Item style={{ marginBottom: 0 }}>
+              <Space size="middle">
+                <Button 
+                  type="primary" 
+                  htmlType="submit" 
+                  loading={submittingReview}
+                  size="large"
+                  style={{
+                    borderRadius: 24,
+                    height: 44,
+                    fontWeight: 600,
+                    padding: '0 32px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: 'none',
+                    boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
+                  }}
+                >
+                  Submit Review
+                </Button>
+                <Button 
+                  onClick={() => setReviewModalVisible(false)}
+                  size="large"
+                  style={{
+                    borderRadius: 24,
+                    height: 44,
+                  }}
+                >
+                  Cancel
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </div>
     </div>
   );
 };
