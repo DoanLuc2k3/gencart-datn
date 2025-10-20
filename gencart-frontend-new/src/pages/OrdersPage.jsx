@@ -12,10 +12,9 @@ import {
   Modal, 
   Row, 
   Col, 
-  Badge,
   Tooltip
 } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   ShoppingOutlined,
   CheckCircleOutlined,
@@ -32,10 +31,13 @@ import {
   TruckOutlined
 } from '@ant-design/icons';
 import { getValidImageUrl, handleImageError } from '../utils/imageUtils';
+import useScrollToTop from '../hooks/useScrollToTop';
 
 const { Title, Text, Paragraph } = Typography;
 
 const OrdersPage = () => {
+  useScrollToTop();
+
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,62 @@ const OrdersPage = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [reviewableProducts, setReviewableProducts] = useState(new Map());
+
+  const pageStyle = {
+    background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 45%, #e0e7ff 100%)',
+    minHeight: '100vh'
+  };
+
+  const headerStyle = {
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.95) 0%, rgba(99,102,241,0.95) 100%)',
+    padding: '56px 24px 110px',
+    position: 'relative',
+    overflow: 'hidden'
+  };
+
+  const headerOverlayStyle = {
+    position: 'absolute',
+    inset: 0,
+    background:'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'   };
+
+  const headerContentStyle = {
+    maxWidth: '1080px',
+    margin: '0 auto',
+    position: 'relative',
+    zIndex: 1,
+    textAlign: 'center'
+  };
+
+  const mainWrapperStyle = {
+    maxWidth: '1100px',
+    margin: '-72px auto 0',
+    padding: '0 20px 64px'
+  };
+
+  const mainCardStyle = {
+    borderRadius: 28,
+    background: 'rgba(255,255,255,0.98)',
+    border: '1px solid rgba(148, 163, 184, 0.18)',
+    boxShadow: '0 38px 80px -48px rgba(15, 23, 42, 0.45)'
+  };
+
+  const orderCardStyle = {
+    borderRadius: 22,
+    border: '1px solid rgba(148,163,184,0.18)',
+    boxShadow: '0 20px 40px -32px rgba(15, 23, 42, 0.4)',
+    background: 'linear-gradient(180deg, rgba(248,250,252,0.95) 0%, rgba(255,255,255,0.96) 100%)',
+    backdropFilter: 'blur(12px)'
+  };
+
+  const summaryPillStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '14px 18px',
+    borderRadius: 18,
+    background: 'rgba(226, 232, 240, 0.58)',
+    border: '1px solid rgba(148, 163, 184, 0.18)'
+  };
 
   // Fetch orders data
   const fetchOrders = async () => {
@@ -269,14 +327,20 @@ const OrdersPage = () => {
 
   // Render simple order card
   const renderOrderCard = (order) => {
-    // Calculate expected delivery date (order date + 5 days for standard delivery)
-    // Note: This is a simple calculation - in a real app, this would come from:
-    // 1. Shipping provider APIs (FedEx, UPS, DHL)
-    // 2. Backend calculation based on shipping method and location
-    // 3. Warehouse processing time + transit time
     const orderDate = new Date(order.date);
     const deliveryDate = new Date(orderDate);
-    deliveryDate.setDate(deliveryDate.getDate() + 5); // Add 5 business days
+    deliveryDate.setDate(deliveryDate.getDate() + 5);
+
+    const formattedOrderDate = orderDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    const formattedOrderTime = orderDate.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 
     const formattedDeliveryDate = deliveryDate.toLocaleDateString('en-US', {
       month: 'short',
@@ -289,96 +353,151 @@ const OrdersPage = () => {
     return (
       <Card
         key={order.id}
-        style={{
-          marginBottom: '16px',
-          borderRadius: '8px',
-          border: '1px solid #e8e8e8',
-        }}
+        bordered={false}
+        style={{ ...orderCardStyle, marginBottom: '24px' }}
+        bodyStyle={{ padding: '26px 28px 22px' }}
       >
-        {/* Simple Order Header */}
-        <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
-          <Col>
-            <Space direction="vertical" size={4}>
-              <Text strong style={{ fontSize: '16px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '16px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <div style={
+            {
+              display: 'flex',
+              flexDirection: 'row',
+              gap: '10px',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }
+          }>
+            <Space size={12} wrap>
+              <Text style={{ fontSize: '20px', fontWeight: 600, color: '#0f172a' }}>
                 Order #{order.id}
               </Text>
-              <Text type="secondary" style={{ fontSize: '14px' }}>
-                {new Date(order.date).toLocaleDateString()}
-              </Text>
+              <Tag
+                color="geekblue"
+                style={{ margin: 0, borderRadius: 12, padding: '2px 12px' }}
+              >
+                {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+              </Tag>
             </Space>
-          </Col>
-          <Col>
-            <Space direction="vertical" size={4} align="end">
-              <Text strong style={{ fontSize: '18px', color: '#1890ff' }}>
-                ₫{order.total.toFixed(2)}
-              </Text>
-              {getStatusTag(order.status)}
+
+            <Space size={16} wrap>
+              <Space size={8}>
+                <CalendarOutlined style={{ color: '#6366f1' }} />
+                <Text type="secondary">{formattedOrderDate}</Text>
+              </Space>
+              <Space size={8}>
+                <ClockCircleOutlined style={{ color: '#6366f1' }} />
+                <Text type="secondary">Placed {formattedOrderTime}</Text>
+              </Space>
             </Space>
-          </Col>
-        </Row>
+          </div>
 
-        {/* Order Summary */}
-        <Row gutter={16} style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-          <Col span={8}>
-            <Text strong>{order.items.length}</Text>
-            <Text type="secondary" style={{ display: 'block', fontSize: '12px' }}>Items</Text>
-          </Col>
-          <Col span={8}>
-            <Text strong>{formattedDeliveryDate}</Text>
-            <Text type="secondary" style={{ display: 'block', fontSize: '12px' }}>Expected Delivery</Text>
-          </Col>
-          <Col span={8}>
-            <Text strong>{order.payment.status ? 'Paid' : 'Pending'}</Text>
-            <Text type="secondary" style={{ display: 'block', fontSize: '12px' }}>Payment</Text>
-          </Col>
-        </Row>
+          <div style={{ textAlign: 'right' }}>
+            <Text style={{ fontSize: '22px', fontWeight: 700, color: '#312e81' }}>
+              ₫{order.total.toFixed(2)}
+            </Text>
+            <div style={{ marginTop: 8 }}>{getStatusTag(order.status)}</div>
+          </div>
+        </div>
 
-        {/* Products */}
-        <div style={{ marginBottom: '16px' }}>
-          <Text strong style={{ marginBottom: '8px', display: 'block' }}>Products:</Text>
-          <Row gutter={[8, 8]}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gap: '18px',
+            margin: '26px 0 24px'
+          }}
+        >
+          <div style={summaryPillStyle}>
+            <BoxPlotOutlined style={{ fontSize: '20px', color: '#6366f1' }} />
+            <div>
+              <Text type="secondary" style={{ fontSize: '12px', letterSpacing: 0.2 }}>Items</Text>
+              <div style={{ fontWeight: 600, fontSize: '16px', color: '#0f172a' }}>{order.items.length}</div>
+            </div>
+          </div>
+          <div style={summaryPillStyle}>
+            <TruckOutlined style={{ fontSize: '20px', color: '#10b981' }} />
+            <div>
+              <Text type="secondary" style={{ fontSize: '12px', letterSpacing: 0.2 }}>Expected Delivery</Text>
+              <div style={{ fontWeight: 600, fontSize: '16px', color: '#0f172a' }}>{formattedDeliveryDate}</div>
+            </div>
+          </div>
+          <div style={summaryPillStyle}>
+            <DollarOutlined style={{ fontSize: '20px', color: '#f97316' }} />
+            <div>
+              <Text type="secondary" style={{ fontSize: '12px', letterSpacing: 0.2 }}>Payment Status</Text>
+              <div style={{ fontWeight: 600, fontSize: '16px', color: '#0f172a' }}>{order.payment.status ? 'Paid' : 'Pending'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <Text strong style={{ display: 'block', fontSize: '15px', color: '#0f172a' }}>
+            Products in this order
+          </Text>
+          <Row gutter={[16, 16]} style={{ marginTop: 10 }}>
             {order.items.map(item => {
               const productReviewData = orderReviewData[item.product_id] || {};
               const canReviewProduct = productReviewData.can_review;
               const hasReviewedProduct = productReviewData.has_reviewed;
 
               return (
-                <Col xs={12} sm={8} md={6} key={item.id}>
+                <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
                   <Card
-                    size="small"
                     hoverable
-                    style={{ height: '100%' }}
+                    size="small"
+                    style={{
+                      height: '100%',
+                      borderRadius: 16,
+                      border: '1px solid rgba(148,163,184,0.2)',
+                      boxShadow: '0 16px 32px -28px rgba(30, 41, 59, 0.45)'
+                    }}
+                    bodyStyle={{ padding: '12px' }}
                     cover={
-                      <div style={{ height: '80px', overflow: 'hidden', backgroundColor: '#f5f5f5' }}>
+                      <div
+                        style={{
+                          height: '110px',
+                          overflow: 'hidden',
+                          borderTopLeftRadius: 16,
+                          borderTopRightRadius: 16,
+                          background: 'linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%)'
+                        }}
+                      >
                         <img
-                          src={getValidImageUrl(item.image, item.name, 80, 80)}
+                          src={getValidImageUrl(item.image, item.name, 110, 110)}
                           alt={item.name}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          onError={(e) => handleImageError(e, item.name, 80, 80)}
+                          onError={(e) => handleImageError(e, item.name, 110, 110)}
                         />
                       </div>
                     }
                   >
                     <Tooltip title={item.name}>
-                      <Text style={{ fontSize: '12px', display: 'block', marginBottom: '4px' }}>
-                        {item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name}
+                      <Text style={{ fontSize: '13px', fontWeight: 500, display: 'block', marginBottom: 6 }}>
+                        {item.name.length > 30 ? `${item.name.substring(0, 30)}…` : item.name}
                       </Text>
                     </Tooltip>
-                    
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <Text style={{ fontSize: '11px' }}>Qty: {item.quantity}</Text>
-                      <Text style={{ fontSize: '12px', fontWeight: '500' }}>₫{item.price}</Text>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text style={{ fontSize: '12px', color: '#475569' }}>Qty: {item.quantity}</Text>
+                      <Text style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>₫{item.price}</Text>
                     </div>
 
-                    {/* Simple Review Status */}
                     {order.status === 'delivered' && item.product_id && (
                       <div style={{ textAlign: 'center' }}>
                         {hasReviewedProduct ? (
-                          <Tag color="green" style={{ fontSize: '10px' }}>
+                          <Tag color="green" style={{ fontSize: '11px', borderRadius: 10 }}>
                             <CheckCircleOutlined /> Reviewed
                           </Tag>
                         ) : canReviewProduct ? (
-                          <Button 
+                          <Button
                             type="link"
                             size="small"
                             icon={<StarOutlined />}
@@ -386,12 +505,12 @@ const OrdersPage = () => {
                               e.stopPropagation();
                               handleReviewProduct(item.product_id);
                             }}
-                            style={{ fontSize: '10px', padding: '0' }}
+                            style={{ fontSize: '11px', padding: 0 }}
                           >
-                            Review
+                            Review now
                           </Button>
                         ) : (
-                          <Tag style={{ fontSize: '10px' }}>Not Eligible</Tag>
+                          <Tag style={{ fontSize: '11px', borderRadius: 10 }}>Not eligible</Tag>
                         )}
                       </div>
                     )}
@@ -402,9 +521,18 @@ const OrdersPage = () => {
           </Row>
         </div>
 
-        {/* Action Buttons */}
-        <div style={{ borderTop: '1px solid #e8e8e8', paddingTop: '12px' }}>
-          <Space>
+        <div
+          style={{
+            borderTop: '1px solid rgba(148,163,184,0.2)',
+            paddingTop: 16,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12
+          }}
+        >
+          <Space wrap>
             <Button
               type="primary"
               icon={<EyeOutlined />}
@@ -424,14 +552,15 @@ const OrdersPage = () => {
             )}
 
             {order.status === 'delivered' && hasReviewableProducts(order.id) && (
-              <Button
-                icon={<StarOutlined />}
-                onClick={() => navigate(`/orders/${order.id}`)}
-              >
+              <Button icon={<StarOutlined />} onClick={() => navigate(`/orders/${order.id}`)}>
                 Review Products
               </Button>
             )}
           </Space>
+
+          <Text type="secondary" style={{ fontSize: '12px' }}>
+            Need help? Contact support@gencart.com
+          </Text>
         </div>
       </Card>
     );
@@ -443,84 +572,100 @@ const OrdersPage = () => {
     return orders.filter(order => order.status === status);
   };
 
+  const totalOrders = orders.length;
+  const processingCount = getFilteredOrders('processing').length;
+  const shippedCount = getFilteredOrders('shipped').length;
+  const deliveredCount = getFilteredOrders('delivered').length;
+  const cancelledCount = getFilteredOrders('cancelled').length;
+
   return (
-    <div style={{ padding: '24px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-      {/* Simple Header */}
-      <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-        <Title level={2} style={{ margin: '0 0 8px 0' }}>
-          <ShoppingOutlined /> My Orders
-        </Title>
-        <Text type="secondary">Track and manage your orders</Text>
+    <div style={pageStyle}>
+      <div style={headerStyle}>
+        <div style={headerOverlayStyle} />
+        <div style={headerContentStyle}>
+          <Title
+            level={2}
+            style={{
+              marginBottom: 12,
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: 'clamp(2rem, 3.2vw, 2.6rem)',
+              textShadow: '0 20px 45px rgba(15, 23, 42, 0.35)'
+            }}
+          >
+            <ShoppingOutlined style={{ marginRight: 12 }} /> My Orders
+          </Title>
+          <Paragraph style={{ color: 'rgba(255,255,255,0.9)', marginBottom: 0, fontSize: 'clamp(1rem, 2vw, 1.1rem)' }}>
+            Track packages, manage returns, and review products you love.
+          </Paragraph>
+
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <div style={mainWrapperStyle}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', backgroundColor: 'white', borderRadius: '8px' }}>
+          <Card
+            bordered={false}
+            style={mainCardStyle}
+            bodyStyle={{ padding: '60px 40px', textAlign: 'center' }}
+          >
             <Spin size="large" />
-            <div style={{ marginTop: '16px' }}>
-              <Text>Loading your orders...</Text>
+            <div style={{ marginTop: 18 }}>
+              <Text type="secondary">Loading your orders…</Text>
             </div>
-          </div>
-        ) : orders.length > 0 ? (
-          <Card style={{ borderRadius: '8px' }}>
+          </Card>
+        ) : totalOrders > 0 ? (
+          <Card
+            bordered={false}
+            style={mainCardStyle}
+            bodyStyle={{ padding: '32px 28px' }}
+          >
             <Tabs
               defaultActiveKey="all"
+              tabBarStyle={{ marginBottom: 28 }}
               items={[
                 {
                   key: 'all',
-                  label: `All Orders (${orders.length})`,
-                  children: (
-                    <div>
-                      {getFilteredOrders('all').map(order => renderOrderCard(order))}
-                    </div>
-                  )
+                  label: `All Orders (${totalOrders})`,
+                  children: <div>{getFilteredOrders('all').map(order => renderOrderCard(order))}</div>
                 },
                 {
                   key: 'processing',
-                  label: `Processing (${getFilteredOrders('processing').length})`,
+                  label: `Processing (${processingCount})`,
                   children: (
                     <div>
                       {getFilteredOrders('processing').map(order => renderOrderCard(order))}
-                      {getFilteredOrders('processing').length === 0 && (
-                        <Empty description="No processing orders" />
-                      )}
+                      {processingCount === 0 && <Empty description="No processing orders" />}
                     </div>
                   )
                 },
                 {
                   key: 'shipped',
-                  label: `Shipped (${getFilteredOrders('shipped').length})`,
+                  label: `Shipped (${shippedCount})`,
                   children: (
                     <div>
                       {getFilteredOrders('shipped').map(order => renderOrderCard(order))}
-                      {getFilteredOrders('shipped').length === 0 && (
-                        <Empty description="No shipped orders" />
-                      )}
+                      {shippedCount === 0 && <Empty description="No shipped orders" />}
                     </div>
                   )
                 },
                 {
                   key: 'delivered',
-                  label: `Delivered (${getFilteredOrders('delivered').length})`,
+                  label: `Delivered (${deliveredCount})`,
                   children: (
                     <div>
                       {getFilteredOrders('delivered').map(order => renderOrderCard(order))}
-                      {getFilteredOrders('delivered').length === 0 && (
-                        <Empty description="No delivered orders" />
-                      )}
+                      {deliveredCount === 0 && <Empty description="No delivered orders" />}
                     </div>
                   )
                 },
                 {
                   key: 'cancelled',
-                  label: `Cancelled (${getFilteredOrders('cancelled').length})`,
+                  label: `Cancelled (${cancelledCount})`,
                   children: (
                     <div>
                       {getFilteredOrders('cancelled').map(order => renderOrderCard(order))}
-                      {getFilteredOrders('cancelled').length === 0 && (
-                        <Empty description="No cancelled orders" />
-                      )}
+                      {cancelledCount === 0 && <Empty description="No cancelled orders" />}
                     </div>
                   )
                 }
@@ -528,17 +673,20 @@ const OrdersPage = () => {
             />
           </Card>
         ) : (
-          <div style={{ textAlign: 'center', padding: '60px', backgroundColor: 'white', borderRadius: '8px' }}>
+          <Card
+            bordered={false}
+            style={mainCardStyle}
+            bodyStyle={{ padding: '60px 40px', textAlign: 'center' }}
+          >
             <Empty description="You haven't placed any orders yet">
-              <Button type="primary">
-                <Link to="/products">Start Shopping</Link>
+              <Button type="primary" size="large" onClick={() => navigate('/products')}>
+                Start Shopping
               </Button>
             </Empty>
-          </div>
+          </Card>
         )}
       </div>
 
-      {/* Cancel Order Modal */}
       <Modal
         title="Cancel Order"
         open={modalVisible}

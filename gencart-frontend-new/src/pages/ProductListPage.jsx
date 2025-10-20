@@ -90,7 +90,7 @@ const ProductListPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(null); // Now stores category name instead of ID
   const [sortBy, setSortBy] = useState("name");
   const [viewMode, setViewMode] = useState(() =>
-    loadFromStorage("productViewMode", "grid")
+    loadFromStorage("productViewMode", "grid"),
   ); // persisted
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -104,14 +104,14 @@ const ProductListPage = () => {
   const [minRating, setMinRating] = useState(0);
   const [onlyOnSale, setOnlyOnSale] = useState(false);
   const [onlyInStock, setOnlyInStock] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [initialFetched, setInitialFetched] = useState(false);
   const [wishlist, setWishlist] = useState(() =>
-    loadFromStorage("wishlistProductIds", [])
+    loadFromStorage("wishlistProductIds", []),
   );
   const toggleWishlist = (id) => {
     setWishlist((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id],
     );
   };
 
@@ -123,7 +123,7 @@ const ProductListPage = () => {
   const mainContentRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Helper function to scroll to top when changing pages
   const scrollToTop = () => {
     // Try multiple methods to ensure scroll works
@@ -132,7 +132,7 @@ const ProductListPage = () => {
     window.scrollTo({
       top: 0,
       left: 0,
-      behavior: "smooth"
+      behavior: "smooth",
     });
   };
 
@@ -192,45 +192,7 @@ const ProductListPage = () => {
     fetchCategories();
   }, []);
 
-  // // Function to fetch a single page of products (supports abort)
-  // const fetchProductsPage = async (baseUrl, abortSignal) => {
-  //   const separator = baseUrl.includes("?") ? "&" : "?";
-  //   const urlWithTimestamp = `${baseUrl}${separator}_bust=${Date.now()}&_random=${Math.random()}`;
-  //   console.log("Fetching products from:", urlWithTimestamp);
-  //   const response = await fetch(urlWithTimestamp, { signal: abortSignal });
-  //   if (!response.ok) throw new Error("Failed to fetch products");
-  //   const data = await response.json();
-    
-  //   // Handle paginated response
-  //   if (data.results && Array.isArray(data.results)) {
-  //     return {
-  //       products: data.results,
-  //       totalCount: data.count || 0,
-  //       totalPages: data.total_pages || 1,
-  //       currentPage: data.current_page || 1,
-  //       pageButtons: data.page_buttons || [],
-  //     };
-  //   }
-  //   // Fallback for non-paginated response
-  //   if (Array.isArray(data)) {
-  //     return {
-  //       products: data,
-  //       totalCount: data.length,
-  //       totalPages: 1,
-  //       currentPage: 1,
-  //       pageButtons: [],
-  //     };
-  //   }
-  //   console.warn("Unexpected products response shape", data);
-  //   return {
-  //     products: [],
-  //     totalCount: 0,
-  //     totalPages: 1,
-  //     currentPage: 1,
-  //     pageButtons: [],
-  //   };
-  // };
-
+ 
   // Central fetch function - server-side pagination with filters
   const fetchProducts = useCallback(
     async (overrideSearchTerm = null) => {
@@ -244,25 +206,25 @@ const ProductListPage = () => {
       try {
         // Build URL with server-side filters
         let baseUrl = "http://localhost:8000/api/products/?";
-        
+
         // Pagination parameters
         baseUrl += `page=${currentPage}&`;
         baseUrl += `limit=${ITEMS_PER_PAGE}&`;
-        
+
         // Search
         const effectiveSearch =
           overrideSearchTerm !== null ? overrideSearchTerm : debouncedSearch;
         if (effectiveSearch)
           baseUrl += `search=${encodeURIComponent(effectiveSearch)}&`;
-        
+
         // Category filter
         if (selectedCategory) {
           baseUrl += `category=${encodeURIComponent(selectedCategory)}&`;
         }
-        
+
         // Sorting
         if (sortBy) baseUrl += `ordering=${sortBy}&`;
-        
+
         // Price range filter
         if (selectedPriceRange[0] > 0) {
           baseUrl += `min_price=${selectedPriceRange[0]}&`;
@@ -270,58 +232,57 @@ const ProductListPage = () => {
         if (selectedPriceRange[1] < 1000) {
           baseUrl += `max_price=${selectedPriceRange[1]}&`;
         }
-        
+
         // Rating filter
         if (minRating > 0) {
           baseUrl += `min_rating=${minRating}&`;
         }
-        
+
         // On sale filter
         if (onlyOnSale) {
           baseUrl += `on_sale=true&`;
         }
-        
+
         // In stock filter
         if (onlyInStock) {
           baseUrl += `in_stock=true&`;
         }
-        
+
         // Cache buster
         baseUrl += `_=${Date.now()}`;
-        
-        console.log("ProductListPage: Fetching products from:", baseUrl);
         const response = await fetch(baseUrl, { signal: controller.signal });
         if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
-        
-        console.log("ProductListPage: Response data:", data);
-        
+
+
         // Update state with paginated results
         const fetchedProducts = data.results || [];
         setProducts(fetchedProducts);
         setTotalCount(data.count || 0);
         setTotalPages(data.total_pages || 1);
         setPageButtons(data.page_buttons || []);
-        
-        console.log("ProductListPage: Products count:", fetchedProducts.length);
-        console.log("ProductListPage: Total pages:", data.total_pages);
-        
       } catch (error) {
-        if (error.name === "AbortError") {
-          console.log("Fetch aborted (expected during rapid updates)");
-        } else {
+ 
           console.error("Error fetching products:", error);
           message.error("Failed to load products");
-        }
+        
       } finally {
         if (activeFetchRef.current === controller) {
           setLoading(false);
           activeFetchRef.current = null;
         }
-        console.log("ProductListPage: fetchProducts completed");
       }
     },
-    [currentPage, debouncedSearch, selectedCategory, sortBy, selectedPriceRange, minRating, onlyOnSale, onlyInStock]
+    [
+      currentPage,
+      debouncedSearch,
+      selectedCategory,
+      sortBy,
+      selectedPriceRange,
+      minRating,
+      onlyOnSale,
+      onlyInStock,
+    ],
   );
 
   // Fetch products when debounced term / filters change
@@ -479,334 +440,19 @@ const ProductListPage = () => {
             </Paragraph>
           </div>
 
-          {/* Enhanced Search and Filter Bar */}
-          <div
-            style={{
-              background: "rgba(255,255,255,0.12)",
-              backdropFilter: "blur(18px)",
-              borderRadius: "20px",
-              padding: "24px",
-              border: "1px solid rgba(255,255,255,0.18)",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-            }}
-          >
-            <Row gutter={[20, 20]} align="top" className="filter-bar-row">
-              {/* Search Bar */}
-              <Col xs={24} sm={24} md={12} lg={9} xl={9}>
-                <div className="filter-group">
-                  <Text className="filter-label">
-                    <SearchOutlined style={{ marginRight: 6 }} /> Search
-                    Products
-                  </Text>
-                  <Search
-                    placeholder="What are you looking for?"
-                    value={searchTerm}
-                    allowClear
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onSearch={handleSearch}
-                    size="large"
-                    style={{ width: "100%" }}
-                    className="modern-search"
-                  />
-                </div>
-              </Col>
-
-              {/* Category Filter */}
-              <Col xs={24} sm={12} md={6} lg={5} xl={5}>
-                <div className="filter-group">
-                  <Text className="filter-label">
-                    <FilterOutlined style={{ marginRight: 6 }} /> Category
-                  </Text>
-                  <Select
-                    placeholder="All Categories"
-                    style={{ width: "100%" }}
-                    value={selectedCategory}
-                    onChange={handleCategoryChange}
-                    allowClear
-                    size="large"
-                    showSearch
-                    className="modern-select"
-                  >
-                    {categories.map((category) => (
-                      <Option key={category.id} value={category.name}>
-                        <Space size={8}>
-                          <div
-                            style={{
-                              width: "10px",
-                              height: "10px",
-                              borderRadius: "50%",
-                              background: `#${getCategoryColor(category.name)}`,
-                            }}
-                          />
-                          {category.name}
-                        </Space>
-                      </Option>
-                    ))}
-                  </Select>
-                </div>
-              </Col>
-
-              {/* Sort Options */}
-              <Col xs={24} sm={12} md={6} lg={5} xl={5}>
-                <div className="filter-group">
-                  <Text className="filter-label">Sort By</Text>
-                  <Select
-                    value={sortBy}
-                    onChange={handleSortChange}
-                    size="large"
-                    style={{ width: "100%" }}
-                    className="modern-select"
-                  >
-                    <Option value="name">Name (A-Z)</Option>
-                    <Option value="-name">Name (Z-A)</Option>
-                    <Option value="price">Price: Low to High</Option>
-                    <Option value="-price">Price: High to Low</Option>
-                    <Option value="-average_rating">Rating: High to Low</Option>
-                    <Option value="average_rating">Rating: Low to High</Option>
-                    <Option value="-created_at">Newest First</Option>
-                    <Option value="created_at">Oldest First</Option>
-                  </Select>
-                </div>
-              </Col>
-
-              {/* View Mode Toggle */}
-              <Col xs={12} sm={6} md={4} lg={2} xl={2}>
-                <div className="filter-group">
-                  <Text className="filter-label">View</Text>
-                  <Button.Group size="large" style={{ width: "100%" }}>
-                    <Button
-                      type={viewMode === "grid" ? "primary" : "default"}
-                      icon={<AppstoreOutlined />}
-                      onClick={() => setViewMode("grid")}
-                      style={{
-                        flex: 1,
-                        background:
-                          viewMode === "grid"
-                            ? "rgba(255,255,255,0.2)"
-                            : "transparent",
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "white",
-                      }}
-                      loading={loading}
-                    />
-                    <Button
-                      type={viewMode === "list" ? "primary" : "default"}
-                      icon={<UnorderedListOutlined />}
-                      onClick={() => setViewMode("list")}
-                      style={{
-                        flex: 1,
-                        background:
-                          viewMode === "list"
-                            ? "rgba(255,255,255,0.2)"
-                            : "transparent",
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "white",
-                      }}
-                    />
-                  </Button.Group>
-                </div>
-              </Col>
-
-              {/* Refresh & Filters */}
-              <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-                <div className="filter-group">
-                  <Text className="filter-label">Action</Text>
-                  <Space size={8} style={{ width: "100%", display: "flex" }}>
-                    <Button
-                      icon={<ReloadOutlined />}
-                      onClick={handleRefresh}
-                      size="large"
-                      style={{
-                        flex: 1,
-                        background: "rgba(255,255,255,0.1)",
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "white",
-                      }}
-                      aria-label="Refresh products"
-                    />
-                    <Button
-                      size="large"
-                      onClick={() => setShowFilters((p) => !p)}
-                      style={{
-                        flex: 1,
-                        background: showFilters
-                          ? "rgba(255,255,255,0.25)"
-                          : "rgba(255,255,255,0.1)",
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "white",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {showFilters ? "Hide" : "Filters"}
-                    </Button>
-                  </Space>
-                </div>
-              </Col>
-            </Row>
-            {showFilters && (
-              <div
-                style={{
-                  marginTop: 20,
-                  background: "rgba(255,255,255,0.15)",
-                  padding: 18,
-                  borderRadius: 16,
-                  border: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                <Row gutter={[24, 24]}>
-                  <Col xs={24} md={12} lg={8}>
-                    <Text
-                      style={{
-                        color: "white",
-                        fontWeight: 600,
-                        display: "block",
-                        marginBottom: 8,
-                      }}
-                    >
-                      Price Range
-                    </Text>
-                    <Slider
-                      range
-                      min={priceRange[0]}
-                      max={priceRange[1] || 0}
-                      tooltip={{ formatter: (val) => formatCurrency(val) }}
-                      value={selectedPriceRange}
-                      onChange={setSelectedPriceRange}
-                    />
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        color: "white",
-                        fontSize: 12,
-                      }}
-                    >
-                      <span>{formatCurrency(selectedPriceRange[0])}</span>
-                      <span>{formatCurrency(selectedPriceRange[1])}</span>
-                    </div>
-                  </Col>
-                  <Col xs={24} md={12} lg={6}>
-                    <Text
-                      style={{
-                        color: "white",
-                        fontWeight: 600,
-                        display: "block",
-                        marginBottom: 8,
-                      }}
-                    >
-                      Minimum Rating
-                    </Text>
-                    <Rate
-                      allowClear
-                      value={minRating}
-                      onChange={setMinRating}
-                    />
-                  </Col>
-                  <Col xs={24} md={12} lg={5}>
-                    <Text
-                      style={{
-                        color: "white",
-                        fontWeight: 600,
-                        display: "block",
-                        marginBottom: 8,
-                      }}
-                    >
-                      Flags
-                    </Text>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                      }}
-                    >
-                      <Checkbox
-                        style={{ color: "white" }}
-                        checked={onlyOnSale}
-                        onChange={(e) => setOnlyOnSale(e.target.checked)}
-                      >
-                        On Sale
-                      </Checkbox>
-                      <Checkbox
-                        style={{ color: "white" }}
-                        checked={onlyInStock}
-                        onChange={(e) => setOnlyInStock(e.target.checked)}
-                      >
-                        In Stock
-                      </Checkbox>
-                    </div>
-                  </Col>
-                  <Col xs={24} md={12} lg={5}>
-                    <Text
-                      style={{
-                        color: "white",
-                        fontWeight: 600,
-                        display: "block",
-                        marginBottom: 8,
-                      }}
-                    >
-                      Quick Actions
-                    </Text>
-                    <Space wrap direction="vertical" style={{ width: "100%" }}>
-                      <Button
-                        size="small"
-                        onClick={() => {
-                          setSelectedPriceRange(priceRange);
-                          setMinRating(0);
-                          setOnlyOnSale(false);
-                          setOnlyInStock(false);
-                        }}
-                        style={{
-                          background: "rgba(239, 68, 68, 0.2)",
-                          borderColor: "rgba(239, 68, 68, 0.4)",
-                          color: "white",
-                        }}
-                      >
-                        Reset All Filters
-                      </Button>
-                      {(selectedPriceRange[0] !== priceRange[0] || 
-                        selectedPriceRange[1] !== priceRange[1] || 
-                        minRating > 0 || 
-                        onlyOnSale || 
-                        onlyInStock) && (
-                        <Text
-                          style={{
-                            fontSize: 11,
-                            color: "#fbbf24",
-                            fontWeight: 600,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <FilterOutlined /> {
-                            [
-                              selectedPriceRange[0] !== priceRange[0] || selectedPriceRange[1] !== priceRange[1] ? 1 : 0,
-                              minRating > 0 ? 1 : 0,
-                              onlyOnSale ? 1 : 0,
-                              onlyInStock ? 1 : 0
-                            ].reduce((a, b) => a + b, 0)
-                          } active filter(s)
-                        </Text>
-                      )}
-                    </Space>
-                  </Col>
-                </Row>
-              </div>
-            )}
-          </div>
+          {/* Controls moved to main content */}
 
           {/* Results Summary */}
           {!loading && (
-            <div
-              style={{
+          <div
+            style={{
                 textAlign: "center",
                 marginTop: "20px",
                 background: "rgba(255,255,255,0.1)",
                 backdropFilter: "blur(10px)",
                 padding: "14px 16px",
                 borderRadius: "14px",
-                border: "1px solid rgba(255,255,255,0.18)",
+              border: "1px solid rgba(255,255,255,0.18)",
               }}
             >
               <Text
@@ -866,13 +512,13 @@ const ProductListPage = () => {
                     )}
                   </>
                 )}
-              </Text>
+                  </Text>
             </div>
           )}
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - two-column layout with left filters and right products */}
       <div
         ref={mainContentRef}
         style={{
@@ -881,25 +527,224 @@ const ProductListPage = () => {
           padding: "40px 20px", // reduced vertical padding
         }}
       >
-          <Title
-            level={2}
+        {/* Controls above Filters + Products */}
+        <div style={{ marginBottom: 16 }}>
+          <div
             style={{
-              margin: 0,
-              fontWeight: 800,
-              fontSize: "clamp(32px, 4vw, 48px)",
-              lineHeight: 1.2,
-              background:
-                "linear-gradient(135deg, #1e293b 0%, #475569 50%, #64748b 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              letterSpacing: "-0.02em",
-              marginBottom: 20,
-              textAlign: "center",
+              background: "white",
+              borderRadius: 16,
+              padding: 16,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+              border: "1px solid #eef2f7",
             }}
           >
-            Product List
-          </Title>
+            <Row gutter={[16, 16]} align="middle">
+              <Col xs={24} sm={24} md={12} lg={9} xl={9}>
+              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Search Products</Text>
+
+                  <Search
+                  placeholder="Search products..."
+                    value={searchTerm}
+                    allowClear
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onSearch={handleSearch}
+                    size="large"
+                    style={{ width: "100%" }}
+                  />
+              </Col>
+
+              <Col xs={24} sm={12} md={6} lg={5} xl={5}>
+                <div className="filter-group">
+                  <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Category</Text>
+                  <Select
+                    placeholder="All Categories"
+                    style={{ width: "100%" }}
+                    value={selectedCategory}
+                    onChange={handleCategoryChange}
+                    allowClear
+                    size="large"
+                    showSearch
+                  >
+                    {categories.map((category) => (
+                      <Option key={category.id} value={category.name}>
+                        <Space size={8}>
+                          <div
+                            style={{
+                              width: "10px",
+                              height: "10px",
+                              borderRadius: "50%",
+                              background: `#${getCategoryColor(category.name)}`,
+                            }}
+                          />
+                          {category.name}
+                        </Space>
+                      </Option>
+                    ))}
+                  </Select>
+                </div>
+              </Col>
+
+              <Col xs={24} sm={12} md={6} lg={5} xl={5}>
+              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Sort By</Text>
+                  <Select
+                    value={sortBy}
+                    onChange={handleSortChange}
+                    size="large"
+                    style={{ width: "100%" }}
+                  >
+                    <Option value="name">Name (A-Z)</Option>
+                    <Option value="-name">Name (Z-A)</Option>
+                    <Option value="price">Price: Low to High</Option>
+                    <Option value="-price">Price: High to Low</Option>
+                    <Option value="-average_rating">Rating: High to Low</Option>
+                    <Option value="average_rating">Rating: Low to High</Option>
+                    <Option value="-created_at">Newest First</Option>
+                    <Option value="created_at">Oldest First</Option>
+                  </Select>
+              </Col>
+
+              <Col xs={12} sm={6} md={4} lg={3} xl={3}>
+              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>View Mode</Text>
+                <Button.Group size="large " style={{ width: "100%" }}>
+                    <Button
+                      type={viewMode === "grid" ? "primary" : "default"}
+                      icon={<AppstoreOutlined />}
+                      onClick={() => setViewMode("grid")}
+                    style={{ flex: 1 , marginRight: 10 }}
+                      loading={loading}
+                    />
+                    <Button
+                      type={viewMode === "list" ? "primary" : "default"}
+                      icon={<UnorderedListOutlined />}
+                      onClick={() => setViewMode("list")}
+                    style={{ flex: 1 }}
+                    />
+                  </Button.Group>
+              </Col>
+
+              <Col xs={12} sm={6} md={4} lg={2} xl={2}>
+              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Refresh</Text>
+                    <Button
+                      icon={<ReloadOutlined />}
+                      onClick={handleRefresh}
+                      size="large"
+                  style={{ width: "100%" }}
+                      aria-label="Refresh products"
+                    />
+              </Col>
+            </Row>
+          </div>
+        </div>
+
+        <Row gutter={[24, 24]}>
+          {/* Left Sidebar Filters */}
+          <Col xs={24} lg={6}>
+              <div
+                style={{
+                position: "sticky",
+                top: 90,
+                background: "white",
+                  borderRadius: 16,
+                padding: 16,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+                border: "1px solid #eef2f7",
+              }}
+            >
+              <Title level={4} style={{ marginTop: 0, marginBottom: 12 }}>
+                Filters
+              </Title>
+              <div style={{ marginBottom: 16 }}>
+                <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>
+                      Price Range
+                    </Text>
+                    <Slider
+                      range
+                      min={priceRange[0]}
+                      max={priceRange[1] || 0}
+                      tooltip={{ formatter: (val) => formatCurrency(val) }}
+                      value={selectedPriceRange}
+                      onChange={setSelectedPriceRange}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                    color: "#334155",
+                        fontSize: 12,
+                      }}
+                    >
+                      <span>{formatCurrency(selectedPriceRange[0])}</span>
+                      <span>{formatCurrency(selectedPriceRange[1])}</span>
+                    </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>
+                      Minimum Rating
+                    </Text>
+                <Rate allowClear value={minRating} onChange={setMinRating} />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>
+                      Flags
+                    </Text>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <Checkbox
+                        checked={onlyOnSale}
+                        onChange={(e) => setOnlyOnSale(e.target.checked)}
+                      >
+                        On Sale
+                      </Checkbox>
+                      <Checkbox
+                        checked={onlyInStock}
+                        onChange={(e) => setOnlyInStock(e.target.checked)}
+                      >
+                        In Stock
+                      </Checkbox>
+                    </div>
+              </div>
+
+              <Space direction="vertical" style={{ width: "100%" }}>
+                      <Button
+                        onClick={() => {
+                          setSelectedPriceRange(priceRange);
+                          setMinRating(0);
+                          setOnlyOnSale(false);
+                          setOnlyInStock(false);
+                        }}
+                        style={{
+                    background: "#fee2e2",
+                    borderColor: "#fecaca",
+                    color: "#991b1b",
+                    fontWeight: 600,
+                        }}
+                      >
+                        Reset All Filters
+                      </Button>
+                      {(selectedPriceRange[0] !== priceRange[0] ||
+                        selectedPriceRange[1] !== priceRange[1] ||
+                        minRating > 0 ||
+                        onlyOnSale ||
+                        onlyInStock) && (
+                  <Text style={{ fontSize: 12, color: "#7c3aed", fontWeight: 600 }}>
+                    <FilterOutlined /> {[
+                            selectedPriceRange[0] !== priceRange[0] ||
+                            selectedPriceRange[1] !== priceRange[1]
+                              ? 1
+                              : 0,
+                            minRating > 0 ? 1 : 0,
+                            onlyOnSale ? 1 : 0,
+                            onlyInStock ? 1 : 0,
+                    ].reduce((a, b) => a + b, 0)} active filter(s)
+                        </Text>
+                      )}
+                    </Space>
+              </div>
+          </Col>
+
+          {/* Right Content: Product List */}
+          <Col xs={24} lg={18}>
         {loading ? (
           <div
             style={{
@@ -935,7 +780,7 @@ const ProductListPage = () => {
                 {viewMode === "grid" && (
                   <Row gutter={[20, 28]}>
                     {displayedProducts.map((p) => (
-                      <Col xs={24} sm={12} md={8} lg={6} xl={6} key={p.id}>
+                          <Col xs={24} sm={12} md={12} lg={8} xl={8} key={p.id}>
                         <GridProductCard
                           product={p}
                           onView={(prod) => navigate(`/products/${prod.id}`)}
@@ -954,7 +799,11 @@ const ProductListPage = () => {
                 {/* List View */}
                 {viewMode === "list" && (
                   <div
-                    style={{ display: "flex", flexDirection: "column", gap: 20 }}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 20,
+                    }}
                   >
                     {displayedProducts.map((p) => (
                       <ListProductCard
@@ -1013,7 +862,8 @@ const ProductListPage = () => {
                   }}
                   style={{
                     marginTop: "20px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                     border: "none",
                     borderRadius: "10px",
                     height: "44px",
@@ -1123,7 +973,8 @@ const ProductListPage = () => {
                     padding: "0 16px",
                     fontWeight: "600",
                     border: "2px solid #e2e8f0",
-                    background: currentPage === totalPages ? "#f8fafc" : "white",
+                    background:
+                      currentPage === totalPages ? "#f8fafc" : "white",
                   }}
                 >
                   Next
@@ -1184,6 +1035,8 @@ const ProductListPage = () => {
             </Button>
           </div>
         )}
+          </Col>
+        </Row>
       </div>
 
       {/* Custom CSS for modern effects */}
@@ -1193,12 +1046,12 @@ const ProductListPage = () => {
           border-radius: 12px !important;
           overflow: visible;
         }
-        
+
         .modern-search .ant-input-search,
         .modern-search .ant-input-search > .ant-input-group {
           border-radius: 12px !important;
         }
-        
+
         .modern-search .ant-input-search .ant-input-group-wrapper {
           border-radius: 12px !important;
         }
@@ -1212,7 +1065,7 @@ const ProductListPage = () => {
           height: 44px !important;
           padding: 0 16px !important;
         }
-        
+
         .modern-search .ant-input-affix-wrapper:hover,
         .modern-search .ant-input-affix-wrapper:focus,
         .modern-search .ant-input-affix-wrapper-focused {
@@ -1357,7 +1210,6 @@ const ProductListPage = () => {
         }
 
         .filter-label {
-          color: rgba(255, 255, 255, 0.85);
           font-size: 13px;
           font-weight: 600;
           margin: 0;

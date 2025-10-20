@@ -58,16 +58,24 @@ class Order(models.Model):
         ('cancelled', 'Cancelled'),
     )
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
-    status = models.CharField(max_length=20, choices=ORDER_STATUS, default='pending')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders', db_index=True)
+    status = models.CharField(max_length=20, choices=ORDER_STATUS, default='pending', db_index=True)
     shipping_address = models.ForeignKey('users.Address', on_delete=models.SET_NULL, null=True, related_name='shipping_orders')
     billing_address = models.ForeignKey('users.Address', on_delete=models.SET_NULL, null=True, related_name='billing_orders')
     payment_status = models.BooleanField(default=False)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at'], name='order_created_desc_idx'),
+            models.Index(fields=['user', '-created_at'], name='order_user_created_idx'),
+            models.Index(fields=['status', '-created_at'], name='order_status_created_idx'),
+        ]
 
     def __str__(self):
         username = self.user.username if self.user else "Unknown User"

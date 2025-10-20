@@ -47,7 +47,7 @@ const AboutPage = () => {
             textShadow: '0 4px 20px rgba(0,0,0,0.3)',
             letterSpacing: '-0.02em',
           }}>
-            About NexCart
+            About GenCart
           </Title>
           
           <Paragraph style={{
@@ -58,7 +58,7 @@ const AboutPage = () => {
             lineHeight: '1.8',
             textShadow: '0 2px 10px rgba(0,0,0,0.2)',
           }}>
-            Welcome to NexCart, your premier destination for online shopping. We are dedicated to providing 
+            Welcome to GenCart, your premier destination for online shopping. We are dedicated to providing 
             a seamless shopping experience with a wide range of high-quality products at competitive prices.
           </Paragraph>
         </div>
@@ -98,7 +98,7 @@ const AboutPage = () => {
               lineHeight: '1.8',
               color: '#475569',
             }}>
-              At NexCart, our mission is to revolutionize the online shopping experience by offering a 
+              At GenCart, our mission is to revolutionize the online shopping experience by offering a 
               user-friendly platform, exceptional customer service, and a diverse selection of products 
               that cater to all your needs.
             </Paragraph>
@@ -351,7 +351,7 @@ const AboutPage = () => {
                       Email
                     </Text>
                     <Text style={{ fontSize: '15px', color: '#64748b' }}>
-                      nvj@nexcart.com
+                    lucdb.21it@vku.udn.vn
                     </Text>
                   </div>
                 </div>
@@ -386,7 +386,7 @@ const AboutPage = () => {
                       Phone
                     </Text>
                     <Text style={{ fontSize: '15px', color: '#64748b' }}>
-                      +91 7736458150
+                    +84 012387499201
                     </Text>
                   </div>
                 </div>
@@ -421,7 +421,7 @@ const AboutPage = () => {
                       Address
                     </Text>
                     <Text style={{ fontSize: '15px', color: '#64748b' }}>
-                      Karingachira, Trippunithura
+                    Ngũ Hành Sơn, Đà Nẵng, Việt Nam
                     </Text>
                   </div>
                 </div>

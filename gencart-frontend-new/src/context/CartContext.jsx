@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { message } from 'antd';
-import { triggerInventoryRefresh } from '../utils/inventoryEvents';
+// Removed inventory refresh trigger to prevent product list reloads on cart updates
 
 // Create the cart context
 const CartContext = createContext();
@@ -80,7 +80,7 @@ export const CartProvider = ({ children }) => {
 
     loadCart();
 
-    // Listen for auth state changes
+    // Listen for auth state changes only; avoid cart storage echo feedback
     const handleStorageChange = (e) => {
       if (e.key === 'access_token') {
         loadCart();
@@ -108,8 +108,8 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // Sync cart with backend
-  const syncCartWithBackend = async (product, quantity, action) => {
+  // Sync cart with backend (no immediate overwrite of local state)
+  const syncCartWithBackend = async (product, quantity, action, { refresh = false } = {}) => {
     const token = localStorage.getItem('access_token');
     if (!token) return false;
 
@@ -164,8 +164,9 @@ export const CartProvider = ({ children }) => {
       });
 
       if (response.ok) {
-        // Refresh cart from backend
-        await fetchCartFromBackend();
+        if (refresh) {
+          await fetchCartFromBackend();
+        }
         return true;
       }
       return false;
@@ -175,40 +176,34 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Add item to cart
+  // Add item to cart (optimistic UI update)
   const addToCart = async (product, quantity = 1) => {
-    // Try to sync with backend first
     const token = localStorage.getItem('access_token');
-    let syncSuccess = false;
 
-    if (token) {
-      syncSuccess = await syncCartWithBackend(product, quantity, 'add');
-      
-      // If backend sync was successful, trigger inventory refresh for this product
-      if (syncSuccess) {
-        triggerInventoryRefresh(product.id);
+    // Optimistically update UI immediately
+    let previousItemsSnapshot = null;
+    setCartItems(prevItems => {
+      previousItemsSnapshot = prevItems;
+      const existingItemIndex = prevItems.findIndex(item => item.id === product.id);
+      if (existingItemIndex !== -1) {
+        const updatedItems = [...prevItems];
+        updatedItems[existingItemIndex] = {
+          ...updatedItems[existingItemIndex],
+          quantity: updatedItems[existingItemIndex].quantity + quantity,
+        };
+        return updatedItems;
       }
-    }
+      return [...prevItems, { ...product, quantity }];
+    });
 
-    // If backend sync failed or user is not logged in, update local cart
-    if (!syncSuccess) {
-      setCartItems(prevItems => {
-        // Check if item already exists in cart
-        const existingItemIndex = prevItems.findIndex(item => item.id === product.id);
-
-        if (existingItemIndex !== -1) {
-          // Item exists, update quantity
-          const updatedItems = [...prevItems];
-          updatedItems[existingItemIndex] = {
-            ...updatedItems[existingItemIndex],
-            quantity: updatedItems[existingItemIndex].quantity + quantity
-          };
-          return updatedItems;
-        } else {
-          // Item doesn't exist, add new item
-          return [...prevItems, { ...product, quantity }];
-        }
-      });
+    // Then sync with backend in the background
+    if (token) {
+      const syncSuccess = await syncCartWithBackend(product, quantity, 'add', { refresh: false });
+      if (!syncSuccess) {
+        // Rollback UI if server rejected the change
+        if (previousItemsSnapshot) setCartItems(previousItemsSnapshot);
+        message.error('Failed to sync cart. Please try again.');
+      }
     }
   };
 
@@ -235,21 +230,22 @@ export const CartProvider = ({ children }) => {
       return;
     }
 
-    // Try to sync with backend first
+    // Optimistically update local cart immediately
+    setCartItems(prevItems =>
+      prevItems.map(item =>
+        item.id === productId ? { ...item, quantity } : item
+      )
+    );
+
+    // Try to sync with backend
     const token = localStorage.getItem('access_token');
-    let syncSuccess = false;
-
     if (token) {
-      syncSuccess = await syncCartWithBackend(productId, quantity, 'update');
-    }
-
-    // If backend sync failed or user is not logged in, update local cart
-    if (!syncSuccess) {
-      setCartItems(prevItems =>
-        prevItems.map(item =>
-          item.id === productId ? { ...item, quantity } : item
-        )
-      );
+      const syncSuccess = await syncCartWithBackend(productId, quantity, 'update');
+      if (!syncSuccess) {
+        // If backend sync failed, we could optionally rollback or show an error
+        // For now, we'll keep the optimistic update
+        console.warn('Failed to sync quantity update with backend');
+      }
     }
   };
 

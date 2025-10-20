@@ -246,6 +246,22 @@ body {
   font-size: 14px !important;
 }
 
+.checkout-select .ant-select-selector {
+  height: 48px !important;
+  padding: 12px 16px !important;
+  display: flex !important;
+  align-items: center;
+}
+
+.checkout-select .ant-select-selection-item,
+.checkout-select .ant-select-selection-placeholder {
+  line-height: 24px !important;
+}
+
+.checkout-select .ant-select-arrow {
+  margin-top: 1px !important;
+}
+
 .ant-input:focus,
 .ant-input-password:focus,
 .ant-select-focused .ant-select-selector {

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Cart, CartItem, Order, OrderItem
 from products.models import Product
 from products.serializers import ProductListSerializer
-from users.serializers import AddressSerializer, UserSerializer
+from users.serializers import AddressSerializer, UserSerializer, UserBasicSerializer
 
 class CartItemSerializer(serializers.ModelSerializer):
     """
@@ -57,9 +57,23 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'quantity', 'price', 'total_price']
         read_only_fields = ['price']
 
+class OrderListSerializer(serializers.ModelSerializer):
+    """
+    Lightweight serializer for Order list view - faster performance
+    Uses UserBasicSerializer instead of full UserSerializer
+    """
+    user = UserBasicSerializer(read_only=True)
+    items_count = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = Order
+        fields = ['id', 'user', 'status', 'payment_status', 'total_amount',
+                  'items_count', 'created_at', 'updated_at']
+        read_only_fields = ['total_amount', 'created_at', 'updated_at']
+
 class OrderSerializer(serializers.ModelSerializer):
     """
-    Serializer for the Order model
+    Full serializer for the Order model - used for detail view
     """
     items = OrderItemSerializer(many=True, read_only=True)
     shipping_address = AddressSerializer(read_only=True)

@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Layout, ConfigProvider, Spin } from "antd";
 import "./App.css";
 
@@ -22,7 +22,12 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const OrdersPage = lazy(() => import("./pages/OrdersPage"));
 const OrderDetailsPage = lazy(() => import("./pages/OrderDetailsPage"));
-const AdminPage = lazy(() => import("./pages/AdminPage"));
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 const { Content } = Layout;
@@ -53,7 +58,14 @@ function App() {
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               {/* Admin route with its own layout */}
-              <Route path="/admin/*" element={<AdminPage />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="categories" element={<AdminCategories />} />
+              </Route>
 
               {/* Regular routes with standard layout */}
               <Route

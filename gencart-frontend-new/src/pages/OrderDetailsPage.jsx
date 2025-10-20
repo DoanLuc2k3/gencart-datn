@@ -21,6 +21,7 @@ import {
   Input
 } from 'antd';
 import { getValidImageUrl, handleImageError } from '../utils/imageUtils';
+import useScrollToTop from '../hooks/useScrollToTop';
 import {
   ShoppingOutlined,
   CheckCircleOutlined,
@@ -41,6 +42,8 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 const OrderDetailsPage = () => {
+  useScrollToTop();
+
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
@@ -52,6 +55,61 @@ const OrderDetailsPage = () => {
   const [reviewForm] = Form.useForm();
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewedProducts, setReviewedProducts] = useState(new Set());
+
+  const pageStyle = {
+    background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #e0e7ff 100%)',
+    minHeight: '100vh'
+  };
+
+  const contentWrapperStyle = {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '32px 20px 72px'
+  };
+
+  const headerCardStyle = {
+    borderRadius: 26,
+    background: 'linear-gradient(135deg, rgba(99,102,241,0.95) 0%, rgba(59,130,246,0.95) 100%)',
+    color: '#fff',
+    padding: '32px 28px',
+    border: '1px solid rgba(148,163,184,0.18)',
+    boxShadow: '0 40px 80px -48px rgba(30,41,59,0.45)',
+    marginBottom: 24,
+    position: 'relative',
+    overflow: 'hidden'
+  };
+
+  const headerOverlayStyle = {
+    position: 'absolute',
+    inset: 0,
+    background:'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'  };
+
+  const headerContentStyle = {
+    position: 'relative',
+    zIndex: 1
+  };
+
+  const detailCardStyle = {
+    borderRadius: 20,
+    border: '1px solid rgba(148,163,184,0.16)',
+    background: 'rgba(255,255,255,0.98)',
+    boxShadow: '0 24px 60px -40px rgba(30,41,59,0.4)'
+  };
+
+  const sectionCardStyle = {
+    borderRadius: 18,
+    border: '1px solid rgba(148,163,184,0.18)',
+    background: 'rgba(248,250,252,0.96)'
+  };
+
+  const headerMetaStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
+    whiteSpace: 'nowrap'
+  };
 
   // Fetch order details
   useEffect(() => {
@@ -295,18 +353,24 @@ const OrderDetailsPage = () => {
 
   // Get status tag
   const getStatusTag = (status) => {
-    switch (status) {
-      case 'processing':
-        return <Tag icon={<ClockCircleOutlined />} color="blue">Processing</Tag>;
-      case 'shipped':
-        return <Tag icon={<CarOutlined />} color="cyan">Shipped</Tag>;
-      case 'delivered':
-        return <Tag icon={<CheckCircleOutlined />} color="green">Delivered</Tag>;
-      case 'cancelled':
-        return <Tag icon={<ExclamationCircleOutlined />} color="red">Cancelled</Tag>;
-      default:
-        return <Tag color="default">{status}</Tag>;
-    }
+    const config = {
+      processing: { color: 'gold', text: 'Processing', icon: <ClockCircleOutlined /> },
+      shipped: { color: 'cyan', text: 'Shipped', icon: <CarOutlined /> },
+      delivered: { color: 'green', text: 'Delivered', icon: <CheckCircleOutlined /> },
+      cancelled: { color: 'red', text: 'Cancelled', icon: <ExclamationCircleOutlined /> }
+    };
+
+    const { color, text, icon } = config[status] || { color: 'default', text: status, icon: null };
+
+    return (
+      <Tag
+        color={color}
+        icon={icon}
+        style={{ borderRadius: 12, padding: '2px 12px', fontWeight: 500 }}
+      >
+        {text}
+      </Tag>
+    );
   };
 
   // Show cancel confirmation modal
@@ -321,7 +385,7 @@ const OrderDetailsPage = () => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
+      <div style={{ textAlign: 'center', padding: '80px' }}>
         <Spin size="large" />
       </div>
     );
@@ -329,152 +393,184 @@ const OrderDetailsPage = () => {
 
   if (!order) {
     return (
-      <Empty
-        description="Order not found"
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-      >
-        <Button type="primary" onClick={handleGoBack}>
-          Back to Orders
-        </Button>
-      </Empty>
+      <div style={{ textAlign: 'center', padding: '80px' }}>
+        <Card style={detailCardStyle} bodyStyle={{ padding: '40px' }}>
+          <Empty description="Order not found" image={Empty.PRESENTED_IMAGE_SIMPLE}>
+            <Button type="primary" onClick={handleGoBack}>
+              Back to Orders
+            </Button>
+          </Empty>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <Button
-        type="link"
-        icon={<ArrowLeftOutlined />}
-        onClick={handleGoBack}
-        style={{ marginBottom: '20px', padding: 0 }}
-      >
-        Back to Orders
-      </Button>
+    <div style={pageStyle}>
+      <div style={contentWrapperStyle}>
+        <Button
+          type="link"
+          icon={<ArrowLeftOutlined />}
+          onClick={handleGoBack}
+          style={{ marginBottom: 16, padding: 0, color: '#6366f1', fontWeight: 500 }}
+        >
+          Back to Orders
+        </Button>
 
-      <Card>
-        <Row gutter={[24, 24]} align="middle">
-          <Col xs={24} md={12}>
-            <Title level={3}>
-              <ShoppingOutlined /> Order Details
-            </Title>
-            <Space direction="vertical">
-              <Text>Placed on {new Date(order.date).toLocaleDateString('en-IN')}</Text>
-              <Text>Expected Delivery: {order.deliveryDate}</Text>
-            </Space>
-          </Col>
-          <Col xs={24} md={12} style={{ textAlign: 'right' }}>
-            <Space direction="vertical" align="end">
-              <div>
-                <Text strong>Status: </Text>
-                {getStatusTag(order.status)}
-              </div>
-              <Text strong>Total: ₫{order.total.toFixed(2)}</Text>
-              {(order.status === 'pending' || order.status === 'processing') && (
-                <Button
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={showCancelConfirm}
-                >
-                  Cancel Order
-                </Button>
-              )}
-            </Space>
-          </Col>
-        </Row>
-
-        <Divider />
-
-        <Row gutter={[24, 24]}>
-          <Col xs={24} md={12}>
-            <Card title="Shipping Information" size="small">
-              <Descriptions column={1} size="small">
-                <Descriptions.Item label={<><UserOutlined /> Name</>}>
-                  {order.shipping.name}
-                </Descriptions.Item>
-                <Descriptions.Item label={<><HomeOutlined /> Address</>}>
-                  {order.shipping.address}
-                </Descriptions.Item>
-                <Descriptions.Item label={<><PhoneOutlined /> Phone</>}>
-                  {order.shipping.phone}
-                </Descriptions.Item>
-                <Descriptions.Item label={<><MailOutlined /> Email</>}>
-                  {order.shipping.email}
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </Col>
-          <Col xs={24} md={12}>
-            <Card title="Payment Information" size="small">
-              <Descriptions column={1} size="small">
-                <Descriptions.Item label="Method">
-                  {order.payment.method}
-                </Descriptions.Item>
-                <Descriptions.Item label="Status">
-                  {order.payment.status ? 'Paid' : 'Pending'}
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </Col>
-        </Row>
-
-        <Divider />
-
-        <Title level={4}>Ordered Items</Title>
-        <Row gutter={[16, 16]}>
-          {order.items.map(item => (
-            <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
-              <Card
-                hoverable
-                cover={
-                  true ? (
-                    <img
-                      src={getValidImageUrl(item.image, item.name, 200, 200)}
-                      alt={item.name}
-                      style={{ height: 200, width: '100%', objectFit: 'cover' }}
-                      onError={(e) => handleImageError(e, item.name, 200, 200)}
-                    />
-                  ) : (
-                    <div style={{
-                      height: 200,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: '#f0f0f0'
-                    }}>
-                      <InboxOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
-                    </div>
-                  )
-                }
-                actions={
-                  order.status === 'delivered' && item.product_id ? [
-                    reviewedProducts.has(item.product_id) ? (
-                      <Button type="text" disabled>
-                        <CheckCircleOutlined /> Reviewed
-                      </Button>
-                    ) : (
-                      <Button 
-                        type="text" 
-                        icon={<StarOutlined />}
-                        onClick={() => handleReviewProduct(item)}
-                      >
-                        Review
-                      </Button>
-                    )
-                  ] : []
-                }
-              >
-                <div style={{ padding: '12px' }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>{item.name}</div>
-                  <Space direction="vertical">
-                    <Text>Quantity: {item.quantity}</Text>
-                    <Text strong>₫{(item.price * item.quantity).toFixed(2)}</Text>
-                  </Space>
+        <div style={headerCardStyle}>
+          <div style={headerOverlayStyle} />
+          <div style={headerContentStyle}>
+            <Space direction="vertical" size={14} style={{ width: '100%' }}>
+              <Space size={12} wrap>
+                <ShoppingOutlined style={{ fontSize: 26 }} />
+                <Title level={3} style={{ margin: 0, color: '#fff' }}>
+                  Order #{order.id}
+                </Title>
+              </Space>
+              <Space size={24} wrap>
+                <div style={headerMetaStyle}>
+                  <ClockCircleOutlined />
+                  <span>Placed {new Date(order.date).toLocaleDateString('en-IN')}</span>
                 </div>
+                <div style={headerMetaStyle}>
+                  <CarOutlined />
+                  <span>Expected delivery: {order.deliveryDate}</span>
+                </div>
+              </Space>
+            </Space>
+
+            <div style={{ position: 'absolute', top: 0, right: 28, textAlign: 'right' }}>
+              <div style={{ marginBottom: 8 }}>{getStatusTag(order.status)}</div>
+              <Text style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
+                Total: ₫{order.total.toFixed(2)}
+              </Text>
+            </div>
+
+            {(order.status === 'pending' || order.status === 'processing') && (
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={showCancelConfirm}
+                style={{ marginTop: 20 }}
+              >
+                Cancel Order
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <Card
+          bordered={false}
+          style={detailCardStyle}
+          bodyStyle={{ padding: '28px 26px' }}
+        >
+          <Row gutter={[24, 24]} align="stretch">
+            <Col xs={24} md={14}>
+              <Card
+                title="Shipping Information"
+                bordered={false}
+                style={{ ...sectionCardStyle, height: '100%' }}
+                headStyle={{ background: 'transparent', borderBottom: '1px solid rgba(148,163,184,0.18)', fontWeight: 600 }}
+                bodyStyle={{ padding: '18px 20px' }}
+              >
+                <Descriptions column={1} size="small">
+                  <Descriptions.Item label={<><UserOutlined /> Name</>}>
+                    {order.shipping.name}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<><HomeOutlined /> Address</>}>
+                    {order.shipping.address}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<><PhoneOutlined /> Phone</>}>
+                    {order.shipping.phone}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<><MailOutlined /> Email</>}>
+                    {order.shipping.email}
+                  </Descriptions.Item>
+                </Descriptions>
               </Card>
             </Col>
-          ))}
-        </Row>
-      </Card>
+
+            <Col xs={24} md={10}>
+              <Card
+                title="Payment Information"
+                bordered={false}
+                style={{ ...sectionCardStyle, height: '100%' }}
+                headStyle={{ background: 'transparent', borderBottom: '1px solid rgba(148,163,184,0.18)', fontWeight: 600 }}
+                bodyStyle={{ padding: '18px 20px' }}
+              >
+                <Descriptions column={1} size="small">
+                  <Descriptions.Item label="Method">
+                    {order.payment.method}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Status">
+                    {order.payment.status ? 'Paid' : 'Pending'}
+                  </Descriptions.Item>
+                </Descriptions>
+              </Card>
+            </Col>
+          </Row>
+
+          <Divider style={{ margin: '28px 0' }} />
+
+          <Title level={4} style={{ marginBottom: 18 }}>Ordered Items</Title>
+          <Row gutter={[18, 18]}>
+            {order.items.map(item => (
+              <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
+                <Card
+                  hoverable
+                  bordered={false}
+                  style={{
+                    borderRadius: 18,
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    boxShadow: '0 20px 38px -34px rgba(30,41,59,0.45)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%'
+                  }}
+                  bodyStyle={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}
+                  cover={
+                    <div
+                      style={{
+                        height: 160,
+                        borderTopLeftRadius: 18,
+                        borderTopRightRadius: 18,
+                        overflow: 'hidden',
+                        background: 'linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%)'
+                      }}
+                    >
+                      <img
+                        src={getValidImageUrl(item.image, item.name, 220, 220)}
+                        alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => handleImageError(e, item.name, 220, 220)}
+                      />
+                    </div>
+                  }
+                  actions={
+                            order.status === 'delivered' && item.product_id ? [
+                              reviewedProducts.has(item.product_id) ? (
+                                <span style={{ color: '#16a34a', fontWeight: 500 }}>
+                                  <CheckCircleOutlined /> Reviewed
+                                </span>
+                              ) : (
+                                <Button type="link" icon={<StarOutlined />} onClick={() => handleReviewProduct(item)}>
+                                  Review Product
+                                </Button>
+                              )
+                            ] : []
+                  }
+                >
+                          <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: 8, flexGrow: 1 }}>{item.name}</div>
+                          <Space direction="vertical" size={4}>
+                    <Text type="secondary">Quantity: {item.quantity}</Text>
+                    <Text strong style={{ fontSize: '15px' }}>₫{(item.price * item.quantity).toFixed(2)}</Text>
+                  </Space>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </Card>
+      </div>
 
       {/* Cancel Order Confirmation Modal */}
       <Modal

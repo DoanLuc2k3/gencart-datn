@@ -2,7 +2,6 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Typography,
-  Table,
   Button,
   InputNumber,
   Space,
@@ -10,7 +9,6 @@ import {
   Row,
   Col,
   Divider,
-  Empty,
   Image,
   Popconfirm,
   message,
@@ -60,40 +58,54 @@ const CartPage = () => {
   return (
     <div
       style={{
-        background: "var(--bg-secondary)",
+        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
         minHeight: "100vh",
-        padding: "24px",
       }}
     >
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        {/* Header */}
+      {/* Gradient Header */}
+      <div
+        style={{
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          padding: "40px 24px 48px",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
         <div
           style={{
-            background: "var(--bg-primary)",
-            padding: "32px",
-            borderRadius: "var(--border-radius)",
-            marginBottom: "24px",
-            boxShadow: "var(--shadow-sm)",
-            textAlign: "center",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
           }}
-        >
-          <Title
-            level={2}
-            style={{ marginBottom: "8px", color: "var(--text-primary)" }}
-          >
-            <ShoppingOutlined
-              style={{ marginRight: "12px", color: "var(--primary-color)" }}
-            />
-            Your Shopping Cart
-          </Title>
-          <Text style={{ fontSize: "16px", color: "var(--text-secondary)" }}>
-            {cartItems.length > 0
-              ? `${cartItems.length} item${
-                  cartItems.length > 1 ? "s" : ""
-                } in your cart`
-              : "Your cart is waiting for some amazing products"}
-          </Text>
+        />
+        <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <div style={{ textAlign: "center" }}>
+            <Title
+              level={2}
+              style={{
+                marginBottom: 8,
+                color: "white",
+                fontSize: "clamp(2rem, 3.5vw, 2.6rem)",
+                fontWeight: 800,
+                textShadow: "0 4px 20px rgba(0,0,0,0.3)",
+              }}
+            >
+              <ShoppingOutlined style={{ marginRight: 12 }} /> Your Shopping Cart
+            </Title>
+            <Text style={{ color: "rgba(255,255,255,0.9)", fontSize: "clamp(1rem, 2vw, 1.1rem)" }}>
+              {cartItems.length > 0
+                ? `${cartItems.length} item${cartItems.length > 1 ? "s" : ""} in your cart`
+                : "Your cart is waiting for some amazing products"}
+            </Text>
+          </div>
         </div>
+      </div>
+
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px 20px" }}>
 
         {cartItems.length > 0 ? (
           <Row gutter={[24, 24]}>
