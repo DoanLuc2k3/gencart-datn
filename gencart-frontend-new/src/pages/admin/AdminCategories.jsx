@@ -372,6 +372,7 @@ const AdminCategories = () => {
           dataSource={categories}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 900 }}
           pagination={{ pageSize: 10 }}
         />
       </Card>

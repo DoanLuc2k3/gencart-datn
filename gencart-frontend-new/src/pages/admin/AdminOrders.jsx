@@ -381,6 +381,7 @@ const AdminOrders = () => {
           loading={loading}
           rowKey="id"
           onChange={handleTableChange}
+          scroll={{ x: 900 }}
           pagination={
             searchText.trim()
               ? {
