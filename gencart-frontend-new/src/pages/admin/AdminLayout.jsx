@@ -29,10 +29,26 @@ const { Title, Text } = Typography;
 
 const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileView, setMobileView] = useState(false);
   const [adminName, setAdminName] = useState("Admin");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Handle responsive
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 768;
+      setMobileView(isMobile);
+      if (isMobile) {
+        setCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     // Check if user is logged in and is admin
@@ -169,10 +185,13 @@ const AdminLayout = () => {
       <Sider
         collapsed={collapsed}
         trigger={null}
+        breakpoint="lg"
+        collapsedWidth={mobileView ? 0 : 80}
         style={{
           height: "100vh",
           position: "fixed",
           left: 0,
+          zIndex: 1000,
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           boxShadow: "4px 0 24px rgba(15, 23, 42, 0.35)",
           display: "flex",
@@ -266,7 +285,7 @@ const AdminLayout = () => {
       </Sider>
       <Layout
         style={{
-          marginLeft: collapsed ? 80 : 200,
+          marginLeft: mobileView ? 0 : collapsed ? 80 : 200,
           transition: "all 0.2s",
           background: "#f5f7fb",
         }}
@@ -276,6 +295,7 @@ const AdminLayout = () => {
             padding: 0,
             background: "linear-gradient(135deg, #111c44 0%, #1f2a51 100%)",
             boxShadow: "0 12px 24px rgba(15, 23, 42, 0.3)",
+            height: "72px",
           }}
         >
           <div
@@ -283,16 +303,34 @@ const AdminLayout = () => {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              padding: "0 24px",
-              minHeight: 72,
+              padding: mobileView ? "0 12px" : "0 24px",
               color: "#fff",
+              flexWrap: "wrap",
+              gap: 12,
+              minHeight: "72px",
+              position: "relative",
             }}
           >
-            <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {mobileView && (
+                <Button
+                  type="text"
+                  icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                  onClick={() => setCollapsed(!collapsed)}
+                  style={{
+                    color: "#51309eff",
+                    fontSize: 20,
+                    border: "1px solid #51309eff",
+                  }}
+                />
+              )}
+            </div>
               <div
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
+                  position: mobileView ? "" : "absolute",
+                  left: "2%",
                   gap: 12,
                   padding: "8px 18px",
                   borderRadius: 999,
@@ -330,46 +368,35 @@ const AdminLayout = () => {
                   {getActiveTabLabel()}
                 </Title>
               </div>
-            </div>
-            <Space align="center" size={16}>
-              <Button
-                type="primary"
-                icon={<HomeOutlined />}
-                onClick={() => navigate("/")}
-              >
-                Home
-              </Button>
+            <Space align="center" size={mobileView ? 8 : 16} wrap>
+                <Button
+                  type="primary"
+                  icon={<HomeOutlined />}
+                  onClick={() => navigate("/")}
+                >
+                 {mobileView ? "" : "Home"}
+                </Button>
               <Button
                 type="primary"
                 danger
                 icon={<LogoutOutlined />}
                 onClick={handleLogout}
+                {...(mobileView && { size: "small" })}
               >
-                Logout
+                {mobileView ? "" : "Logout"}
               </Button>
-              <div style={{ textAlign: "right" }}>
-                <Text style={{ color: "#fff", fontWeight: 500 }}>
-                  {adminName}
-                </Text>
-                <div style={{ color: "rgba(255,255,255,0.62)", fontSize: 12 }}>
-                  Administrator
-                </div>
-              </div>
-              <Avatar style={{ backgroundColor: "#6366f1" }}>
-                {adminInitial}
-              </Avatar>
             </Space>
           </div>
         </Header>
         <Content
           style={{
-            margin: "24px 16px",
+            margin: mobileView ? "16px 8px" : "24px 16px",
             padding: 0,
             background: "transparent",
             minHeight: 280,
           }}
         >
-          <div style={{ padding: 24 }}>
+          <div style={{ padding: mobileView ? 12 : 24 }}>
             <Outlet />
           </div>
         </Content>

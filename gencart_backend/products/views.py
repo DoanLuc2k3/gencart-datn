@@ -298,8 +298,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         # Check if pagination should be disabled
         no_pag = self.request.query_params.get('no_pagination', '').lower() in ['true', '1', 'yes']
         if no_pag:
-            # Only allow disabling pagination in DEBUG AND if the requester is staff.
-            if settings.DEBUG and getattr(self.request.user, 'is_staff', False):
+            # Only allow disabling pagination if the requester is authenticated and is staff/superuser
+            user = self.request.user
+            if user and user.is_authenticated and (getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False)):
                 return None
             # Otherwise ignore the flag and paginate normally to protect server
         return super().paginate_queryset(queryset)
@@ -482,8 +483,15 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def sentiment_overview(self, request):
         from products.models import Review
+        from django.db.models import Avg
+        
         reviews = Review.objects.filter(sentiment__isnull=False)
         total = reviews.count()
+        
+        # Count unique products that have reviews
+        products_with_reviews = Review.objects.values('product').distinct().count()
+        total_products = Product.objects.count()
+        
         if total == 0:
             return Response({
                 'scope': 'global',
@@ -491,7 +499,9 @@ class ProductViewSet(viewsets.ModelViewSet):
                 'sentiment_counts': {'positive': 0, 'neutral': 0, 'negative': 0},
                 'sentiment_distribution': {'positive': 0, 'neutral': 0, 'negative': 0},
                 'average_confidence': 0,
-                'overall_sentiment': 'neutral'
+                'overall_sentiment': 'neutral',
+                'products_with_reviews': products_with_reviews,
+                'total_products': total_products
             })
         counts = {
             'positive': reviews.filter(sentiment='positive').count(),
@@ -499,7 +509,6 @@ class ProductViewSet(viewsets.ModelViewSet):
             'negative': reviews.filter(sentiment='negative').count(),
         }
         distribution = {k: (v/total)*100 for k, v in counts.items()}
-        from django.db.models import Avg
         avg_conf = reviews.aggregate(a=Avg('sentiment_confidence'))['a'] or 0
         overall = max(counts, key=counts.get)
         return Response({
@@ -508,7 +517,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             'sentiment_counts': counts,
             'sentiment_distribution': distribution,
             'average_confidence': avg_conf,
-            'overall_sentiment': overall
+            'overall_sentiment': overall,
+            'products_with_reviews': products_with_reviews,
+            'total_products': total_products
         })
 
 class ReviewViewSet(viewsets.ModelViewSet):

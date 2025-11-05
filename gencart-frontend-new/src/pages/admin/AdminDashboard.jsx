@@ -23,6 +23,7 @@ import {
   UserOutlined,
   AppstoreOutlined,
 } from "@ant-design/icons";
+import { useResponsive } from "../../hooks/useResponsive";
 
 // Lazy load heavy chart component
 const SentimentChart = lazy(() => import("../../components/admin/SentimentChart"));
@@ -39,6 +40,7 @@ const formatCurrency = (value) =>
 const formatNumber = (value) => Number(value || 0).toLocaleString("vi-VN");
 
 const AdminDashboard = () => {
+  const { isMobile } = useResponsive();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("Admin");
@@ -48,6 +50,7 @@ const AdminDashboard = () => {
     totalProducts: 0,
     totalRevenue: 0,
     totalReviews: 0,
+    productsWithReviews: 0,
     recentOrders: [],
   });
   const [sentimentTrends, setSentimentTrends] = useState(null);
@@ -150,8 +153,12 @@ const AdminDashboard = () => {
   const fetchDashboardStats = useCallback(async () => {
     try {
       const token = localStorage.getItem("access_token");
+      // Fetch with auth token for no_pagination to work
       const prodRes = await fetch(
-        "http://localhost:8000/api/products/?no_pagination=true"
+        "http://localhost:8000/api/products/?no_pagination=true",
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
       );
       let products = [];
       let productsTotalCount = 0;
@@ -227,12 +234,20 @@ const AdminDashboard = () => {
         totalReviews,
         recentOrders: orders.slice(0, 5),
       }));
+      // Fetch sentiment overview to get accurate products_with_reviews count
       try {
         const gRes = await fetch(
           "http://localhost:8000/api/products/sentiment_overview/"
         );
         if (gRes.ok) {
-          await gRes.json();
+          const overviewData = await gRes.json();
+          // Store products_with_reviews from sentiment overview
+          if (overviewData.products_with_reviews !== undefined) {
+            setStats((s) => ({
+              ...s,
+              productsWithReviews: overviewData.products_with_reviews,
+            }));
+          }
         }
       } catch (err) {
         console.warn("Global sentiment fetch failed", err);
@@ -295,9 +310,11 @@ const AdminDashboard = () => {
   const renderDashboard = () => {
     const avgOrderValue =
       stats.totalOrders > 0 ? stats.totalRevenue / stats.totalOrders : 0;
-    const productsWithReviews = productsList.filter(
-      (p) => (p.total_reviews || 0) > 0
-    ).length;
+    // Use accurate count from sentiment overview API (products_with_reviews)
+    // Fallback to counting from productsList if not available
+    const productsWithReviews = stats.productsWithReviews > 0 
+      ? stats.productsWithReviews 
+      : productsList.filter((p) => (p.total_reviews || 0) > 0).length;
     const productCoverage =
       stats.totalProducts > 0
         ? Math.round((productsWithReviews / stats.totalProducts) * 100)
@@ -401,39 +418,39 @@ const AdminDashboard = () => {
     };
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 16 : 24 }}>
         <div
           style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            borderRadius: 24,
-            padding: 32,
+            borderRadius: isMobile ? 12 : 24,
+            padding: isMobile ? 16 : 32,
             color: "#fff",
             boxShadow: "0 24px 48px rgba(15, 23, 42, 0.35)",
           }}
         >
-          <Row gutter={[24, 24]} align="middle">
+          <Row gutter={[16, 16]} align="middle">
             <Col xs={24} md={16}>
-              <Title level={2} style={{ color: "#fff", marginBottom: 8 }}>
+              <Title level={isMobile ? 3 : 2} style={{ color: "#fff", marginBottom: 8 }}>
                 Hello, {adminName}
               </Title>
-              <Text style={{ color: "rgba(255,255,255,0.72)", fontSize: 16 }}>
+              <Text style={{ color: "rgba(255,255,255,0.72)", fontSize: isMobile ? 14 : 16 }}>
                 Monitor your business performance and customer sentiment at a glance.
               </Text>
               <div
                 style={{
-                  marginTop: 20,
+                  marginTop: isMobile ? 12 : 20,
                   display: "flex",
-                  gap: 12,
+                  gap: 8,
                   flexWrap: "wrap",
                 }}
               >
-                <Tag color="success" style={{ borderRadius: 16 }}>
-                  {formatNumber(stats.totalOrders)} orders completed
+                <Tag color="success" style={{ borderRadius: 16, fontSize: isMobile ? 12 : 14 }}>
+                  {formatNumber(stats.totalOrders)} orders
                 </Tag>
-                <Tag color="processing" style={{ borderRadius: 16 }}>
+                <Tag color="processing" style={{ borderRadius: 16, fontSize: isMobile ? 12 : 14 }}>
                   {formatNumber(stats.totalUsers)} customers
                 </Tag>
-                <Tag color="purple" style={{ borderRadius: 16 }}>
+                <Tag color="purple" style={{ borderRadius: 16, fontSize: isMobile ? 12 : 14 }}>
                   {formatNumber(stats.totalProducts)} products
                 </Tag>
               </div>
@@ -441,8 +458,8 @@ const AdminDashboard = () => {
             <Col xs={24} md={8}>
               <div
                 style={{
-                  padding: 24,
-                  borderRadius: 20,
+                  padding: isMobile ? 16 : 24,
+                  borderRadius: isMobile ? 12 : 20,
                   background: "rgba(255,255,255,0.12)",
                   border: "1px solid rgba(255,255,255,0.18)",
                   backdropFilter: "blur(8px)",
@@ -451,20 +468,21 @@ const AdminDashboard = () => {
                   gap: 8,
                 }}
               >
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: isMobile ? 12 : 14 }}>
                   Current Revenue
                 </Text>
-                <span style={{ fontSize: 32, fontWeight: 600 }}>
+                <span style={{ fontSize: isMobile ? 24 : 32, fontWeight: 600 }}>
                   {formatCurrency(stats.totalRevenue)}
                 </span>
-                <Text style={{ color: "rgba(255,255,255,0.65)" }}>
-                  Average order value {formatCurrency(avgOrderValue)}
+                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: isMobile ? 12 : 14 }}>
+                  Avg: {formatCurrency(avgOrderValue)}
                 </Text>
                 <Tag
                   style={{
                     width: "fit-content",
                     borderRadius: 16,
                     marginTop: 4,
+                    fontSize: isMobile ? 11 : 12,
                   }}
                 >
                   Updated {nowLabel}
@@ -474,32 +492,32 @@ const AdminDashboard = () => {
           </Row>
         </div>
 
-        <Row gutter={[24, 24]}>
+        <Row gutter={[isMobile ? 12 : 24, isMobile ? 12 : 24]}>
           {highlightCards.map((card) => (
             <Col xs={24} sm={12} xl={6} key={card.key}>
               <Card
                 bordered={false}
                 style={{
-                  borderRadius: 20,
+                  borderRadius: isMobile ? 12 : 20,
                   background: card.accent,
                   color: "#fff",
                   boxShadow: "0 20px 40px rgba(17, 24, 39, 0.25)",
                 }}
-                bodyStyle={{ padding: 24 }}
+                bodyStyle={{ padding: isMobile ? 16 : 24 }}
               >
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "flex-start",
-                    gap: 16,
+                    gap: isMobile ? 12 : 16,
                   }}
                 >
                   <div>
                     <Text
                       style={{
                         color: "rgba(255,255,255,0.78)",
-                        fontSize: 14,
+                        fontSize: isMobile ? 12 : 14,
                         fontWeight: 500,
                       }}
                     >
@@ -507,18 +525,18 @@ const AdminDashboard = () => {
                     </Text>
                     <div
                       style={{
-                        fontSize: 34,
+                        fontSize: isMobile ? 24 : 34,
                         fontWeight: 600,
                         marginTop: 8,
                       }}
                     >
                       {card.value}
                     </div>
-                    <Text style={{ color: "rgba(255,255,255,0.72)" }}>
+                    <Text style={{ color: "rgba(255,255,255,0.72)", fontSize: isMobile ? 11 : 13 }}>
                       {card.secondary}
                     </Text>
                   </div>
-                  <div style={{ fontSize: 44, color: "rgba(255,255,255,0.4)" }}>
+                  <div style={{ fontSize: isMobile ? 32 : 44, color: "rgba(255,255,255,0.4)" }}>
                     {card.icon}
                   </div>
                 </div>
@@ -536,17 +554,17 @@ const AdminDashboard = () => {
           ))}
         </Row>
 
-        <Row gutter={[24, 24]}>
+        <Row gutter={[isMobile ? 12 : 24, isMobile ? 12 : 24]}>
           <Col xs={24} lg={14}>
             <Card
               title="Recent Orders"
               bordered={false}
               style={{
-                borderRadius: 20,
+                borderRadius: isMobile ? 12 : 20,
                 boxShadow: "0 20px 45px rgba(15, 23, 42, 0.08)",
               }}
               extra={
-                <Button type="link" onClick={() => navigate("/admin/orders")}>
+                <Button type="link" size={isMobile ? "small" : "default"} onClick={() => navigate("/admin/orders")}>
                   View All
                 </Button>
               }
@@ -557,8 +575,8 @@ const AdminDashboard = () => {
                 rowKey="id"
                 scroll={{ x: true }}
                 pagination={{ pageSize: 5, showSizeChanger: false }}
-                size="middle"
-                style={{ padding: 24 }}
+                size={isMobile ? "small" : "middle"}
+                style={{ padding: isMobile ? 12 : 24 }}
                 locale={{ emptyText: "No orders yet" }}
                 columns={[
                   {
@@ -618,12 +636,12 @@ const AdminDashboard = () => {
               title="Quick Metrics"
               bordered={false}
               style={{
-                borderRadius: 20,
+                borderRadius: isMobile ? 12 : 20,
                 boxShadow: "0 20px 45px rgba(15, 23, 42, 0.08)",
                 height: "100%",
               }}
             >
-              <Space direction="vertical" size={20} style={{ width: "100%" }}>
+              <Space direction="vertical" size={isMobile ? 12 : 20} style={{ width: "100%" }}>
                 <div
                   style={{
                     display: "flex",
@@ -631,12 +649,12 @@ const AdminDashboard = () => {
                     alignItems: "center",
                   }}
                 >
-                  <Text type="secondary">Average Order Value</Text>
+                  <Text type="secondary" style={{ fontSize: isMobile ? 12 : 14 }}>Average Order Value</Text>
                   <Tooltip title="Revenue divided by recorded orders">
-                    <Tag color="purple">Details</Tag>
+                    <Tag color="purple" style={{ fontSize: isMobile ? 11 : 12 }}>Details</Tag>
                   </Tooltip>
                 </div>
-                <Title level={3} style={{ margin: 0 }}>
+                <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
                   {formatCurrency(avgOrderValue)}
                 </Title>
                 <Divider style={{ margin: "4px 0" }} />
@@ -681,19 +699,19 @@ const AdminDashboard = () => {
           title="Sentiment Analysis"
           bordered={false}
           style={{
-            borderRadius: 20,
+            borderRadius: isMobile ? 12 : 20,
             boxShadow: "0 20px 45px rgba(15, 23, 42, 0.08)",
           }}
-          bodyStyle={{ padding: 24 }}
+          bodyStyle={{ padding: isMobile ? 12 : 24 }}
           extra={
-            <Space wrap size={12}>
+            <Space wrap size={isMobile ? 8 : 12}>
               <Segmented
-                size="middle"
+                size={isMobile ? "small" : "middle"}
                 value={mode}
                 onChange={handleModeChange}
                 options={[
-                  { label: "Overview", value: "global" },
-                  { label: "By Product", value: "product" },
+                  { label: isMobile ? "All" : "Overview", value: "global" },
+                  { label: isMobile ? "Prod" : "By Product", value: "product" },
                 ]}
               />
               {mode === "global" ? (
@@ -793,7 +811,7 @@ const AdminDashboard = () => {
                   <Space direction="vertical" size={4}>
                     <Text strong>Total Reviews in Database</Text>
                     <Text style={{ fontSize: 24, fontWeight: 600 }}>
-                      {formatNumber(stats.totalReviews)}
+                      {formatNumber(totalReviewsCount)}
                     </Text>
                     <Text type="danger">
                       {formatNumber(outstandingReviews)} pending analysis

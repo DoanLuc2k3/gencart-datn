@@ -25,6 +25,7 @@ import {
   SearchOutlined,
 } from "@ant-design/icons";
 import { getValidImageUrl } from "../../utils/imageUtils";
+import { useResponsive } from "../../hooks/useResponsive";
 
 // Debounce hook
 const useDebounce = (value, delay = 500) => {
@@ -37,6 +38,7 @@ const useDebounce = (value, delay = 500) => {
 };
 
 const AdminCategories = () => {
+  const { isMobile } = useResponsive();
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -298,39 +300,44 @@ const AdminCategories = () => {
   return (
     <div
       style={{
-        padding: 24,
+        padding: isMobile ? 12 : 24,
         background: "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
-        borderRadius: 24,
+        borderRadius: isMobile ? 12 : 24,
         minHeight: "100%",
       }}
     >
       <Card
         style={{
-          borderRadius: 24,
+          borderRadius: isMobile ? 12 : 24,
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           color: "#fff",
           boxShadow: "0 28px 60px rgba(15, 23, 42, 0.45)",
-          marginBottom: 24,
+          marginBottom: isMobile ? 16 : 24,
           border: "none",
         }}
-        bodyStyle={{ padding: 28 }}
+        bodyStyle={{ padding: isMobile ? 16 : 28 }}
       >
-        <Row gutter={[24, 24]} align="middle" justify="space-between">
+        <Row gutter={[16, 16]} align="middle" justify="space-between">
           <Col xs={24} md={16}>
-            <Title level={2} style={{ color: "#fff", margin: 0 }}>
+            <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0 }}>
               Product Categories
             </Title>
-            <Text style={{ color: "rgba(255,255,255,0.72)" }}>
+            <Text style={{ color: "rgba(255,255,255,0.72)", fontSize: isMobile ? 13 : 14 }}>
               Manage categories, images, and activation status.
             </Text>
           </Col>
-          <Col xs={24} md={8} style={{ textAlign: "right" }}>
+          <Col xs={24} md={8} style={{ textAlign: isMobile ? "left" : "right" }}>
             <Space wrap>
-              <Button onClick={fetchCategories} loading={loading}>
+              <Button onClick={fetchCategories} loading={loading} size={isMobile ? "middle" : "default"}>
                 Refresh
               </Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
-                Add Category
+              <Button 
+                type="primary" 
+                icon={!isMobile && <PlusOutlined />} 
+                onClick={() => showModal()}
+                size={isMobile ? "middle" : "default"}
+              >
+                {isMobile ? "Add" : "Add Category"}
               </Button>
             </Space>
           </Col>
