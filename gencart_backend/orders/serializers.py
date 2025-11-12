@@ -61,14 +61,16 @@ class OrderListSerializer(serializers.ModelSerializer):
     """
     Lightweight serializer for Order list view - faster performance
     Uses UserBasicSerializer instead of full UserSerializer
+    Includes items for frontend display
     """
     user = UserBasicSerializer(read_only=True)
     items_count = serializers.IntegerField(read_only=True)
+    items = OrderItemSerializer(many=True, read_only=True)
     
     class Meta:
         model = Order
         fields = ['id', 'user', 'status', 'payment_status', 'total_amount',
-                  'items_count', 'created_at', 'updated_at']
+                  'items_count', 'items', 'created_at', 'updated_at']
         read_only_fields = ['total_amount', 'created_at', 'updated_at']
 
 class OrderSerializer(serializers.ModelSerializer):

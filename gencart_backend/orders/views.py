@@ -211,11 +211,15 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         # Use different query optimization based on action
         if self.action == 'list':
-            # For list view: only load user, annotate items count
-            queryset = Order.objects.select_related('user').annotate(
+            # For list view: load necessary relations to avoid N+1 queries
+            queryset = Order.objects.select_related(
+                'user',
+                'shipping_address'
+            ).prefetch_related(
+                'items__product',
+                'items__product__category'
+            ).annotate(
                 items_count=Count('items')
-            ).only(
-                'id', 'user', 'status', 'payment_status', 'total_amount', 'created_at', 'updated_at'
             )
         else:
             # For detail view: load everything

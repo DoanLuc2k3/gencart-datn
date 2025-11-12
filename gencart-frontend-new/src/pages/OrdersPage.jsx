@@ -12,7 +12,8 @@ import {
   Modal, 
   Row, 
   Col, 
-  Tooltip
+  Tooltip,
+  Pagination
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -45,6 +46,13 @@ const OrdersPage = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [reviewableProducts, setReviewableProducts] = useState(new Map());
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
   const pageStyle = {
     background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 45%, #e0e7ff 100%)',
@@ -103,7 +111,7 @@ const OrdersPage = () => {
   };
 
   // Fetch orders data
-  const fetchOrders = async () => {
+  const fetchOrders = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
       // Get token from localStorage
@@ -116,8 +124,9 @@ const OrdersPage = () => {
         return;
       }
 
-      // Fetch orders from API
-      const response = await fetch('http://localhost:8000/api/orders/', {
+      // Fetch orders with pagination
+      const response = await fetch(`http://localhost:8000/api/orders/?page=${page}&page_size=${pageSize}`, {
+        credentials: 'include',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -128,6 +137,13 @@ const OrdersPage = () => {
       }
 
       const data = await response.json();
+      
+      // Update pagination state
+      setPagination({
+        current: page,
+        pageSize: pageSize,
+        total: data.count || 0,
+      });
 
       // Format orders data
       const formattedOrders = data.results.map(order => {
@@ -137,23 +153,15 @@ const OrdersPage = () => {
            ${order.shipping_address.city}, ${order.shipping_address.state}, ${order.shipping_address.zip_code}` :
           'No address provided';
 
-        // Log order items for debugging
-        console.log('Order items:', order.items);
-        if (order.items.length > 0 && order.items[0].product) {
-          console.log('First product image URL:', order.items[0].product.primary_image);
-        }
+        // Check if items exist (list endpoint may not include items)
+        const orderItems = order.items || [];
 
         return {
           id: order.id,
           date: new Date(order.created_at).toISOString().split('T')[0],
           total: parseFloat(order.total_amount),
           status: order.status,
-          items: order.items.map(item => {
-            // Log each product's image URL
-            if (item.product) {
-              console.log(`Product ${item.product.name} image:`, item.product.primary_image);
-            }
-
+          items: orderItems.map(item => {
             return {
               id: item.id,
               name: item.product ? item.product.name : 'Product',
@@ -275,7 +283,7 @@ const OrdersPage = () => {
       setModalVisible(false);
 
       // Refresh orders list
-      fetchOrders();
+      fetchOrders(pagination.current, pagination.pageSize);
     } catch (error) {
       console.error('Error cancelling order:', error);
       message.error(error.message || 'Failed to cancel order. Please try again.');
@@ -294,14 +302,21 @@ const OrdersPage = () => {
   const handleReviewProduct = (productId) => {
     navigate(`/products/${productId}`);
   };
+  
+  // Handle pagination change
+  const handlePageChange = (page, pageSize) => {
+    fetchOrders(page, pageSize);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(pagination.current, pagination.pageSize);
   }, [navigate]);
 
   // Get status tag
   const getStatusTag = (status) => {
     const statusConfig = {
+      pending: { color: 'orange', text: 'Pending', icon: <ClockCircleOutlined /> },
       processing: { color: 'blue', text: 'Processing', icon: <ClockCircleOutlined /> },
       shipped: { color: 'cyan', text: 'Shipped', icon: <TruckOutlined /> },
       delivered: { color: 'green', text: 'Delivered', icon: <CheckCircleOutlined /> },
@@ -573,6 +588,7 @@ const OrdersPage = () => {
   };
 
   const totalOrders = orders.length;
+  const pendingCount = getFilteredOrders('pending').length;
   const processingCount = getFilteredOrders('processing').length;
   const shippedCount = getFilteredOrders('shipped').length;
   const deliveredCount = getFilteredOrders('delivered').length;
@@ -630,6 +646,16 @@ const OrdersPage = () => {
                   children: <div>{getFilteredOrders('all').map(order => renderOrderCard(order))}</div>
                 },
                 {
+                  key: 'pending',
+                  label: `Pending (${pendingCount})`,
+                  children: (
+                    <div>
+                      {getFilteredOrders('pending').map(order => renderOrderCard(order))}
+                      {pendingCount === 0 && <Empty description="No pending orders" />}
+                    </div>
+                  )
+                },
+                {
                   key: 'processing',
                   label: `Processing (${processingCount})`,
                   children: (
@@ -671,6 +697,21 @@ const OrdersPage = () => {
                 }
               ]}
             />
+            
+            {/* Pagination */}
+            {pagination.total > pagination.pageSize && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32, paddingBottom: 16 }}>
+                <Pagination
+                  current={pagination.current}
+                  pageSize={pagination.pageSize}
+                  total={pagination.total}
+                  onChange={handlePageChange}
+                  showSizeChanger
+                  showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} orders`}
+                  pageSizeOptions={['5', '10', '20', '50']}
+                />
+              </div>
+            )}
           </Card>
         ) : (
           <Card
