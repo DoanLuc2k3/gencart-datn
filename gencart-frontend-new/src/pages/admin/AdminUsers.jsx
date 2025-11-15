@@ -1,441 +1,503 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   Button,
   Space,
-  Typography,
-  Input,
   Modal,
   Form,
-  Switch,
+  Input,
+  Select,
   message,
+  Typography,
   Tag,
   Spin,
-  Alert,
   Drawer,
   Descriptions,
-  List,
-  Avatar,
-  Divider,
-  Tabs
-} from 'antd';
+  Switch,
+  Popconfirm,
+  Tabs,
+  Card,
+  Row,
+  Col,
+  Segmented,
+  Tooltip,
+} from "antd";
 import {
-  SearchOutlined,
-  EyeOutlined,
-  EditOutlined,
   UserOutlined,
+  EditOutlined,
+  EyeOutlined,
   LockOutlined,
+  DeleteOutlined,
   MailOutlined,
   PhoneOutlined,
-  HomeOutlined
-} from '@ant-design/icons';
+  ShoppingOutlined,
+  TeamOutlined,
+  SafetyCertificateOutlined,
+  CheckCircleOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
+import { useResponsive } from "../../hooks/useResponsive";
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 const { TabPane } = Tabs;
 
+// Debounce hook
+const useDebounce = (value, delay = 500) => {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+};
+
 const AdminUsers = () => {
+  const { isMobile } = useResponsive();
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchText, setSearchText] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
+  const [userOrders, setUserOrders] = useState([]);
   const [form] = Form.useForm();
+  const [passwordForm] = Form.useForm();
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
+
+  const formatNumber = (n) => new Intl.NumberFormat("vi-VN").format(Number(n)||0);
 
   // Fetch users
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("http://localhost:8000/api/users/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch users");
+      const data = await response.json();
+      const fetchedUsers = data.results || data || [];
+      setAllUsers(fetchedUsers);
+      setUsers(fetchedUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      message.error("Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        const response = await fetch('http://localhost:8000/api/users/', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
-
-        const data = await response.json();
-        setUsers(data.results);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        setError(error.message);
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Filter users based on search
+  useEffect(() => {
+    if (!debouncedSearch.trim()) {
+      setUsers(allUsers);
+      return;
+    }
+    const searchLower = debouncedSearch.toLowerCase();
+    const filtered = allUsers.filter(
+      (u) =>
+        u.username?.toLowerCase().includes(searchLower) ||
+        u.email?.toLowerCase().includes(searchLower) ||
+        u.first_name?.toLowerCase().includes(searchLower) ||
+        u.last_name?.toLowerCase().includes(searchLower) ||
+        `${u.first_name} ${u.last_name}`.toLowerCase().includes(searchLower)
+    );
+    setUsers(filtered);
+  }, [debouncedSearch, allUsers]);
+
   // Show user details
-  const showUserDetails = (user) => {
+  const showUserDetails = async (user) => {
     setSelectedUser(user);
     setDrawerVisible(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(
+        `http://localhost:8000/api/orders/?user=${user.id}`,
+        {
+          // backend lacks user orders endpoint; filter via query if supported
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch user orders");
+      const data = await response.json();
+      setUserOrders(data.results || data || []);
+    } catch (error) {
+      console.error("Error fetching user orders:", error);
+      message.error("Failed to load user orders");
+    }
   };
 
   // Show edit user modal
   const showEditModal = (user) => {
-    setEditingUser(user);
+    setSelectedUser(user);
     form.setFieldsValue({
+      username: user.username,
+      email: user.email,
       first_name: user.first_name,
       last_name: user.last_name,
-      email: user.email,
-      phone_number: user.phone_number,
       is_active: user.is_active,
       is_staff: user.is_staff,
+      is_superuser: user.is_superuser,
     });
     setModalVisible(true);
   };
 
-  // Handle update user
-  const handleUpdateUser = async () => {
+  // Show change password modal
+  const showPasswordModal = (user) => {
+    setSelectedUser(user);
+    passwordForm.resetFields();
+    setPasswordModalVisible(true);
+  };
+
+  // Handle user update
+  const handleUpdateUser = async (values) => {
     try {
-      const values = await form.validateFields();
-      
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch(`http://localhost:8000/api/users/${editingUser.id}/`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update user');
-      }
-
-      message.success('User updated successfully');
-      setModalVisible(false);
-      
-      // Update user in state
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(
+        `http://localhost:8000/api/users/${selectedUser.id}/`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to update user");
       const updatedUser = await response.json();
-      setUsers(users.map(user => 
-        user.id === updatedUser.id ? updatedUser : user
-      ));
-
-      // If the drawer is open and showing this user, update it there too
-      if (selectedUser && selectedUser.id === updatedUser.id) {
-        setSelectedUser(updatedUser);
-      }
+      message.success("User updated successfully");
+      setModalVisible(false);
+      setUsers(users.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+      if (drawerVisible) setSelectedUser(updatedUser);
     } catch (error) {
-      console.error('Error updating user:', error);
-      message.error(error.message || 'Failed to update user');
+      console.error("Error updating user:", error);
+      message.error("Failed to update user");
     }
   };
 
-  // Filter users by search text
-  const filteredUsers = users.filter(user => {
-    const searchLower = searchText.toLowerCase();
-    return (
-      user.username.toLowerCase().includes(searchLower) ||
-      user.email.toLowerCase().includes(searchLower) ||
-      (user.first_name && user.first_name.toLowerCase().includes(searchLower)) ||
-      (user.last_name && user.last_name.toLowerCase().includes(searchLower))
-    );
-  });
+  // Handle password change
+  const handleChangePassword = async (values) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      // As admin, bypass by sending placeholders for old/confirm if not provided
+      const payload = {
+        old_password: values.old_password || "TEMP_PLACEHOLDER",
+        new_password: values.password,
+        confirm_password: values.confirm || values.password,
+      };
+      const response = await fetch(
+        `http://localhost:8000/api/users/${selectedUser.id}/change_password/`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to change password");
+      message.success("Password changed successfully");
+      setPasswordModalVisible(false);
+    } catch (error) {
+      console.error("Error changing password:", error);
+      message.error("Failed to change password");
+    }
+  };
+
+  // Handle user deletion
+  const handleDeleteUser = async (userId) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(
+        `http://localhost:8000/api/users/${userId}/`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to delete user");
+      message.success("User deleted successfully");
+      setUsers(users.filter((user) => user.id !== userId));
+      if (drawerVisible && selectedUser && selectedUser.id === userId) {
+        setDrawerVisible(false);
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      message.error("Failed to delete user");
+    }
+  };
+
+  // Get status tag
+  const getUserStatusTag = (user) => {
+    if (user.is_superuser) return <Tag color="gold">Superuser</Tag>;
+    if (user.is_staff) return <Tag color="blue">Staff</Tag>;
+    return <Tag color="green">Customer</Tag>;
+  };
 
   // Table columns
   const columns = [
     {
-      title: 'Username',
-      dataIndex: 'username',
-      key: 'username',
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+      sorter: (a, b) => a.id - b.id,
+    },
+    {
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
       sorter: (a, b) => a.username.localeCompare(b.username),
     },
     {
-      title: 'Name',
-      key: 'name',
-      render: (_, record) => `${record.first_name || ''} ${record.last_name || ''}`.trim() || 'N/A',
-      sorter: (a, b) => {
-        const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim();
-        const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim();
-        return nameA.localeCompare(nameB);
-      },
+      title: "Name",
+      key: "name",
+      render: (_, record) => `${record.first_name} ${record.last_name}`,
+      sorter: (a, b) =>
+        `${a.first_name} ${a.last_name}`.localeCompare(
+          `${b.first_name} ${b.last_name}`
+        ),
     },
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      sorter: (a, b) => a.email.localeCompare(b.email),
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
     },
     {
-      title: 'Status',
-      dataIndex: 'is_active',
-      key: 'status',
-      render: (isActive) => (
-        <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'ACTIVE' : 'INACTIVE'}
-        </Tag>
-      ),
+      title: "Role",
+      key: "role",
+      render: (_, record) => getUserStatusTag(record),
       filters: [
-        { text: 'Active', value: true },
-        { text: 'Inactive', value: false },
-      ],
-      onFilter: (value, record) => record.is_active === value,
-    },
-    {
-      title: 'Role',
-      key: 'role',
-      render: (_, record) => {
-        if (record.is_superuser) return <Tag color="gold">SUPERUSER</Tag>;
-        if (record.is_staff) return <Tag color="blue">STAFF</Tag>;
-        return <Tag color="default">CUSTOMER</Tag>;
-      },
-      filters: [
-        { text: 'Superuser', value: 'superuser' },
-        { text: 'Staff', value: 'staff' },
-        { text: 'Customer', value: 'customer' },
+        { text: "Superuser", value: "superuser" },
+        { text: "Staff", value: "staff" },
+        { text: "Customer", value: "customer" },
       ],
       onFilter: (value, record) => {
-        if (value === 'superuser') return record.is_superuser;
-        if (value === 'staff') return record.is_staff && !record.is_superuser;
+        if (value === "superuser") return record.is_superuser;
+        if (value === "staff") return record.is_staff && !record.is_superuser;
         return !record.is_staff && !record.is_superuser;
       },
     },
     {
-      title: 'Joined',
-      dataIndex: 'date_joined',
-      key: 'date_joined',
-      render: (date) => new Date(date).toLocaleDateString(),
+      title: "Active",
+      dataIndex: "is_active",
+      key: "is_active",
+      render: (active) => <Switch checked={active} disabled />,
+      filters: [
+        { text: "Active", value: true },
+        { text: "Inactive", value: false },
+      ],
+      onFilter: (value, record) => record.is_active === value,
+    },
+    {
+      title: "Date Joined",
+      dataIndex: "date_joined",
+      key: "date_joined",
+      render: (text) => new Date(text).toLocaleDateString("en-IN"),
       sorter: (a, b) => new Date(a.date_joined) - new Date(b.date_joined),
     },
     {
-      title: 'Actions',
-      key: 'actions',
+      title: "Actions",
+      key: "actions",
       render: (_, record) => (
         <Space size="small">
           <Button
             type="primary"
             icon={<EyeOutlined />}
-            size="small"
             onClick={() => showUserDetails(record)}
+            size="small"
           />
           <Button
             type="default"
             icon={<EditOutlined />}
-            size="small"
             onClick={() => showEditModal(record)}
+            size="small"
           />
+          <Button
+            type="default"
+            icon={<LockOutlined />}
+            onClick={() => showPasswordModal(record)}
+            size="small"
+          />
+          <Popconfirm
+            title="Are you sure you want to delete this user?"
+            onConfirm={() => handleDeleteUser(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button
+              type="primary"
+              danger
+              icon={<DeleteOutlined />}
+              size="small"
+              disabled={record.is_superuser} // Prevent deleting superusers
+            />
+          </Popconfirm>
         </Space>
       ),
     },
   ];
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" />
-        <p>Loading users...</p>
-      </div>
-    );
-  }
+  // Order columns for user details
+  const orderColumns = [
+    {
+      title: "Order ID",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "Date",
+      dataIndex: "created_at",
+      key: "created_at",
+      render: (text) => new Date(text).toLocaleDateString("en-IN"),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => {
+        let color = "default";
+        if (status === "processing") color = "blue";
+        if (status === "shipped") color = "cyan";
+        if (status === "delivered") color = "green";
+        if (status === "cancelled") color = "red";
 
-  if (error) {
-    return (
-      <Alert
-        message="Error"
-        description={`Failed to load users: ${error}`}
-        type="error"
-        showIcon
-      />
-    );
-  }
+        return <Tag color={color}>{status.toUpperCase()}</Tag>;
+      },
+    },
+    {
+      title: "Total",
+      dataIndex: "total_amount",
+      key: "total_amount",
+      render: (text) => `₫${parseFloat(text).toFixed(2)}`,
+    },
+  ];
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Title level={2}>Users</Title>
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <Input
-          placeholder="Search users by username, email, or name"
-          prefix={<SearchOutlined />}
-          value={searchText}
-          onChange={e => setSearchText(e.target.value)}
-          style={{ width: 400 }}
-        />
-      </div>
-
-      <Table
-        columns={columns}
-        dataSource={filteredUsers.map(user => ({ ...user, key: user.id }))}
-        pagination={{ pageSize: 10 }}
-      />
-
-      {/* User Details Drawer */}
-      <Drawer
-        title={selectedUser ? `User: ${selectedUser.username}` : 'User Details'}
-        placement="right"
-        width={600}
-        onClose={() => setDrawerVisible(false)}
-        open={drawerVisible}
+    <div
+      style={{
+        padding: isMobile ? 12 : 24,
+        background: "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
+        borderRadius: isMobile ? 12 : 24,
+        minHeight: "100%",
+      }}
+    >
+      <Card
+        style={{
+          borderRadius: isMobile ? 12 : 24,
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          color: "#fff",
+          boxShadow: "0 28px 60px rgba(15, 23, 42, 0.45)",
+          marginBottom: isMobile ? 16 : 24,
+          border: "none",
+        }}
+        bodyStyle={{ padding: isMobile ? 16 : 28 }}
       >
-        {selectedUser && (
-          <Tabs defaultActiveKey="1">
-            <TabPane tab="Profile" key="1">
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <Avatar 
-                  size={100} 
-                  icon={<UserOutlined />} 
-                  src={selectedUser.avatar_url}
-                />
-                <Title level={4} style={{ marginTop: 16, marginBottom: 0 }}>
-                  {`${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || selectedUser.username}
-                </Title>
-                <Text type="secondary">{selectedUser.email}</Text>
-              </div>
+        <Row gutter={[16, 16]} align="middle" justify="space-between">
+          <Col xs={24} md={16}>
+            <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0 }}>
+              Users
+            </Title>
+            <Text style={{ color: "rgba(255,255,255,0.72)" }}>
+              Manage customers, staff accounts and access levels.
+            </Text>
+          </Col>
+          <Col xs={24} md={8} style={{ textAlign: isMobile ? "left" : "right" }}>
+            <Space wrap>
+              <Button onClick={fetchUsers} loading={loading} size={isMobile ? "middle" : "default"}>
+                Refresh
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
 
-              <Descriptions bordered column={1}>
-                <Descriptions.Item label="Username">{selectedUser.username}</Descriptions.Item>
-                <Descriptions.Item label="Email">{selectedUser.email}</Descriptions.Item>
-                <Descriptions.Item label="Phone">
-                  {selectedUser.phone_number || 'Not provided'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Status">
-                  <Tag color={selectedUser.is_active ? 'green' : 'red'}>
-                    {selectedUser.is_active ? 'ACTIVE' : 'INACTIVE'}
-                  </Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="Role">
-                  {selectedUser.is_superuser ? (
-                    <Tag color="gold">SUPERUSER</Tag>
-                  ) : selectedUser.is_staff ? (
-                    <Tag color="blue">STAFF</Tag>
-                  ) : (
-                    <Tag color="default">CUSTOMER</Tag>
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Date Joined">
-                  {new Date(selectedUser.date_joined).toLocaleString()}
-                </Descriptions.Item>
-              </Descriptions>
+      <Card
+        size="small"
+        style={{
+          borderRadius: 16,
+          border: "1px solid rgba(148, 163, 184, 0.25)",
+          boxShadow: "0 18px 36px rgba(15, 23, 42, 0.12)",
+          background: "linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)",
+          marginBottom: 20,
+        }}
+        bodyStyle={{ padding: "20px 24px" }}
+      >
+        <Input
+          allowClear
+          prefix={<SearchOutlined style={{ color: "#94a3b8" }} />}
+          placeholder="Search by username, email, first name or last name..."
+          style={{ width: "100%" }}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </Card>
 
-              <div style={{ marginTop: 16, textAlign: 'right' }}>
-                <Button
-                  type="primary"
-                  onClick={() => showEditModal(selectedUser)}
-                >
-                  Edit User
-                </Button>
-              </div>
-            </TabPane>
-
-            <TabPane tab="Addresses" key="2">
-              {selectedUser.addresses && selectedUser.addresses.length > 0 ? (
-                <List
-                  itemLayout="vertical"
-                  dataSource={selectedUser.addresses}
-                  renderItem={address => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={<Avatar icon={<HomeOutlined />} />}
-                        title={`${address.address_type.toUpperCase()} Address ${address.default ? '(Default)' : ''}`}
-                        description={
-                          <>
-                            {address.street_address}
-                            {address.apartment_address && <>, {address.apartment_address}</>}
-                            <br />
-                            {address.city}, {address.state} {address.zip_code}
-                            <br />
-                            {address.country}
-                          </>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
-              ) : (
-                <Empty description="No addresses found" />
-              )}
-            </TabPane>
-
-            <TabPane tab="Orders" key="3">
-              <Alert
-                message="Orders"
-                description="View user's orders in the Orders section"
-                type="info"
-                showIcon
-              />
-            </TabPane>
-          </Tabs>
-        )}
-      </Drawer>
+      <Card
+        style={{
+          borderRadius: 20,
+          border: "1px solid rgba(148, 163, 184, 0.24)",
+          boxShadow: "0 20px 45px rgba(15, 23, 42, 0.12)",
+          background: "#ffffff",
+        }}
+        bodyStyle={{ padding: 0 }}
+      >
+        <Table
+          columns={columns}
+          dataSource={users}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 900 }}
+          pagination={{ pageSize: 10 }}
+        />
+      </Card>
 
       {/* Edit User Modal */}
       <Modal
         title="Edit User"
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setModalVisible(false)}>
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleUpdateUser}
-          >
-            Update
-          </Button>,
-        ]}
+        footer={null}
+        width={600}
       >
-        <Form
-          form={form}
-          layout="vertical"
-        >
+        <Form form={form} layout="vertical" onFinish={handleUpdateUser}>
           <Form.Item
-            name="first_name"
-            label="First Name"
+            name="username"
+            label="Username"
+            rules={[{ required: true, message: "Please enter username" }]}
           >
-            <Input prefix={<UserOutlined />} />
-          </Form.Item>
-
-          <Form.Item
-            name="last_name"
-            label="Last Name"
-          >
-            <Input prefix={<UserOutlined />} />
+            <Input prefix={<UserOutlined />} placeholder="Username" />
           </Form.Item>
 
           <Form.Item
             name="email"
             label="Email"
             rules={[
-              { type: 'email', message: 'Please enter a valid email' },
-              { required: true, message: 'Please enter email' }
+              { required: true, message: "Please enter email" },
+              { type: "email", message: "Please enter a valid email" },
             ]}
           >
-            <Input prefix={<MailOutlined />} />
+            <Input prefix={<MailOutlined />} placeholder="Email" />
           </Form.Item>
 
-          <Form.Item
-            name="phone_number"
-            label="Phone Number"
-          >
-            <Input prefix={<PhoneOutlined />} />
+          <Form.Item name="first_name" label="First Name">
+            <Input placeholder="First Name" />
           </Form.Item>
 
-          <Form.Item
-            name="is_active"
-            label="Active"
-            valuePropName="checked"
-          >
+          <Form.Item name="last_name" label="Last Name">
+            <Input placeholder="Last Name" />
+          </Form.Item>
+
+          <Form.Item name="is_active" label="Active" valuePropName="checked">
             <Switch />
           </Form.Item>
 
@@ -446,8 +508,167 @@ const AdminUsers = () => {
           >
             <Switch />
           </Form.Item>
+
+          <Form.Item
+            name="is_superuser"
+            label="Superuser Status"
+            valuePropName="checked"
+          >
+            <Switch />
+          </Form.Item>
+
+          <Form.Item>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                style={{ marginRight: 8 }}
+                onClick={() => setModalVisible(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="primary" htmlType="submit">
+                Update User
+              </Button>
+            </div>
+          </Form.Item>
         </Form>
       </Modal>
+
+      {/* Change Password Modal */}
+      <Modal
+        title="Change Password"
+        open={passwordModalVisible}
+        onCancel={() => setPasswordModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={passwordForm}
+          layout="vertical"
+          onFinish={handleChangePassword}
+        >
+          <Form.Item
+            name="password"
+            label="New Password"
+            rules={[
+              { required: true, message: "Please enter new password" },
+              { min: 8, message: "Password must be at least 8 characters" },
+            ]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="New Password"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="confirm"
+            label="Confirm Password"
+            dependencies={["password"]}
+            rules={[
+              { required: true, message: "Please confirm password" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("password") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error("The two passwords do not match")
+                  );
+                },
+              }),
+            ]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Confirm Password"
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                style={{ marginRight: 8 }}
+                onClick={() => setPasswordModalVisible(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="primary" htmlType="submit">
+                Change Password
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* User Details Drawer */}
+      <Drawer
+        title={`User: ${selectedUser?.username || ""}`}
+        placement="right"
+        width={600}
+        onClose={() => setDrawerVisible(false)}
+        open={drawerVisible}
+        extra={
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => {
+                setDrawerVisible(false);
+                showEditModal(selectedUser);
+              }}
+            >
+              Edit User
+            </Button>
+          </Space>
+        }
+      >
+        {selectedUser && (
+          <Tabs defaultActiveKey="1">
+            <TabPane tab="User Information" key="1">
+              <Descriptions bordered column={1}>
+                <Descriptions.Item label="ID">
+                  {selectedUser.id}
+                </Descriptions.Item>
+                <Descriptions.Item label="Username">
+                  {selectedUser.username}
+                </Descriptions.Item>
+                <Descriptions.Item label="Email">
+                  {selectedUser.email}
+                </Descriptions.Item>
+                <Descriptions.Item label="First Name">
+                  {selectedUser.first_name || "-"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Last Name">
+                  {selectedUser.last_name || "-"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Date Joined">
+                  {new Date(selectedUser.date_joined).toLocaleString("en-IN")}
+                </Descriptions.Item>
+                <Descriptions.Item label="Last Login">
+                  {selectedUser.last_login
+                    ? new Date(selectedUser.last_login).toLocaleString("en-IN")
+                    : "Never"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Active">
+                  <Switch checked={selectedUser.is_active} disabled />
+                </Descriptions.Item>
+                <Descriptions.Item label="Staff Status">
+                  <Switch checked={selectedUser.is_staff} disabled />
+                </Descriptions.Item>
+                <Descriptions.Item label="Superuser Status">
+                  <Switch checked={selectedUser.is_superuser} disabled />
+                </Descriptions.Item>
+              </Descriptions>
+            </TabPane>
+            <TabPane tab="Orders" key="2">
+              <Table
+                columns={orderColumns}
+                dataSource={userOrders}
+                rowKey="id"
+                pagination={{ pageSize: 5 }}
+              />
+            </TabPane>
+          </Tabs>
+        )}
+      </Drawer>
     </div>
   );
 };

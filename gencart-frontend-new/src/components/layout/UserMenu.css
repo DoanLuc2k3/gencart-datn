@@ -209,7 +209,6 @@
 @media (max-width: 768px) {
   .ant-layout-header {
     padding: 0 clamp(12px, 2.5vw, 16px) !important;
-    height: clamp(64px, 10vw, 72px) !important;
   }
 
   .ant-layout-header > div {
@@ -234,7 +233,6 @@
 
 @media (max-width: 576px) {
   .ant-layout-header {
-    height: clamp(60px, 12vw, 64px) !important;
     padding: 0 clamp(8px, 2vw, 12px) !important;
   }
 
@@ -258,7 +256,6 @@
 
 @media (max-width: 480px) {
   .ant-layout-header {
-    height: 60px !important;
     padding: 0 8px !important;
   }
 

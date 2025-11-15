@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from products.models import Product
 from users.models import Address
 from .models import Cart, CartItem, Order, OrderItem
-from .serializers import CartSerializer, CartItemSerializer, OrderSerializer, OrderItemSerializer
+from .serializers import CartSerializer, CartItemSerializer, OrderSerializer, OrderItemSerializer, OrderListSerializer
 
 class CartViewSet(viewsets.ModelViewSet):
     """
@@ -189,6 +189,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'status']
     ordering = ['-created_at']
 
+    def get_serializer_class(self):
+        """
+        Use lightweight serializer for list view, full serializer for detail view
+        """
+        if self.action == 'list':
+            return OrderListSerializer
+        return OrderSerializer
+
     def get_serializer_context(self):
         """
         Extra context provided to the serializer class.
@@ -198,10 +206,35 @@ class OrderViewSet(viewsets.ModelViewSet):
         return context
 
     def get_queryset(self):
+        from django.db.models import Count
         user = self.request.user
+        
+        # Use different query optimization based on action
+        if self.action == 'list':
+            # For list view: load necessary relations to avoid N+1 queries
+            queryset = Order.objects.select_related(
+                'user',
+                'shipping_address'
+            ).prefetch_related(
+                'items__product',
+                'items__product__category'
+            ).annotate(
+                items_count=Count('items')
+            )
+        else:
+            # For detail view: load everything
+            queryset = Order.objects.select_related(
+                'user',
+                'shipping_address',
+                'billing_address'
+            ).prefetch_related(
+                'items__product',
+                'items__product__category'
+            )
+        
         if user.is_staff:
-            return Order.objects.all()
-        return Order.objects.filter(user=user)
+            return queryset
+        return queryset.filter(user=user)
 
     @action(detail=False, methods=['post'])
     def create_from_cart(self, request):
@@ -316,4 +349,36 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
 
         serializer = self.get_serializer(order, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='by-user/(?P<user_id>[0-9]+)')
+    def by_user(self, request, user_id=None):
+        """
+        Get all orders for a specific user (admin only)
+        Returns orders with full details including items, shipping address, etc.
+        """
+        # Check if user is staff/admin
+        if not request.user.is_staff:
+            return Response(
+                {"detail": "You do not have permission to view other users' orders."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get orders for the specified user with optimized queries
+        orders = Order.objects.filter(user_id=user_id).select_related(
+            'user',
+            'shipping_address',
+            'billing_address'
+        ).prefetch_related(
+            'items__product',
+            'items__product__category'
+        ).order_by('-created_at')
+        
+        # Use pagination if available
+        page = self.paginate_queryset(orders)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data)

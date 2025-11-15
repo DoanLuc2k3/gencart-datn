@@ -73,7 +73,7 @@ const LoginPage = () => {
       localStorage.setItem("isLoggedIn", "true");
 
       // Get user info
-      const userResponse = await fetch("http://localhost:8000/api/auth/me/", {
+      const userResponse = await fetch("http://localhost:8000/api/users/me/", {
         headers: {
           Authorization: `Bearer ${data.access}`,
         },
@@ -90,72 +90,22 @@ const LoginPage = () => {
         isAdmin = userData.is_staff || userData.is_superuser;
         console.log("User data:", userData);
         console.log("Is admin:", isAdmin);
-
-        // Force redirect to admin page if username is nvj (your admin username)
-        if (values.username === "nvj") {
-          console.log("Username is nvj, forcing admin redirect");
-          message.success("Login successful! Redirecting to admin panel...");
-          navigate("/admin");
-          return;
-        }
       }
 
       message.success("Login successful!");
 
-      // Explicitly check admin status with the backend
-      try {
-        const adminCheckResponse = await fetch(
-          "http://localhost:8000/api/auth/check_admin/",
-          {
-            headers: {
-              Authorization: `Bearer ${data.access}`,
-            },
-          }
-        );
-
-        if (adminCheckResponse.ok) {
-          const adminCheckData = await adminCheckResponse.json();
-          console.log("Admin check response:", adminCheckData);
-
-          if (adminCheckData.is_admin) {
-            // User is confirmed as admin by the backend
-            message.info(
-              "You are logged in as an admin. Redirecting to admin panel."
-            );
-            navigate("/admin");
-            return;
-          }
-        }
-      } catch (error) {
-        console.error("Error checking admin status:", error);
-      }
-
-      // If we get here, either the admin check failed or the user is not an admin
-      // Fallback to the original logic
-      const urlParams = new URLSearchParams(window.location.search);
-      const redirect = urlParams.get("redirect");
-
-      // Check if the user data indicates admin status
-      if (userData && (userData.is_staff || userData.is_superuser)) {
-        console.log(
-          "User is admin according to user data, redirecting to admin page"
-        );
-        message.info(
-          "You are logged in as an admin. Redirecting to admin panel."
-        );
-        navigate("/admin");
-        return;
-      }
-
-      if (redirect === "admin" && isAdmin) {
-        navigate("/admin");
-      } else if (isAdmin) {
-        // If user is admin, go to admin page
-        message.info(
-          "You are logged in as an admin. You can access the admin panel."
-        );
+      // Trigger login event to update header immediately
+      window.dispatchEvent(new Event('login'));
+      
+      // Navigate based on user role
+      if (isAdmin) {
+        // Admin users go to admin panel
+        console.log("Admin user detected, redirecting to admin panel");
+        message.info("Welcome Admin! Redirecting to admin panel...");
         navigate("/admin");
       } else {
+        // Regular users go to home page
+        console.log("Regular user detected, redirecting to home");
         navigate("/");
       }
     } catch (error) {

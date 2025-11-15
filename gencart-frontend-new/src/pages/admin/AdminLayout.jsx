@@ -1,56 +1,87 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Layout,
   Menu,
   Button,
   Typography,
   Avatar,
-  Dropdown,
+  Space,
   message,
+  Tooltip,
+  Spin,
 } from "antd";
 import {
   DashboardOutlined,
   ShoppingOutlined,
   UserOutlined,
   ShoppingCartOutlined,
-  CreditCardOutlined,
   TagOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   HomeOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
-import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
 const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [userData, setUserData] = useState(null);
+  const [mobileView, setMobileView] = useState(false);
+  const [adminName, setAdminName] = useState("Admin");
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Handle responsive
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 768;
+      setMobileView(isMobile);
+      if (isMobile) {
+        setCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useEffect(() => {
     // Check if user is logged in and is admin
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
-    const userDataStr = localStorage.getItem("user");
+    const checkAuth = () => {
+      const token = localStorage.getItem("access_token");
+      const userDataStr = localStorage.getItem("user");
 
-    if (!isLoggedIn || !isAdmin) {
-      message.error("You must be logged in as an admin to access this page");
-      navigate("/admin/login");
-      return;
-    }
-
-    if (userDataStr) {
-      try {
-        const parsedUserData = JSON.parse(userDataStr);
-        setUserData(parsedUserData);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
+      if (!token) {
+        message.error("You must be logged in to access the admin page");
+        navigate("/login?redirect=admin");
+        return;
       }
-    }
+
+      if (userDataStr) {
+        try {
+          const userData = JSON.parse(userDataStr);
+          if (userData.is_superuser) {
+            setAdminName(userData.username || userData.email || "Admin");
+            setLoading(false);
+          } else {
+            message.error("You do not have permission to access the admin page");
+            navigate("/");
+          }
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -60,157 +91,314 @@ const AdminLayout = () => {
     localStorage.removeItem("isAdmin");
     localStorage.removeItem("user");
     message.success("Logged out successfully");
-    navigate("/admin/login");
+    navigate("/login");
   };
-
-  const userMenu = (
-    <Menu>
-      <Menu.Item key="profile" icon={<UserOutlined />}>
-        Profile
-      </Menu.Item>
-      <Menu.Divider />
-      <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
-        Logout
-      </Menu.Item>
-    </Menu>
-  );
 
   // Get the current selected key based on the path
   const getSelectedKey = () => {
     const path = location.pathname;
-    if (path.includes("/admin/dashboard")) return "1";
-    if (path.includes("/admin/products")) return "2";
-    if (path.includes("/admin/categories")) return "3";
-    if (path.includes("/admin/orders")) return "4";
-    if (path.includes("/admin/users")) return "5";
-    if (path.includes("/admin/payments")) return "6";
-    return "1";
+    if (path.includes("/admin/dashboard")) return "dashboard";
+    if (path.includes("/admin/products")) return "products";
+    if (path.includes("/admin/categories")) return "categories";
+    if (path.includes("/admin/orders")) return "orders";
+    if (path.includes("/admin/users")) return "users";
+    return "dashboard";
   };
+
+  // Get active tab label
+  const getActiveTabLabel = () => {
+    const key = getSelectedKey();
+    return key.charAt(0).toUpperCase() + key.slice(1);
+  };
+
+  const adminInitial = adminName ? adminName.charAt(0).toUpperCase() : "A";
+
+  const menuItems = useMemo(
+    () => [
+      {
+        key: "dashboard",
+        icon: <DashboardOutlined />,
+        label: "Dashboard",
+        onClick: () => navigate("/admin/dashboard"),
+      },
+      {
+        key: "products",
+        icon: <AppstoreOutlined />,
+        label: "Products",
+        onClick: () => navigate("/admin/products"),
+      },
+      {
+        key: "orders",
+        icon: <ShoppingOutlined />,
+        label: "Orders",
+        onClick: () => navigate("/admin/orders"),
+      },
+      {
+        key: "users",
+        icon: <UserOutlined />,
+        label: "Users",
+        onClick: () => navigate("/admin/users"),
+      },
+      {
+        key: "categories",
+        icon: <TagOutlined />,
+        label: "Categories",
+        onClick: () => navigate("/admin/categories"),
+      },
+      {
+        type: "divider",
+      },
+      {
+        key: "logout",
+        icon: <LogoutOutlined />,
+        label: "Logout",
+        onClick: handleLogout,
+      },
+    ],
+    [navigate]
+  );
+
+  const tooltipContainer = useCallback((triggerNode) => {
+    if (typeof window !== "undefined") {
+      return window.document.body;
+    }
+    return triggerNode?.ownerDocument?.body;
+  }, []);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider trigger={null} collapsible collapsed={collapsed} width={250}>
+      <Sider
+        collapsed={collapsed}
+        trigger={null}
+        breakpoint="lg"
+        collapsedWidth={mobileView ? 0 : 80}
+        style={{
+          height: "100vh",
+          position: "fixed",
+          left: 0,
+          zIndex: 1000,
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          boxShadow: "4px 0 24px rgba(15, 23, 42, 0.35)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <div
           style={{
-            height: "64px",
             display: "flex",
             alignItems: "center",
-            justifyContent: collapsed ? "center" : "flex-start",
-            padding: collapsed ? "0" : "0 16px",
-            color: "white",
-            backgroundColor: "#001529",
+            gap: 12,
+            padding: collapsed ? "20px 18px" : "24px 24px 16px",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
           }}
         >
+          <Avatar
+            size={collapsed ? 36 : 44}
+            style={{
+              background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+              boxShadow: "0 10px 20px rgba(15, 23, 42, 0.3)",
+            }}
+          >
+            G
+          </Avatar>
           {!collapsed && (
-            <Title level={4} style={{ margin: 0, color: "white" }}>
-              GenCart Admin
-            </Title>
+            <div style={{ lineHeight: 1.3 }}>
+              <Text strong style={{ color: "#fff", fontSize: 16 }}>
+                GenCart Admin
+              </Text>
+              <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 12 }}>
+                Hello, {adminName}
+              </div>
+            </div>
           )}
-          {collapsed && <ShoppingOutlined style={{ fontSize: "24px" }} />}
         </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          defaultSelectedKeys={[getSelectedKey()]}
-          selectedKeys={[getSelectedKey()]}
-          items={[
-            {
-              key: "home",
-              icon: <HomeOutlined />,
-              label: <Link to="/">Home</Link>,
-            },
-            {
-              key: "1",
-              icon: <DashboardOutlined />,
-              label: <Link to="/admin/dashboard">Dashboard</Link>,
-            },
-            {
-              key: "2",
-              icon: <ShoppingOutlined />,
-              label: <Link to="/admin/products">Products</Link>,
-            },
-            {
-              key: "3",
-              icon: <TagOutlined />,
-              label: <Link to="/admin/categories">Categories</Link>,
-            },
-            {
-              key: "4",
-              icon: <ShoppingCartOutlined />,
-              label: <Link to="/admin/orders">Orders</Link>,
-            },
-            {
-              key: "5",
-              icon: <UserOutlined />,
-              label: <Link to="/admin/users">Users</Link>,
-            },
-            {
-              key: "6",
-              icon: <CreditCardOutlined />,
-              label: <Link to="/admin/payments">Payments</Link>,
-            },
-          ]}
-        />
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: collapsed ? "12px 10px" : "16px 16px",
+          }}
+        >
+          <Menu
+            theme="dark"
+            mode="inline"
+            selectedKeys={[getSelectedKey()]}
+            style={{
+              background: "transparent",
+              borderInlineEnd: "none",
+              paddingInline: 0,
+              gap: 8,
+            }}
+            items={menuItems}
+          />
+        </div>
+        <div
+          style={{
+            padding: collapsed ? "16px 12px" : "20px 24px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+            display: "flex",
+            flexDirection: collapsed ? "column" : "row",
+            alignItems: "center",
+            justifyContent: collapsed ? "center" : "space-between",
+            gap: 12,
+          }}
+        >
+          <Tooltip
+            title={collapsed ? "Expand" : "Collapse"}
+            placement={collapsed ? "right" : "top"}
+            getPopupContainer={tooltipContainer}
+            overlayStyle={{ zIndex: 2000 }}
+          >
+            <Button
+              shape="circle"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed((prev) => !prev)}
+              style={{
+                background: "rgba(255, 255, 255, 0.12)",
+                border: "none",
+                color: "#fff",
+                width: 44,
+                height: 44,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto",
+              }}
+            />
+          </Tooltip>
+        </div>
       </Sider>
-      <Layout>
+      <Layout
+        style={{
+          marginLeft: mobileView ? 0 : collapsed ? 80 : 200,
+          transition: "all 0.2s",
+          background: "#f5f7fb",
+        }}
+      >
         <Header
           style={{
-            margin: "0 20px",
-            background: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 1px 4px rgba(0,21,41,.08)",
-            borderBottom: "1px solid #f0f0f0",
+            padding: 0,
+            background: "linear-gradient(135deg, #111c44 0%, #1f2a51 100%)",
+            boxShadow: "0 12px 24px rgba(15, 23, 42, 0.3)",
+            height: "72px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <Button
-              type="text"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
-              style={{ fontSize: "16px", width: 64, height: 64 }}
-            />
-            <Button
-              type="primary"
-              icon={<HomeOutlined />}
-              onClick={() => navigate("/")}
-              style={{ marginLeft: 16, marginTop: 10 }}
-            >
-              Home
-            </Button>
-          </div>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {userData && (
-              <Dropdown overlay={userMenu} placement="bottomRight">
-                <div
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: mobileView ? "0 12px" : "0 24px",
+              color: "#fff",
+              flexWrap: "wrap",
+              gap: 12,
+              minHeight: "72px",
+              position: "relative",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {mobileView && (
+                <Button
+                  type="text"
+                  icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                  onClick={() => setCollapsed(!collapsed)}
                   style={{
-                    cursor: "pointer",
+                    color: "#51309eff",
+                    fontSize: 20,
+                    border: "1px solid #51309eff",
+                  }}
+                />
+              )}
+            </div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  position: mobileView ? "" : "absolute",
+                  left: "2%",
+                  gap: 12,
+                  padding: "8px 18px",
+                  borderRadius: 999,
+                  background: "rgba(255, 255, 255, 0.1)",
+                  boxShadow: "0 10px 20px rgba(15, 23, 42, 0.18)",
+                }}
+              >
+                <span
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
+                    justifyContent: "center",
+                    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                    color: "#fff",
+                    fontWeight: 600,
+                    fontSize: 16,
                   }}
                 >
-                  <Avatar
-                    style={{ backgroundColor: "#1890ff" }}
-                    icon={<UserOutlined />}
-                    src={userData.avatar_url}
-                  />
-                  <Text style={{ marginLeft: 8 }}>{userData.username}</Text>
-                </div>
-              </Dropdown>
-            )}
+                  {getSelectedKey().charAt(0).toUpperCase()}
+                </span>
+                <Title
+                  level={4}
+                  style={{
+                    color: "#51309eff",
+                    fontWeight: 700,
+                    margin: 0,
+                    fontSize: 20,
+                    letterSpacing: 0.5,
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {getActiveTabLabel()}
+                </Title>
+              </div>
+            <Space align="center" size={mobileView ? 8 : 16} wrap>
+                <Button
+                  type="primary"
+                  icon={<HomeOutlined />}
+                  onClick={() => navigate("/")}
+                >
+                 {mobileView ? "" : "Home"}
+                </Button>
+              <Button
+                type="primary"
+                danger
+                icon={<LogoutOutlined />}
+                onClick={handleLogout}
+                {...(mobileView && { size: "small" })}
+              >
+                {mobileView ? "" : "Logout"}
+              </Button>
+            </Space>
           </div>
         </Header>
         <Content
           style={{
-            margin: "24px 16px",
-            padding: "32px 24px 24px",
-            background: "#fff",
+            margin: mobileView ? "16px 8px" : "24px 16px",
+            padding: 0,
+            background: "transparent",
             minHeight: 280,
-            borderRadius: 8,
           }}
         >
-          <Outlet />
+          <div style={{ padding: mobileView ? 12 : 24 }}>
+            <Outlet />
+          </div>
         </Content>
       </Layout>
     </Layout>

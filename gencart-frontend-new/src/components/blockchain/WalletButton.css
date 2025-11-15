@@ -1,0 +1,128 @@
+/* WalletButton Component Styles */
+
+.wallet-button {
+  transition: all 0.3s ease;
+}
+
+.wallet-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.5);
+}
+
+.wallet-button-disconnected {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  font-weight: 500;
+}
+
+.wallet-button-disconnected:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.wallet-popover {
+  border-radius: 8px;
+}
+
+.wallet-popover-content {
+  min-width: 220px;
+}
+
+.wallet-address-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.wallet-address-display:hover {
+  background: #e6e6e6;
+}
+
+.wallet-address-text {
+  font-size: 12px;
+  font-weight: 500;
+  flex: 1;
+  font-family: 'Monaco', 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.wallet-copy-icon {
+  color: #999;
+  transition: color 0.3s ease;
+}
+
+.wallet-copy-icon.copied {
+  color: #52c41a;
+}
+
+.wallet-status-badge {
+  width: 100%;
+  text-align: center;
+  background: linear-gradient(135deg, #52c41a 0%, #95de64 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+}
+
+.wallet-disconnect-button {
+  width: 100%;
+  text-align: left;
+  color: #ff4d4f !important;
+  transition: all 0.3s ease;
+}
+
+.wallet-disconnect-button:hover {
+  background: #fff1f0 !important;
+  transform: translateX(4px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wallet-button {
+    min-width: auto !important;
+  }
+
+  .wallet-popover-content {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wallet-button {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+
+  .wallet-address-text {
+    font-size: 11px;
+  }
+
+  .wallet-popover-content {
+    min-width: 180px;
+  }
+}
+
+/* Animation for copied state */
+@keyframes copySuccess {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.wallet-copy-success {
+  animation: copySuccess 2s ease-in-out;
+}

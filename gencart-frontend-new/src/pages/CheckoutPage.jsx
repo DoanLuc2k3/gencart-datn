@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import { useCart } from '../context/CartContext';
 import { triggerInventoryRefresh } from '../utils/inventoryEvents';
+import useScrollToTop from '../hooks/useScrollToTop';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -35,6 +36,8 @@ const { Step } = Steps;
 const { TextArea } = Input;
 
 const CheckoutPage = () => {
+  useScrollToTop();
+
   const navigate = useNavigate();
   const { cartItems, cartTotal, clearCart } = useCart();
   const [currentStep, setCurrentStep] = useState(0);
@@ -45,6 +48,27 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState(null);
+
+  const sectionCardStyle = {
+    borderRadius: 20,
+    border: '1px solid rgba(148, 163, 184, 0.14)',
+    boxShadow: '0 28px 60px -32px rgba(15, 23, 42, 0.4)',
+    background: 'rgba(255, 255, 255, 0.98)',
+    backdropFilter: 'blur(8px)'
+  };
+
+  const innerCardStyle = {
+    borderRadius: 16,
+    border: '1px solid rgba(148, 163, 184, 0.16)',
+    background: 'rgba(248, 250, 252, 0.8)'
+  };
+  
+  const mainCardStyle = {
+    borderRadius: 24,
+    background: 'rgba(255,255,255,0.98)',
+    boxShadow: '0 32px 70px -36px rgba(15, 23, 42, 0.35)',
+    border: '1px solid rgba(148, 163, 184, 0.16)'
+  };
 
   // Redirect to cart if cart is empty
   useEffect(() => {
@@ -255,7 +279,13 @@ const CheckoutPage = () => {
 
   // Render shipping form
   const renderShippingForm = () => (
-    <Card title="Shipping Information" bordered={false}>
+    <Card
+      title="Shipping Information"
+      bordered={false}
+  style={sectionCardStyle}
+      bodyStyle={{ padding: '32px' }}
+      headStyle={{ fontSize: '20px', fontWeight: 600 }}
+    >
       <Form
         form={shippingForm}
         layout="vertical"
@@ -269,7 +299,7 @@ const CheckoutPage = () => {
               label="Full Name"
               rules={[{ required: true, message: 'Please enter your full name' }]}
             >
-              <Input prefix={<UserOutlined />} placeholder="John Doe" />
+              <Input prefix={<UserOutlined />} style={{ padding: '0 11px' }} placeholder="John Doe" />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
@@ -322,7 +352,7 @@ const CheckoutPage = () => {
               label="City"
               rules={[{ required: true, message: 'Please enter your city' }]}
             >
-              <Input placeholder="Mumbai" />
+              <Input placeholder="Ho Chi Minh City" />
             </Form.Item>
           </Col>
         </Row>
@@ -334,13 +364,14 @@ const CheckoutPage = () => {
               label="State"
               rules={[{ required: true, message: 'Please select your state' }]}
             >
-              <Select placeholder="Select state">
-                <Option value="maharashtra">Maharashtra</Option>
-                <Option value="delhi">Delhi</Option>
-                <Option value="kerala">Kerala</Option>
-                <Option value="karnataka">Karnataka</Option>
-                <Option value="tamilnadu">Tamil Nadu</Option>
-                <Option value="telangana">Telangana</Option>
+              <Select
+                placeholder="Select state"
+                className="checkout-select"
+              >
+                <Option value="hochiminh">Ho Chi Minh</Option>
+                <Option value="hanoi">Ha Noi</Option>
+                <Option value="danang">Da Nang</Option>
+                <Option value="hue">Hue</Option>
                 <Option value="other">Other</Option>
               </Select>
             </Form.Item>
@@ -351,18 +382,21 @@ const CheckoutPage = () => {
               label="PIN Code"
               rules={[{ required: true, message: 'Please enter your PIN code' }]}
             >
-              <Input placeholder="400001" />
+              <Input placeholder="700000" />
             </Form.Item>
           </Col>
           <Col xs={24} md={8}>
             <Form.Item
               name="country"
               label="Country"
-              initialValue="india"
+              initialValue="vietnam"
               rules={[{ required: true, message: 'Please select your country' }]}
             >
-              <Select placeholder="Select country">
-                <Option value="india">India</Option>
+              <Select
+                placeholder="Select country"
+                className="checkout-select"
+              >
+                <Option value="vietnam">Viet Nam</Option>
               </Select>
             </Form.Item>
           </Col>
@@ -379,7 +413,13 @@ const CheckoutPage = () => {
 
   // Render payment form
   const renderPaymentForm = () => (
-    <Card title="Payment Information" bordered={false}>
+    <Card
+      title="Payment Information"
+      bordered={false}
+  style={sectionCardStyle}
+      bodyStyle={{ padding: '32px' }}
+      headStyle={{ fontSize: '20px', fontWeight: 600 }}
+    >
       <Form
         form={paymentForm}
         layout="vertical"
@@ -524,10 +564,16 @@ const CheckoutPage = () => {
 
   // Render order review
   const renderOrderReview = () => (
-    <Card title="Order Review" bordered={false}>
+    <Card
+      title="Order Review"
+      bordered={false}
+  style={sectionCardStyle}
+      bodyStyle={{ padding: '32px' }}
+      headStyle={{ fontSize: '20px', fontWeight: 600 }}
+    >
       <Row gutter={[24, 24]}>
         <Col xs={24} md={16}>
-          <Card type="inner" title="Shipping Information">
+          <Card type="inner" title="Shipping Information" style={innerCardStyle} bodyStyle={{ padding: '24px' }}>
             <p><strong>Name:</strong> {shippingData.fullName}</p>
             <p><strong>Email:</strong> {shippingData.email}</p>
             <p><strong>Phone:</strong> {shippingData.phone}</p>
@@ -540,7 +586,7 @@ const CheckoutPage = () => {
 
           <Divider />
 
-          <Card type="inner" title="Payment Method">
+          <Card type="inner" title="Payment Method" style={innerCardStyle} bodyStyle={{ padding: '24px' }}>
             <p>
               <strong>Payment Method:</strong> {
                 paymentData.paymentMethod === 'creditCard' ? 'Credit/Debit Card' :
@@ -566,7 +612,7 @@ const CheckoutPage = () => {
 
           <Divider />
 
-          <Card type="inner" title="Order Items">
+          <Card type="inner" title="Order Items" style={innerCardStyle} bodyStyle={{ padding: '24px' }}>
             <Table
               dataSource={cartItems}
               columns={orderSummaryColumns}
@@ -577,7 +623,7 @@ const CheckoutPage = () => {
         </Col>
 
         <Col xs={24} md={8}>
-          <Card title="Order Summary">
+          <Card title="Order Summary" style={innerCardStyle} bodyStyle={{ padding: '24px' }}>
             <p><strong>Subtotal:</strong> ₫{cartTotal.toFixed(2)}</p>
             <p><strong>Shipping:</strong> Free</p>
             <p><strong>Tax:</strong> ₫{(cartTotal * 0.18).toFixed(2)}</p>
@@ -608,7 +654,11 @@ const CheckoutPage = () => {
 
   // Render order confirmation
   const renderOrderConfirmation = () => (
-    <Card bordered={false}>
+    <Card
+      bordered={false}
+  style={sectionCardStyle}
+      bodyStyle={{ padding: '48px 32px' }}
+    >
       <div style={{ textAlign: 'center', padding: '20px 0' }}>
         <CheckCircleOutlined style={{ fontSize: '72px', color: '#52c41a' }} />
         <Title level={2}>Order Placed Successfully!</Title>
@@ -651,21 +701,97 @@ const CheckoutPage = () => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <Title level={2}>Checkout</Title>
-
-      <Steps
-        current={currentStep}
-        style={{ marginBottom: '24px' }}
-        responsive={true}
+    <div
+      style={{
+        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        minHeight: '100vh'
+      }}
+    >
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          padding: '48px 24px 96px',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
       >
-        <Step title="Shipping" icon={<HomeOutlined />} />
-        <Step title="Payment" icon={<CreditCardOutlined />} />
-        <Step title="Review" icon={<ShoppingOutlined />} />
-        <Step title="Confirmation" icon={<CheckCircleOutlined />} />
-      </Steps>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              "url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'#ffffff\' fill-opacity=\'0.05\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'4\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"
+          }}
+        />
+        <div
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            position: 'relative',
+            zIndex: 1
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <Title
+              level={2}
+              style={{
+                marginBottom: 12,
+                color: '#fff',
+                fontSize: 'clamp(2rem, 3.5vw, 2.6rem)',
+                fontWeight: 800,
+                textShadow: '0 18px 45px rgba(15, 23, 42, 0.4)'
+              }}
+            >
+              Checkout
+            </Title>
+            <Paragraph
+              style={{
+                color: 'rgba(255,255,255,0.92)',
+                fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+                marginBottom: 0
+              }}
+            >
+              Review your shipping details, choose a payment method, and place your order securely.
+            </Paragraph>
+          </div>
+        </div>
+      </div>
 
-      {renderStepContent()}
+      <div
+        style={{
+          maxWidth: '1200px',
+          margin: '-72px auto 0',
+          padding: '0 20px 56px'
+        }}
+      >
+        <Card
+          bordered={false}
+          style={mainCardStyle}
+          bodyStyle={{ padding: '32px 24px' }}
+        >
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <Steps
+              current={currentStep}
+              responsive
+              style={{
+                marginBottom: '24px',
+                padding: '0 12px'
+              }}
+            >
+              <Step title="Shipping" icon={<HomeOutlined />} />
+              <Step title="Payment" icon={<CreditCardOutlined />} />
+              <Step title="Review" icon={<ShoppingOutlined />} />
+              <Step title="Confirmation" icon={<CheckCircleOutlined />} />
+            </Steps>
+
+            <Divider style={{ margin: '0 0 24px' }} />
+
+            <div>
+              {renderStepContent()}
+            </div>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import {
   Row,
   Col,
@@ -11,8 +11,12 @@ import {
   message,
   Space,
   Tag,
+  Spin,
 } from "antd";
-import { Pie, Column } from "@ant-design/plots";
+
+// Lazy load chart components
+const Pie = lazy(() => import("@ant-design/plots").then(m => ({ default: m.Pie })));
+const Column = lazy(() => import("@ant-design/plots").then(m => ({ default: m.Column })));
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -304,19 +308,21 @@ const SentimentAnalytics = () => {
         <Row gutter={16} style={{ marginBottom: 24 }}>
           <Col xs={24} lg={10}>
             <Card title="Current Sentiment Distribution">
-              <Pie
-                data={[
-                  { type: "Positive", value: sentimentData.counts.positive },
-                  { type: "Neutral", value: sentimentData.counts.neutral },
-                  { type: "Negative", value: sentimentData.counts.negative },
-                ]}
-                angleField="value"
-                colorField="type"
-                radius={0.9}
-                label={{ type: "spider", content: "{name}: {percentage}" }}
-                legend={{ position: "bottom" }}
-                color={["#52c41a", "#faad14", "#ff4d4f"]}
-              />
+              <Suspense fallback={<Spin />}>
+                <Pie
+                  data={[
+                    { type: "Positive", value: sentimentData.counts.positive },
+                    { type: "Neutral", value: sentimentData.counts.neutral },
+                    { type: "Negative", value: sentimentData.counts.negative },
+                  ]}
+                  angleField="value"
+                  colorField="type"
+                  radius={0.9}
+                  label={{ type: "spider", content: "{name}: {percentage}" }}
+                  legend={{ position: "bottom" }}
+                  color={["#52c41a", "#faad14", "#ff4d4f"]}
+                />
+              </Suspense>
             </Card>
           </Col>
 
@@ -327,28 +333,30 @@ const SentimentAnalytics = () => {
                   viewMode === "product" ? selectedProductName : "Global"
                 }`}
               >
-                <Column
-                  data={["positive", "neutral", "negative"].flatMap((sent) =>
-                    trendsData.dates.map((date, i) => ({
-                      date,
-                      type: sent,
-                      value: Number(trendsData[sent]?.[i] || 0),
-                    }))
-                  )}
-                  xField="date"
-                  yField="value"
-                  seriesField="type"
-                  isStack
-                  isPercent
-                  height={280}
-                  color={["#52c41a", "#faad14", "#ff4d4f"]}
-                  tooltip={{
-                    formatter: (datum) => ({
-                      name: datum.type,
-                      value: `${(datum.value * 100).toFixed(1)}%`,
-                    }),
-                  }}
-                />
+                <Suspense fallback={<Spin />}>
+                  <Column
+                    data={["positive", "neutral", "negative"].flatMap((sent) =>
+                      trendsData.dates.map((date, i) => ({
+                        date,
+                        type: sent,
+                        value: Number(trendsData[sent]?.[i] || 0),
+                      }))
+                    )}
+                    xField="date"
+                    yField="value"
+                    seriesField="type"
+                    isStack
+                    isPercent
+                    height={280}
+                    color={["#52c41a", "#faad14", "#ff4d4f"]}
+                    tooltip={{
+                      formatter: (datum) => ({
+                        name: datum.type,
+                        value: `${(datum.value * 100).toFixed(1)}%`,
+                      }),
+                    }}
+                  />
+                </Suspense>
               </Card>
             ) : (
               <Card

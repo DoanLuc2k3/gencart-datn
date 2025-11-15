@@ -1,107 +1,136 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   Button,
   Space,
-  Typography,
-  Input,
   Modal,
   Form,
   Select,
   message,
+  Typography,
   Tag,
   Spin,
-  Alert,
   Drawer,
   Descriptions,
   List,
   Avatar,
   Divider,
-  Badge,
+  Row,
+  Col,
+  Card,
+  Input,
 } from "antd";
 import {
-  SearchOutlined,
   EyeOutlined,
   EditOutlined,
   ShoppingOutlined,
+  UserOutlined,
+  HomeOutlined,
+  PhoneOutlined,
+  MailOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import { getValidImageUrl } from "../../utils/imageUtils";
+import { useResponsive } from "../../hooks/useResponsive";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const AdminOrders = () => {
+  const { isMobile } = useResponsive();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchText, setSearchText] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingOrder, setEditingOrder] = useState(null);
   const [form] = Form.useForm();
+  const [searchText, setSearchText] = useState("");
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+    showSizeChanger: true,
+    pageSizeOptions: ["10", "20", "50", "100"],
+  });
 
-  // Fetch orders
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-          throw new Error("No authentication token found");
-        }
+  // Fetch orders - optimized with backend pagination
+  const fetchOrders = async (page = 1, pageSize = 10) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
 
-        const response = await fetch("http://localhost:8000/api/orders/", {
+      // Fetch orders with pagination - backend already includes user data via select_related
+      const response = await fetch(
+        `http://localhost:8000/api/orders/?page=${page}&page_size=${pageSize}`,
+        {
+          credentials: "include",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch orders");
         }
+      );
 
-        const data = await response.json();
-        console.log("Orders data in AdminOrders:", data);
-
-        // Fetch user details for each order if not already included
-        const ordersWithUserDetails = await Promise.all(
-          data.results.map(async (order) => {
-            if (!order.user && order.user_id) {
-              try {
-                const userResponse = await fetch(
-                  `http://localhost:8000/api/users/${order.user_id}/`,
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                    },
-                  }
-                );
-                if (userResponse.ok) {
-                  const userData = await userResponse.json();
-                  return { ...order, user: userData };
-                }
-              } catch (error) {
-                console.error(
-                  `Error fetching user for order ${order.id}:`,
-                  error
-                );
-              }
-            }
-            return order;
-          })
-        );
-
-        setOrders(ordersWithUserDetails);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-        setError(error.message);
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to fetch orders");
       }
-    };
 
-    fetchOrders();
+      const data = await response.json();
+      const orders = data.results || data || [];
+
+      // Update pagination - keep existing settings
+      setPagination((prev) => ({
+        ...prev,
+        current: page,
+        pageSize: pageSize,
+        total: data.count || orders.length,
+      }));
+
+      // Backend already includes user data, no need to fetch separately
+      setOrders(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      message.error("Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders(pagination.current, pagination.pageSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Handle search - optimized with useMemo
+  const handleSearch = (value) => {
+    setSearchText(value);
+  };
+
+  // Memoized filtered orders to avoid re-filtering on every render
+  const displayedOrders = useMemo(() => {
+    if (!searchText.trim()) {
+      return orders;
+    }
+    
+    const searchLower = searchText.toLowerCase();
+    return orders.filter((order) => {
+      const orderId = String(order.id);
+      const username = order.user?.username?.toLowerCase() || "";
+      const email = order.user?.email?.toLowerCase() || "";
+      const firstName = order.user?.first_name?.toLowerCase() || "";
+      const lastName = order.user?.last_name?.toLowerCase() || "";
+      const fullName = `${firstName} ${lastName}`.trim();
+      const status = order.status?.toLowerCase() || "";
+      
+      return (
+        orderId.includes(searchText) ||
+        username.includes(searchLower) ||
+        email.includes(searchLower) ||
+        fullName.includes(searchLower) ||
+        status.includes(searchLower)
+      );
+    });
+  }, [orders, searchText]);
 
   // Show order details
   const showOrderDetails = (order) => {
@@ -109,94 +138,72 @@ const AdminOrders = () => {
     setDrawerVisible(true);
   };
 
-  // Show edit order modal
+  // Show edit status modal
   const showEditModal = (order) => {
-    setEditingOrder(order);
+    setSelectedOrder(order);
     form.setFieldsValue({
       status: order.status,
-      payment_status: order.payment_status,
-      tracking_number: order.tracking_number || "",
     });
     setModalVisible(true);
   };
 
-  // Handle update order
-  const handleUpdateOrder = async () => {
+  // Handle table pagination change
+  const handleTableChange = (pag, filters, sorter) => {
+    // If searching, pagination is handled by Ant Design (client-side)
+    if (searchText.trim()) {
+      // Just update the pageSize in state for consistency
+      setPagination((prev) => ({
+        ...prev,
+        pageSize: pag.pageSize,
+      }));
+      return;
+    }
+    
+    // Server-side pagination when not searching
+    fetchOrders(pag.current, pag.pageSize);
+  };
+
+  // Handle status update
+  const handleUpdateStatus = async (values) => {
     try {
-      const values = await form.validateFields();
-
       const token = localStorage.getItem("access_token");
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-
       const response = await fetch(
-        `http://localhost:8000/api/orders/${editingOrder.id}/`,
+        `http://localhost:8000/api/orders/${selectedOrder.id}/`,
         {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(values),
+          body: JSON.stringify({ status: values.status }),
         }
       );
-
       if (!response.ok) {
-        throw new Error("Failed to update order");
+        throw new Error("Failed to update order status");
       }
-
-      message.success("Order updated successfully");
+      message.success("Order status updated successfully");
       setModalVisible(false);
-
-      // Update order in state
-      const updatedOrder = await response.json();
-      setOrders(
-        orders.map((order) =>
-          order.id === updatedOrder.id ? updatedOrder : order
-        )
+      const updatedOrders = orders.map((order) =>
+        order.id === selectedOrder.id
+          ? { ...order, status: values.status }
+          : order
       );
-
-      // If the drawer is open and showing this order, update it there too
-      if (selectedOrder && selectedOrder.id === updatedOrder.id) {
-        setSelectedOrder(updatedOrder);
-      }
+      setOrders(updatedOrders);
     } catch (error) {
-      console.error("Error updating order:", error);
-      message.error(error.message || "Failed to update order");
+      console.error("Error updating order status:", error);
+      message.error("Failed to update order status");
     }
   };
 
-  // Filter orders by search text
-  const filteredOrders = orders.filter((order) => {
-    const searchLower = searchText.toLowerCase();
-    return (
-      order.id.toString().includes(searchLower) ||
-      (order.user &&
-        order.user.username &&
-        order.user.username.toLowerCase().includes(searchLower)) ||
-      (order.user_id && order.user_id.toString().includes(searchLower)) ||
-      (order.tracking_number &&
-        order.tracking_number.toLowerCase().includes(searchLower))
-    );
-  });
+  // Get status tag
+  const getStatusTag = (status) => {
+    let color = "default";
+    if (status === "processing") color = "blue";
+    if (status === "shipped") color = "cyan";
+    if (status === "delivered") color = "green";
+    if (status === "cancelled") color = "red";
 
-  // Get status tag color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "blue";
-      case "processing":
-        return "orange";
-      case "shipped":
-        return "cyan";
-      case "delivered":
-        return "green";
-      case "cancelled":
-        return "red";
-      default:
-        return "default";
-    }
+    return <Tag color={color}>{status.toUpperCase()}</Tag>;
   };
 
   // Table columns
@@ -209,47 +216,53 @@ const AdminOrders = () => {
     },
     {
       title: "Customer",
-      key: "customer",
-      render: (_, record) => {
-        console.log("Order record in AdminOrders:", record); // Debug log
-        if (record.user && record.user.username) {
-          return `@${record.user.username}`;
-        } else if (record.user_id) {
-          return `User ${record.user_id}`;
-        } else {
-          return "Guest";
-        }
+      dataIndex: "user",
+      key: "user",
+      render: (user, record) => {
+        if (!user && !record.user_id) return "Guest";
+        if (!user && record.user_id) return `User ${record.user_id}`;
+
+        const fullName = `${user.first_name || ""} ${
+          user.last_name || ""
+        }`.trim();
+        return (
+          <div>
+            <div>
+              <strong>@{user.username}</strong>
+            </div>
+            {fullName && (
+              <div style={{ fontSize: "12px", color: "#888" }}>{fullName}</div>
+            )}
+          </div>
+        );
       },
       sorter: (a, b) => {
-        const aName = a.user
-          ? `@${a.user.username}`
+        const aUsername = a.user
+          ? a.user.username
           : a.user_id
           ? `User ${a.user_id}`
           : "Guest";
-        const bName = b.user
-          ? `@${b.user.username}`
+        const bUsername = b.user
+          ? b.user.username
           : b.user_id
           ? `User ${b.user_id}`
           : "Guest";
-        return aName.localeCompare(bName);
+        return aUsername.localeCompare(bUsername);
       },
     },
     {
       title: "Date",
       dataIndex: "created_at",
-      key: "date",
-      render: (date) => new Date(date).toLocaleDateString(),
+      key: "created_at",
+      render: (text) => new Date(text).toLocaleDateString("en-IN"),
       sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status) => (
-        <Tag color={getStatusColor(status)}>{status.toUpperCase()}</Tag>
-      ),
+      render: (status) => getStatusTag(status),
       filters: [
-        { text: "Pending", value: "pending" },
         { text: "Processing", value: "processing" },
         { text: "Shipped", value: "shipped" },
         { text: "Delivered", value: "delivered" },
@@ -258,24 +271,17 @@ const AdminOrders = () => {
       onFilter: (value, record) => record.status === value,
     },
     {
-      title: "Payment",
-      dataIndex: "payment_status",
-      key: "payment",
-      render: (paid) => (
-        <Tag color={paid ? "green" : "red"}>{paid ? "PAID" : "UNPAID"}</Tag>
-      ),
-      filters: [
-        { text: "Paid", value: true },
-        { text: "Unpaid", value: false },
-      ],
-      onFilter: (value, record) => record.payment_status === value,
+      title: "Total",
+      dataIndex: "total_amount",
+      key: "total_amount",
+      render: (text) => `₫${parseFloat(text).toFixed(2)}`,
+      sorter: (a, b) => parseFloat(a.total_amount) - parseFloat(b.total_amount),
     },
     {
-      title: "Total (VND)",
-      dataIndex: "total_amount",
-      key: "total",
-      render: (amount) => `₫${parseFloat(amount).toFixed(2)}`,
-      sorter: (a, b) => parseFloat(a.total_amount) - parseFloat(b.total_amount),
+      title: "Items",
+      dataIndex: "items_count",
+      key: "items_count",
+      render: (count, record) => count || (record.items ? record.items.length : 0),
     },
     {
       title: "Actions",
@@ -285,134 +291,263 @@ const AdminOrders = () => {
           <Button
             type="primary"
             icon={<EyeOutlined />}
-            size="small"
             onClick={() => showOrderDetails(record)}
+            size="small"
           />
           <Button
             type="default"
             icon={<EditOutlined />}
-            size="small"
             onClick={() => showEditModal(record)}
+            size="small"
           />
         </Space>
       ),
     },
   ];
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: "center", padding: "50px" }}>
-        <Spin size="large" />
-        <p>Loading orders...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert
-        message="Error"
-        description={`Failed to load orders: ${error}`}
-        type="error"
-        showIcon
-      />
-    );
-  }
-
   return (
-    <div>
-      <div
+    <div
+      style={{
+        padding: isMobile ? 12 : 24,
+        background: "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
+        borderRadius: isMobile ? 12 : 24,
+        minHeight: "100%",
+      }}
+    >
+      <Card
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 16,
+          borderRadius: isMobile ? 12 : 24,
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          color: "#fff",
+          boxShadow: "0 28px 60px rgba(15, 23, 42, 0.45)",
+          marginBottom: isMobile ? 16 : 24,
+          border: "none",
         }}
+        bodyStyle={{ padding: isMobile ? 16 : 28 }}
       >
-        <Title level={2}>Orders</Title>
-      </div>
+        <Row gutter={[16, 16]} align="middle" justify="space-between">
+          <Col xs={24} md={16}>
+            <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0 }}>
+              Orders
+            </Title>
+            <Text style={{ color: "rgba(255,255,255,0.72)" }}>
+              Track revenue and fulfillment progress at a glance.
+            </Text>
+          </Col>
+          <Col xs={24} md={8} style={{ textAlign: isMobile ? "left" : "right" }}>
+            <Space wrap>
+              <Button 
+                onClick={() => fetchOrders(pagination.current, pagination.pageSize)}
+                loading={loading}
+                size={isMobile ? "middle" : "default"}
+              >
+                Refresh
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
 
-      <div style={{ marginBottom: 16 }}>
+      <Card
+        size="small"
+        style={{
+          borderRadius: 16,
+          border: "1px solid rgba(148, 163, 184, 0.25)",
+          boxShadow: "0 18px 36px rgba(15, 23, 42, 0.12)",
+          background: "linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)",
+          marginBottom: 20,
+        }}
+        bodyStyle={{ padding: "20px 24px" }}
+      >
         <Input
-          placeholder="Search orders by ID, customer, or tracking number"
-          prefix={<SearchOutlined />}
+          allowClear
+          prefix={<SearchOutlined style={{ color: "#94a3b8" }} />}
+          placeholder="Search by order ID, customer name, username, email or status..."
+          style={{ width: "100%" }}
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          style={{ width: 400 }}
+          onChange={(e) => handleSearch(e.target.value)}
         />
-      </div>
+      </Card>
 
-      <Table
-        columns={columns}
-        dataSource={filteredOrders.map((order) => ({
-          ...order,
-          key: order.id,
-        }))}
-        pagination={{ pageSize: 10 }}
-      />
+      <Card
+        style={{
+          borderRadius: 20,
+          border: "1px solid rgba(148, 163, 184, 0.24)",
+          boxShadow: "0 20px 45px rgba(15, 23, 42, 0.12)",
+          background: "#ffffff",
+        }}
+        bodyStyle={{ padding: 0 }}
+      >
+        <Table
+          columns={columns}
+          dataSource={displayedOrders}
+          loading={loading}
+          rowKey="id"
+          onChange={handleTableChange}
+          scroll={{ x: 900 }}
+          pagination={
+            searchText.trim()
+              ? {
+                  // Client-side pagination when searching
+                  current: 1,
+                  pageSize: pagination.pageSize,
+                  total: displayedOrders.length,
+                  showSizeChanger: true,
+                  pageSizeOptions: ["10", "20", "50", "100"],
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} orders`,
+                }
+              : {
+                  // Server-side pagination when not searching
+                  ...pagination,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} of ${total} orders`,
+                }
+          }
+        />
+      </Card>
+
+      {/* Edit Status Modal */}
+      <Modal
+        title="Update Order Status"
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        footer={null}
+      >
+        <Form form={form} layout="vertical" onFinish={handleUpdateStatus}>
+          <Form.Item
+            name="status"
+            label="Status"
+            rules={[{ required: true, message: "Please select a status" }]}
+          >
+            <Select placeholder="Select status">
+              <Option value="processing">Processing</Option>
+              <Option value="shipped">Shipped</Option>
+              <Option value="delivered">Delivered</Option>
+              <Option value="cancelled">Cancelled</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                style={{ marginRight: 8 }}
+                onClick={() => setModalVisible(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="primary" htmlType="submit">
+                Update Status
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* Order Details Drawer */}
       <Drawer
-        title={
-          selectedOrder ? `Order #${selectedOrder.id} Details` : "Order Details"
-        }
+        title={`Order #${selectedOrder?.id || ""} Details`}
         placement="right"
         width={600}
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
+        extra={
+          <Button
+            type="primary"
+            onClick={() => {
+              setDrawerVisible(false);
+              showEditModal(selectedOrder);
+            }}
+          >
+            Update Status
+          </Button>
+        }
       >
         {selectedOrder && (
           <>
-            <Descriptions bordered column={1}>
+            <Descriptions title="Order Information" bordered column={1}>
               <Descriptions.Item label="Order ID">
                 {selectedOrder.id}
               </Descriptions.Item>
-              <Descriptions.Item label="Customer">
-                {selectedOrder.user && selectedOrder.user.username
-                  ? `@${selectedOrder.user.username}`
-                  : selectedOrder.user_id
-                  ? `User ${selectedOrder.user_id}`
-                  : "Guest"}
-              </Descriptions.Item>
               <Descriptions.Item label="Date">
-                {new Date(selectedOrder.created_at).toLocaleString()}
+                {new Date(selectedOrder.created_at).toLocaleString("en-IN")}
               </Descriptions.Item>
               <Descriptions.Item label="Status">
-                <Tag color={getStatusColor(selectedOrder.status)}>
-                  {selectedOrder.status.toUpperCase()}
-                </Tag>
+                {getStatusTag(selectedOrder.status)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Total Amount">
+                ₫{parseFloat(selectedOrder.total_amount).toFixed(2)}
               </Descriptions.Item>
               <Descriptions.Item label="Payment Status">
-                <Tag color={selectedOrder.payment_status ? "green" : "red"}>
-                  {selectedOrder.payment_status ? "PAID" : "UNPAID"}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Tracking Number">
-                {selectedOrder.tracking_number || "Not assigned"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Shipping Address">
-                {selectedOrder.shipping_address ? (
-                  <>
-                    {selectedOrder.shipping_address.street_address}
-                    {selectedOrder.shipping_address.apartment_address &&
-                      `, ${selectedOrder.shipping_address.apartment_address}`}
-                    <br />
-                    {selectedOrder.shipping_address.city},{" "}
-                    {selectedOrder.shipping_address.state}{" "}
-                    {selectedOrder.shipping_address.zip_code}
-                    <br />
-                    {selectedOrder.shipping_address.country}
-                  </>
-                ) : (
-                  "No shipping address provided"
-                )}
-              </Descriptions.Item>
-              <Descriptions.Item label="Total Amount (VND)">
-                ₫{parseFloat(selectedOrder.total_amount).toFixed(2)}
+                {selectedOrder.payment_status ? "Paid" : "Pending"}
               </Descriptions.Item>
             </Descriptions>
 
-            <Divider orientation="left">Order Items</Divider>
+            <Divider />
 
+            <Title level={5}>
+              <UserOutlined /> Customer Information
+            </Title>
+            {selectedOrder.user ? (
+              <Descriptions bordered column={1}>
+                <Descriptions.Item label="Username">
+                  <Text strong>@{selectedOrder.user.username}</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Name">
+                  {`${selectedOrder.user.first_name || ""} ${
+                    selectedOrder.user.last_name || ""
+                  }`.trim() || "No Name Provided"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Email">
+                  {selectedOrder.user.email}
+                </Descriptions.Item>
+              </Descriptions>
+            ) : selectedOrder.user_id ? (
+              <Descriptions bordered column={1}>
+                <Descriptions.Item label="User ID">
+                  <Text strong>{selectedOrder.user_id}</Text>
+                </Descriptions.Item>
+              </Descriptions>
+            ) : (
+              <Text>Guest Order</Text>
+            )}
+
+            <Divider />
+
+            <Title level={5}>
+              <HomeOutlined /> Shipping Address
+            </Title>
+            {selectedOrder.shipping_address ? (
+              <Descriptions bordered column={1}>
+                <Descriptions.Item label="Name">
+                  {`${selectedOrder.shipping_address.first_name} ${selectedOrder.shipping_address.last_name}`}
+                </Descriptions.Item>
+                <Descriptions.Item label="Address">
+                  {`${selectedOrder.shipping_address.street_address}${
+                    selectedOrder.shipping_address.apartment_address
+                      ? ", " + selectedOrder.shipping_address.apartment_address
+                      : ""
+                  },
+                  ${selectedOrder.shipping_address.city}, ${
+                    selectedOrder.shipping_address.state
+                  }, ${selectedOrder.shipping_address.zip_code}`}
+                </Descriptions.Item>
+                <Descriptions.Item label="Phone">
+                  {selectedOrder.shipping_address.phone}
+                </Descriptions.Item>
+                <Descriptions.Item label="Email">
+                  {selectedOrder.shipping_address.email}
+                </Descriptions.Item>
+              </Descriptions>
+            ) : (
+              <Text>No shipping address provided</Text>
+            )}
+
+            <Divider />
+
+            <Title level={5}>
+              <ShoppingOutlined /> Order Items
+            </Title>
             <List
               itemLayout="horizontal"
               dataSource={selectedOrder.items || []}
@@ -424,89 +559,31 @@ const AdminOrders = () => {
                         shape="square"
                         size={64}
                         src={getValidImageUrl(
-                          item.product.image_url || item.product.primary_image,
-                          item.product.name,
+                          item.product?.primary_image,
+                          item.product?.name,
                           64,
                           64
                         )}
-                        icon={<ShoppingOutlined />}
                       />
                     }
-                    title={item.product.name}
+                    title={item.product?.name || "Product"}
                     description={
-                      <>
+                      <Space direction="vertical">
                         <Text>Quantity: {item.quantity}</Text>
-                        <br />
                         <Text>Price: ₫{parseFloat(item.price).toFixed(2)}</Text>
-                        <br />
                         <Text strong>
-                          Total: ₫
+                          Subtotal: ₫
                           {(parseFloat(item.price) * item.quantity).toFixed(2)}
                         </Text>
-                      </>
+                      </Space>
                     }
                   />
                 </List.Item>
               )}
             />
-
-            <div style={{ marginTop: 16, textAlign: "right" }}>
-              <Button
-                type="primary"
-                onClick={() => showEditModal(selectedOrder)}
-              >
-                Update Order
-              </Button>
-            </div>
           </>
         )}
       </Drawer>
-
-      {/* Edit Order Modal */}
-      <Modal
-        title="Update Order"
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setModalVisible(false)}>
-            Cancel
-          </Button>,
-          <Button key="submit" type="primary" onClick={handleUpdateOrder}>
-            Update
-          </Button>,
-        ]}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="status"
-            label="Order Status"
-            rules={[{ required: true, message: "Please select order status" }]}
-          >
-            <Select>
-              <Option value="pending">Pending</Option>
-              <Option value="processing">Processing</Option>
-              <Option value="shipped">Shipped</Option>
-              <Option value="delivered">Delivered</Option>
-              <Option value="cancelled">Cancelled</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="payment_status"
-            label="Payment Status"
-            valuePropName="checked"
-          >
-            <Select>
-              <Option value={true}>Paid</Option>
-              <Option value={false}>Unpaid</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="tracking_number" label="Tracking Number">
-            <Input placeholder="Enter tracking number" />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 };

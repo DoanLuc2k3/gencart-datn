@@ -13,9 +13,17 @@ class AddressSerializer(serializers.ModelSerializer):
         fields = ['id', 'address_type', 'street_address', 'apartment_address',
                   'city', 'state', 'country', 'zip_code', 'default']
 
+class UserBasicSerializer(serializers.ModelSerializer):
+    """
+    Lightweight serializer for User model - for list views
+    """
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+
 class UserSerializer(serializers.ModelSerializer):
     """
-    Serializer for the User model
+    Full serializer for the User model
     """
     addresses = AddressSerializer(many=True, read_only=True)
     avatar_url = serializers.SerializerMethodField()
@@ -23,7 +31,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name',
-                  'phone_number', 'addresses', 'date_joined', 'avatar', 'avatar_url']
+                  'phone_number', 'addresses', 'date_joined', 'avatar', 'avatar_url', 'is_staff', 'is_superuser']
         read_only_fields = ['date_joined', 'avatar_url']
 
     def get_avatar_url(self, obj):

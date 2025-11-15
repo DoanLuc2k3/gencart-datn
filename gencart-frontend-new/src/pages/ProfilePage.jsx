@@ -34,11 +34,15 @@ import {
   EnvironmentOutlined,
   GlobalOutlined
 } from '@ant-design/icons';
+import useScrollToTop from '../hooks/useScrollToTop';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 
 const ProfilePage = () => {
+  // Scroll to top when page loads
+  useScrollToTop();
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState({
@@ -1033,21 +1037,56 @@ const ProfilePage = () => {
   );
 
   return (
-    <div style={{ 
-      background: '#f5f5f5',
-      minHeight: '100vh',
-      padding: '24px'
-    }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        {/* Page Header */}
-        <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-          <Title level={1} style={{ marginBottom: '8px', color: '#262626' }}>
-            My Profile
-          </Title>
-          <Text style={{ fontSize: '16px', color: '#8c8c8c' }}>
-            Manage your account settings and personal information
-          </Text>
+    <div
+      style={{
+        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        minHeight: '100vh',
+      }}
+    >
+      {/* Gradient Header */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          padding: '40px 24px 48px',
+          position: 'relative',
+          overflow: 'hidden',
+          marginBottom: 0,
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+          }}
+        />
+        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <div style={{ textAlign: 'center', marginBottom: '0' }}>
+            <Title
+              level={1}
+              style={{
+                color: 'white',
+                marginBottom: 8,
+                fontSize: 'clamp(2.1rem, 4.2vw, 3.05rem)',
+                fontWeight: 800,
+                textShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              My Profile
+            </Title>
+            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 'clamp(1rem, 2vw, 1.2rem)' }}>
+              Manage your account settings and personal information
+            </Text>
+          </div>
         </div>
+      </div>
+
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 20px' }}>
 
         {loading ? (
           <div style={{ 

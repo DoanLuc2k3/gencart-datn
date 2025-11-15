@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as django_filters
-from django.db.models import Avg, Count, Q  # Added Q
+from django.db.models import Avg, Count, Q, F  # Added F
 from django.utils.text import slugify  # Added slugify
 import cloudinary
 import cloudinary.uploader
@@ -11,6 +11,9 @@ import time
 from .models import Category, Product, Review
 from .serializers import CategorySerializer, ProductSerializer, ProductListSerializer, ReviewSerializer
 from .filters import ProductFilter
+from .pagination import StandardResultsSetPagination
+from django.conf import settings
+from django.db import connection
 from orders.models import OrderItem
 from sentiment_analysis.services import SentimentAnalysisService
 
@@ -78,7 +81,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Product model
     """
-    queryset = Product.objects.all()
+    # Optimize queryset with select_related and prefetch_related to avoid N+1 queries
+    queryset = Product.objects.select_related('category').prefetch_related('reviews')
     serializer_class = ProductSerializer
     permission_classes = []  # use dynamic in get_permissions
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -98,6 +102,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return ProductListSerializer
         return ProductSerializer
+
+    # Use safe pagination by default
+    pagination_class = StandardResultsSetPagination
 
     def create(self, request, *args, **kwargs):
         """Create a new product with image upload to Cloudinary"""
@@ -227,12 +234,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         return self.update(request, *args, **kwargs)
 
     def get_queryset(self):
-        queryset = Product.objects.all()
+        # Optimize queries: select_related for ForeignKey, prefetch_related for ManyToMany/Reverse FK
+        queryset = Product.objects.select_related('category').prefetch_related('reviews').all()
 
         # Annotate with average rating and review count for sorting
+        # These annotations use the prefetched reviews efficiently
         queryset = queryset.annotate(
             avg_rating=Avg('reviews__rating'),
-            review_count=Count('reviews')
+            review_count=Count('reviews', distinct=True)
         )
 
         # --- New category name support start ---
@@ -257,6 +266,25 @@ class ProductViewSet(viewsets.ModelViewSet):
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
 
+        # Filter by minimum rating
+        min_rating = self.request.query_params.get('min_rating')
+        if min_rating:
+            try:
+                min_rating_value = float(min_rating)
+                queryset = queryset.filter(avg_rating__gte=min_rating_value)
+            except (ValueError, TypeError):
+                pass  # Ignore invalid rating values
+
+        # Filter by on sale (products with discount)
+        on_sale = self.request.query_params.get('on_sale')
+        if on_sale and on_sale.lower() in ['true', '1', 'yes']:
+            queryset = queryset.filter(discount_price__isnull=False, discount_price__lt=F('price'))
+
+        # Filter by in stock
+        in_stock = self.request.query_params.get('in_stock')
+        if in_stock and in_stock.lower() in ['true', '1', 'yes']:
+            queryset = queryset.filter(inventory__gt=0)
+
         # Handle custom ordering for average_rating
         ordering = self.request.query_params.get('ordering')
         if ordering == 'average_rating':
@@ -268,9 +296,28 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def paginate_queryset(self, queryset):
         # Check if pagination should be disabled
-        if self.request.query_params.get('no_pagination', '').lower() in ['true', '1', 'yes']:
-            return None
+        no_pag = self.request.query_params.get('no_pagination', '').lower() in ['true', '1', 'yes']
+        if no_pag:
+            # Only allow disabling pagination if the requester is authenticated and is staff/superuser
+            user = self.request.user
+            if user and user.is_authenticated and (getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False)):
+                return None
+            # Otherwise ignore the flag and paginate normally to protect server
         return super().paginate_queryset(queryset)
+
+    def list(self, request, *args, **kwargs):
+        import time, logging
+        logger = logging.getLogger(__name__)
+        start = time.time()
+        # Clear connection queries if DEBUG to measure only this request
+        if settings.DEBUG:
+            connection.queries_log.clear() if hasattr(connection, 'queries_log') else None
+        response = super().list(request, *args, **kwargs)
+        duration = time.time() - start
+        # Log DB query count when in DEBUG
+        qcount = len(connection.queries) if settings.DEBUG else 'n/a'
+        logger.info(f"Product list served in {duration:.3f}s (DB queries: {qcount}) for user={request.user if request.user.is_authenticated else 'anon'}")
+        return response
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -436,8 +483,15 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def sentiment_overview(self, request):
         from products.models import Review
+        from django.db.models import Avg
+        
         reviews = Review.objects.filter(sentiment__isnull=False)
         total = reviews.count()
+        
+        # Count unique products that have reviews
+        products_with_reviews = Review.objects.values('product').distinct().count()
+        total_products = Product.objects.count()
+        
         if total == 0:
             return Response({
                 'scope': 'global',
@@ -445,7 +499,9 @@ class ProductViewSet(viewsets.ModelViewSet):
                 'sentiment_counts': {'positive': 0, 'neutral': 0, 'negative': 0},
                 'sentiment_distribution': {'positive': 0, 'neutral': 0, 'negative': 0},
                 'average_confidence': 0,
-                'overall_sentiment': 'neutral'
+                'overall_sentiment': 'neutral',
+                'products_with_reviews': products_with_reviews,
+                'total_products': total_products
             })
         counts = {
             'positive': reviews.filter(sentiment='positive').count(),
@@ -453,7 +509,6 @@ class ProductViewSet(viewsets.ModelViewSet):
             'negative': reviews.filter(sentiment='negative').count(),
         }
         distribution = {k: (v/total)*100 for k, v in counts.items()}
-        from django.db.models import Avg
         avg_conf = reviews.aggregate(a=Avg('sentiment_confidence'))['a'] or 0
         overall = max(counts, key=counts.get)
         return Response({
@@ -462,7 +517,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             'sentiment_counts': counts,
             'sentiment_distribution': distribution,
             'average_confidence': avg_conf,
-            'overall_sentiment': overall
+            'overall_sentiment': overall,
+            'products_with_reviews': products_with_reviews,
+            'total_products': total_products
         })
 
 class ReviewViewSet(viewsets.ModelViewSet):
