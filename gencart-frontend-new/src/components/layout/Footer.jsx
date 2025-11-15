@@ -29,6 +29,7 @@ const Footer = () => {
                 <ShoppingOutlined style={{ marginRight: "8px" }} />
                 GenCart
               </Title>
+              {/* text */}
               <Text className="brand-description">
                 Your premium destination for quality products. We bring you the
                 finest selection with unmatched customer service and competitive
