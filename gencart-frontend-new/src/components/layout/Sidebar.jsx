@@ -12,6 +12,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from "@ant-design/icons";
+import WalletButton from "../blockchain/WalletButton";
 import "./Sidebar.css";
 
 const { Sider } = Layout;
@@ -331,6 +332,18 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           >
             Browse & Discover Products
           </Text>
+        </div>
+
+        <div
+          style={{
+            padding: "clamp(16px, 3.5vw, 20px) clamp(16px, 3vw, 20px)", // Responsive padding
+            display: "flex",
+            justifyContent: "center",
+            borderBottom: "1px solid rgba(102, 126, 234, 0.1)",
+            background: "rgba(102, 126, 234, 0.02)",
+          }}
+        >
+          <WalletButton />
         </div>
 
         {loading ? (

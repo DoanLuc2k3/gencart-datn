@@ -1,0 +1,358 @@
+/**
+ * Cryptocurrency Payment Styles
+ * components/blockchain/CryptoPayment.css
+ */
+
+.crypto-payment-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.payment-placeholder {
+  padding: 40px 20px;
+  text-align: center;
+  background: #f5f5f5;
+  color: #999;
+  font-size: 16px;
+}
+
+.payment-placeholder.warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.payment-placeholder.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.payment-placeholder p {
+  margin: 0 0 16px 0;
+}
+
+.payment-placeholder small {
+  display: block;
+  font-size: 12px;
+  margin: 4px 0;
+}
+
+.payment-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.payment-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.balance-info {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.payment-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-control:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* USD Amount Input */
+.usd-amount {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.usd-amount .currency {
+  padding: 10px 12px;
+  background: #f5f5f5;
+  font-weight: 600;
+  color: #333;
+}
+
+.usd-amount .form-control {
+  border: none;
+  margin: 0;
+  flex: 1;
+}
+
+/* Crypto Selector */
+.crypto-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.crypto-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.crypto-option:hover {
+  border-color: #667eea;
+  background: #f0f7ff;
+}
+
+.crypto-option.active {
+  border-color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+.crypto-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.crypto-info {
+  text-align: center;
+  flex: 1;
+}
+
+.crypto-info strong {
+  display: block;
+  font-size: 14px;
+  color: #333;
+}
+
+.crypto-info small {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+
+/* Exchange Rate */
+.exchange-rate {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.exchange-rate .form-control {
+  flex: 1;
+}
+
+.rate-unit {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+}
+
+/* Crypto Amount */
+.crypto-amount {
+  display: flex;
+  gap: 8px;
+}
+
+.crypto-amount .form-control {
+  flex: 1;
+}
+
+.btn-small {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-small:hover {
+  background: #764ba2;
+}
+
+.calc-info {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Payment Summary */
+.payment-summary {
+  background: #f9f9f9;
+  border-left: 4px solid #667eea;
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.summary-row span {
+  color: #666;
+}
+
+.summary-row strong {
+  color: #333;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+/* Messages */
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+/* Payment Footer */
+.payment-footer {
+  padding: 16px 24px;
+  background: #f9f9f9;
+  border-top: 1px solid #eee;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  width: 100%;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-large {
+  padding: 14px 20px;
+  font-size: 16px;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.confirmation-actions .btn-secondary {
+  background: #e0e0e0;
+  color: #333;
+  flex: 1;
+  padding: 12px;
+}
+
+.confirmation-actions .btn-secondary:hover:not(:disabled) {
+  background: #d0d0d0;
+}
+
+.confirmation-actions .btn-primary {
+  flex: 1;
+  padding: 12px;
+}
+
+@media (max-width: 600px) {
+  .crypto-selector {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  .crypto-option {
+    padding: 12px;
+  }
+
+  .crypto-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .crypto-info strong {
+    font-size: 13px;
+  }
+
+  .crypto-info small {
+    font-size: 11px;
+  }
+
+  .exchange-rate {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .exchange-rate .form-control {
+    width: 100%;
+  }
+
+  .rate-unit {
+    padding: 8px 0;
+  }
+}

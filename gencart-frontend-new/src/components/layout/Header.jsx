@@ -8,6 +8,7 @@ import NavigationMenu from "./NavigationMenu";
 import CartButton from "../cart/CartButton";
 import UserAvatar from "../user/UserAvatar";
 import UserMenu from "../user/UserMenu";
+import WalletButton from "../blockchain/WalletButton";
 import "./UserMenu.css";
 
 const { Header: AntHeader } = Layout;
@@ -177,6 +178,8 @@ const Header = () => {
               flex: "0 0 auto",
             }}
           >
+            <WalletButton />
+
             <CartButton cartCount={cartCount} />
 
             <UserAvatar 

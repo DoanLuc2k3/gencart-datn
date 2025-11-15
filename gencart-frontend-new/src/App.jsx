@@ -1,6 +1,11 @@
 import React, { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Layout, ConfigProvider, Spin } from "antd";
+import { WagmiProvider } from "wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createConfig, http } from "wagmi";
+import { mainnet, polygon, bsc, sepolia } from "wagmi/chains";
+import { injected } from "wagmi/connectors";
 import "./App.css";
 
 // Context
@@ -9,6 +14,20 @@ import { CartProvider } from "./context/CartContext";
 // Components - Eager loading for critical UI
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
+
+// Wagmi Configuration
+const queryClient = new QueryClient();
+
+const wagmiConfig = createConfig({
+  chains: [sepolia, mainnet, polygon, bsc],
+  connectors: [injected()],
+  transports: {
+    [sepolia.id]: http(),
+    [mainnet.id]: http(),
+    [polygon.id]: http(),
+    [bsc.id]: http(),
+  },
+});
 
 // Pages - Lazy loading for code splitting
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -46,16 +65,18 @@ const LoadingFallback = () => (
 
 function App() {
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: "#1677ff",
-        },
-      }}
-    >
-      <CartProvider>
-        <Router>
-          <Suspense fallback={<LoadingFallback />}>
+    <QueryClientProvider client={queryClient}>
+      <WagmiProvider config={wagmiConfig}>
+        <ConfigProvider
+          theme={{
+            token: {
+              colorPrimary: "#1677ff",
+            },
+          }}
+        >
+          <CartProvider>
+            <Router>
+              <Suspense fallback={<LoadingFallback />}>
             <Routes>
               {/* Admin route with its own layout */}
               <Route path="/admin" element={<AdminLayout />}>
@@ -118,7 +139,9 @@ function App() {
           </Suspense>
         </Router>
       </CartProvider>
-    </ConfigProvider>
+      </ConfigProvider>
+      </WagmiProvider>
+    </QueryClientProvider>
   );
 }
 
