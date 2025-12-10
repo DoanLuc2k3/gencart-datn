@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'gencart_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gencart',           # Replace with your PostgreSQL DB name
+        'NAME': 'nexcart_db',           # Replace with your PostgreSQL DB name
         'USER': 'postgres',             # Replace with your PostgreSQL username
         'PASSWORD': '123456',           # Replace with your PostgreSQL password
         'HOST': 'localhost',            # Or your DB host
@@ -209,9 +209,9 @@ STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 try:
     import cloudinary
     cloudinary.config(
-        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'dcdt9rujj'),
-        api_key=os.environ.get('CLOUDINARY_API_KEY', '156398491478495'),
-        api_secret=os.environ.get('CLOUDINARY_API_SECRET', '-bwfCt2R1CZ2ubQHHUSgqzqbOFM'),
+        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'doqnph6xu'),
+        api_key=os.environ.get('CLOUDINARY_API_KEY', '751781286651813'),
+        api_secret=os.environ.get('CLOUDINARY_API_SECRET', 'GG_QKKtMW7KSd_zepRnOVC-X6ZI'),
         secure=True
     )
 except ImportError:
