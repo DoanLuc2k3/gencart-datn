@@ -51,7 +51,13 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             from django.utils.text import slugify
-            self.slug = slugify(self.name)
+            base = slugify(self.name)
+            slug_candidate = base
+            n = 1
+            while Product.objects.filter(slug=slug_candidate).exclude(pk=self.pk).exists():
+                slug_candidate = f"{base}-{n}"
+                n += 1
+            self.slug = slug_candidate
         super().save(*args, **kwargs)
 
     @property

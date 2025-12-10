@@ -204,7 +204,9 @@ const UserMenu = ({
                   <ShoppingOutlined
                     style={{ marginRight: "10px", fontSize: "18px" }}
                   />
-                  <span style={{ fontWeight: "500" }}>View My Orders</span>
+                  <span style={{ fontWeight: "500" }}>
+                    {isAdmin ? "Xem tất cả đơn hàng" : "View My Orders"}
+                  </span>
                 </Link>
               </li>
 

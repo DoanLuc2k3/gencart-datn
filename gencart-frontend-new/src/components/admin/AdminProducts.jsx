@@ -258,14 +258,25 @@ const AdminProducts = () => {
       // Prepare FormData for file upload to backend
       const formData = new FormData();
       formData.append("name", values.name);
+      
+      // Generate slug from name (fallback for backend validation issues)
+      const slug = values.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      formData.append("slug", slug);
+
       formData.append("description", values.description);
       formData.append("price", values.price);
       if (values.discount_price) {
         formData.append("discount_price", values.discount_price);
       }
-      formData.append("category_id", values.category_id);
+      
+      // Ensure category_id is valid
+      if (values.category_id) {
+        formData.append("category_id", values.category_id);
+      }
+      
       formData.append("inventory", values.inventory);
-      formData.append("is_active", values.is_active);
+      // Ensure is_active is sent as string "true"/"false" or boolean
+      formData.append("is_active", values.is_active !== undefined ? values.is_active : true);
 
       // Add image file if selected
       console.log("FileList:", fileList);
@@ -307,6 +318,7 @@ const AdminProducts = () => {
         let detail = "";
         try {
           const errJson = await response.json();
+          console.error("Server error details:", errJson); // Log full error details
           detail =
             typeof errJson === "string" ? errJson : JSON.stringify(errJson);
         } catch {
