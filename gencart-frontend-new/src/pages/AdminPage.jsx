@@ -795,8 +795,9 @@ const AdminPage = () => {
         </Header>
         <Content
           style={{
-            margin: "24px 16px",
-            padding: 24,
+            // reduce top margin so content sits closer to header — a little more
+            margin: "4px 16px",
+            padding: 8,
             background: "#fff",
             minHeight: 280,
           }}

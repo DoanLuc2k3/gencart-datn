@@ -47,6 +47,7 @@ const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
 const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
+const AdminHelp = lazy(() => import("./pages/admin/AdminHelp"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 const { Content } = Layout;
@@ -86,6 +87,7 @@ function App() {
                 <Route path="orders" element={<AdminOrders />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="categories" element={<AdminCategories />} />
+                <Route path="help" element={<AdminHelp />} />
               </Route>
 
               {/* Regular routes with standard layout */}

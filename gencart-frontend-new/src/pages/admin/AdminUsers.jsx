@@ -69,6 +69,14 @@ const AdminUsers = () => {
 
   const formatNumber = (n) => new Intl.NumberFormat("vi-VN").format(Number(n)||0);
 
+  const usersMetrics = useMemo(() => {
+    const total = users.length;
+    const staff = users.filter((u) => u.is_staff).length;
+    const superusers = users.filter((u) => u.is_superuser).length;
+    const active = users.filter((u) => u.is_active).length;
+    return { total, staff, superusers, active };
+  }, [users]);
+
   // Fetch users
   const fetchUsers = async () => {
     setLoading(true);
@@ -311,10 +319,14 @@ const AdminUsers = () => {
       render: (_, record) => (
         <Space size="small">
           <Button
-            type="primary"
             icon={<EyeOutlined />}
             onClick={() => showUserDetails(record)}
             size="small"
+            style={{
+              background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
+              border: "none",
+              color: "#fff",
+            }}
           />
           <Button
             type="default"
@@ -385,7 +397,7 @@ const AdminUsers = () => {
   return (
     <div
       style={{
-        padding: isMobile ? 12 : 24,
+        padding: isMobile ? 3 : 6,
         background: "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
         borderRadius: isMobile ? 12 : 24,
         minHeight: "100%",
@@ -394,26 +406,49 @@ const AdminUsers = () => {
       <Card
         style={{
           borderRadius: isMobile ? 12 : 24,
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
           color: "#fff",
-          boxShadow: "0 28px 60px rgba(15, 23, 42, 0.45)",
-          marginBottom: isMobile ? 16 : 24,
+          boxShadow: "0 20px 40px rgba(15, 23, 42, 0.25)",
+          marginBottom: isMobile ? 12 : 12,
           border: "none",
         }}
-        bodyStyle={{ padding: isMobile ? 16 : 28 }}
+        bodyStyle={{ padding: isMobile ? 12 : 20 }}
       >
         <Row gutter={[16, 16]} align="middle" justify="space-between">
-          <Col xs={24} md={16}>
-            <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0 }}>
-              Users
-            </Title>
-            <Text style={{ color: "rgba(255,255,255,0.72)" }}>
-              Manage customers, staff accounts and access levels.
-            </Text>
+          <Col xs={24} md={16} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0, fontWeight: 650 }}>
+                User Management
+              </Title>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <Tag color="geekblue" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Total: {formatNumber(usersMetrics.total)}
+              </Tag>
+              <Tag color="cyan" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Staff: {formatNumber(usersMetrics.staff)}
+              </Tag>
+              <Tag color="gold" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Superusers: {formatNumber(usersMetrics.superusers)}
+              </Tag>
+              <Tag color="green" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Active: {formatNumber(usersMetrics.active)}
+              </Tag>
+            </div>
           </Col>
           <Col xs={24} md={8} style={{ textAlign: isMobile ? "left" : "right" }}>
             <Space wrap>
-              <Button onClick={fetchUsers} loading={loading} size={isMobile ? "middle" : "default"}>
+              <Button
+                onClick={fetchUsers}
+                loading={loading}
+                size={isMobile ? "middle" : "default"}
+                type="primary"
+                style={{
+                  background: "rgba(255,255,255,0.12)",
+                  border: "none",
+                  color: "#fff",
+                }}
+              >
                 Refresh
               </Button>
             </Space>
@@ -428,7 +463,8 @@ const AdminUsers = () => {
           border: "1px solid rgba(148, 163, 184, 0.25)",
           boxShadow: "0 18px 36px rgba(15, 23, 42, 0.12)",
           background: "linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)",
-          marginBottom: 20,
+          marginTop: -8,
+          marginBottom: 12,
         }}
         bodyStyle={{ padding: "20px 24px" }}
       >
