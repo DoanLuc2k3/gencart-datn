@@ -17,7 +17,7 @@ import {
 
 const { Text } = Typography;
 
-const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => {
+const ProductCard = ({ product, compact = false, wishlist, toggleWishlist, isHotDeal = false }) => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const categoryName = getCategoryName(product);
@@ -31,11 +31,11 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
   const handleAddToCart = (e) => {
     e.stopPropagation();
     if (outOfStock) {
-      message.error("This product is out of stock!");
+      message.error("Sản phẩm này đã hết hàng!");
       return;
     }
     addToCart(product);
-    message.success(`${product.name} added to cart!`);
+    message.success(`${product.name} đã thêm vào giỏ hàng!`);
   };
 
   const handleWishlistToggle = (e) => {
@@ -52,6 +52,7 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
   return (
     <Card
       onClick={handleProductClick}
+      className={isHotDeal ? "hot-deal-card" : ""}
       style={{
         borderRadius: 20,
         border: "none",
@@ -59,18 +60,18 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
         overflow: "hidden",
         cursor: "pointer",
         transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+        boxShadow: isHotDeal ? "0 10px 30px rgba(255, 69, 0, 0.2)" : "0 4px 20px rgba(0, 0, 0, 0.08)",
         position: "relative",
         height: "100%",
       }}
       bodyStyle={{ padding: 0 }}
       hoverable
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 20px 60px rgba(0, 0, 0, 0.15)";
+        e.currentTarget.style.boxShadow = isHotDeal ? "0 20px 60px rgba(255, 69, 0, 0.4)" : "0 20px 60px rgba(0, 0, 0, 0.15)";
         e.currentTarget.style.transform = "translateY(-8px) scale(1.02)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.08)";
+        e.currentTarget.style.boxShadow = isHotDeal ? "0 10px 30px rgba(255, 69, 0, 0.2)" : "0 4px 20px rgba(0, 0, 0, 0.08)";
         e.currentTarget.style.transform = "translateY(0) scale(1)";
       }}
     >
@@ -78,7 +79,7 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
       <div
         style={{
           height: compact ? 120 : 160,
-          background: getCategoryGradient(categoryName),
+          background: "#f8fafc",
           position: "relative",
           display: "flex",
           alignItems: "center",
@@ -86,31 +87,12 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
           overflow: "hidden",
         }}
       >
-        {/* Background pattern */}
-        <div
-          style={{
-            position: "absolute",
-            top: -20,
-            right: -20,
-            width: 80,
-            height: 80,
-            background: "rgba(255, 255, 255, 0.1)",
-            borderRadius: "50%",
-            zIndex: 1,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: -30,
-            left: -30,
-            width: 100,
-            height: 100,
-            background: "rgba(255, 255, 255, 0.05)",
-            borderRadius: "50%",
-            zIndex: 1,
-          }}
-        />
+        {/* Hot Deal Badge */}
+        {isHotDeal && (
+           <div className="hot-deal-badge-fire" style={{ position: 'absolute', top: 10, left: 10 }}>
+             🔥 KHUYẾN MÃI HOT
+           </div>
+        )}
 
         {/* Product Image - Background */}
         <img
@@ -129,12 +111,14 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
             objectFit: 'contain',
             zIndex: 0,
             padding: compact ? 10 : 20,
+            mixBlendMode: "multiply"
           }}
         />
 
         {/* Wishlist button */}
         {toggleWishlist && (
           <Button
+            className="wishlist-button"
             shape="circle"
             size="large"
             aria-label="wishlist"
@@ -144,32 +128,21 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
                 <HeartFilled style={{ color: "#ef4444", fontSize: 18 }} />
               ) : (
                 <HeartOutlined
-                  style={{ color: "rgba(255,255,255,0.8)", fontSize: 18 }}
+                  style={{ color: "#94a3b8", fontSize: 18 }}
                 />
               )
             }
             style={{
               position: "absolute",
-              top: 16,
-              right: 16,
-              background: inWishlist ? "#fff" : "rgba(255, 255, 255, 0.2)",
-              border: "none",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-              backdropFilter: "blur(10px)",
-              transition: "all 0.3s ease",
+              top: 12,
+              right: 12,
+              background: "#ffffff",
+              border: "1px solid #f1f5f9",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
               zIndex: 10,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = inWishlist
-                ? "#fef2f2"
-                : "rgba(255, 255, 255, 0.3)";
-              e.currentTarget.style.transform = "scale(1.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = inWishlist
-                ? "#fff"
-                : "rgba(255, 255, 255, 0.2)";
-              e.currentTarget.style.transform = "scale(1)";
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           />
         )}
@@ -320,7 +293,7 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist }) => 
             }
           }}
         >
-          {outOfStock ? "Out of Stock" : "Add To Cart"}
+          {outOfStock ? "Hết hàng" : "Thêm vào giỏ hàng"}
         </Button>
       </div>
     </Card>

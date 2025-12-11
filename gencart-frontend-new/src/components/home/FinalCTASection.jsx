@@ -10,15 +10,7 @@ const FinalCTASection = () => {
 
   return (
     <section
-      style={{
-        background: `
-          linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e293b 75%, #0f172a 100%)
-        `,
-        color: "#fff",
-        padding: "100px 0",
-        position: "relative",
-        overflow: "hidden",
-      }}
+      className="home-section final-cta-section"
     >
       {/* Animated background elements */}
       <div
@@ -77,6 +69,7 @@ const FinalCTASection = () => {
       ))}
 
       <div
+        className="final-cta-content"
         style={{
           maxWidth: 900,
           margin: "0 auto",
@@ -117,7 +110,7 @@ const FinalCTASection = () => {
               letterSpacing: 0.8,
             }}
           >
-            Start Shopping
+            Bắt đầu mua sắm
           </Text>
         </div>
 
@@ -137,7 +130,7 @@ const FinalCTASection = () => {
             letterSpacing: "-0.02em",
           }}
         >
-          Ready to explore?
+          Sẵn sàng khám phá?
         </Title>
 
         <Paragraph
@@ -150,8 +143,7 @@ const FinalCTASection = () => {
             fontWeight: 400,
           }}
         >
-          Discover amazing products with our lightning-fast search, intuitive
-          design, and seamless checkout experience.
+          Khám phá sản phẩm tuyệt vời với tìm kiếm siêu tốc, giao diện trực quan và trải nghiệm thanh toán mượt mà.
         </Paragraph>
 
         {/* Enhanced buttons */}
@@ -165,6 +157,7 @@ const FinalCTASection = () => {
           }}
         >
           <Button
+            className="cta-button"
             type="primary"
             size="large"
             onClick={() => navigate("/products")}
@@ -188,7 +181,7 @@ const FinalCTASection = () => {
               e.target.style.boxShadow = "0 8px 25px rgba(139, 92, 246, 0.4)";
             }}
           >
-            Browse Products
+            Xem sản phẩm
           </Button>
 
           <Button
@@ -217,7 +210,7 @@ const FinalCTASection = () => {
               e.target.style.transform = "translateY(0)";
             }}
           >
-            Create Account
+            Tạo tài khoản
           </Button>
         </div>
 
@@ -242,7 +235,7 @@ const FinalCTASection = () => {
                 {feature.icon}
               </div>
               <Text style={{ fontSize: 14, color: "rgba(255,255,255,0.7)" }}>
-                {feature.label}
+                {feature.label_vi}
               </Text>
             </div>
           ))}

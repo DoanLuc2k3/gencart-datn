@@ -1,0 +1,1590 @@
+/* Blog Container */
+.blog-container {
+  min-height: 100vh;
+  position: relative;
+  padding: 60px 24px;
+  overflow: hidden;
+}
+
+/* Animated Background */
+.blog-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  /* ĐÃ THAY ĐỔI: Nền gradient xám nhạt */
+  background: linear-gradient(135deg, #f0f2f5 0%, #ffffff 50%, #f0f2f5 100%);
+  overflow: hidden;
+}
+
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  /* ĐÃ THAY ĐỔI: Giảm độ mờ của orb trên nền sáng */
+  opacity: 0.2;
+  animation: float 20s infinite ease-in-out;
+}
+
+.orb-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.6) 0%, transparent 70%);
+  top: -100px;
+  left: -100px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.5) 0%, transparent 70%);
+  bottom: -150px;
+  right: -150px;
+  animation-delay: 5s;
+}
+
+.orb-3 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.4) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 10s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(50px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-50px, 50px) scale(0.9);
+  }
+}
+
+/* Header Section */
+.blog-header {
+  max-width: 1400px;
+  margin: 0 auto 80px;
+  text-align: center;
+  animation: fadeInDown 0.8s ease-out;
+}
+
+.header-content {
+  /* ĐÃ THAY ĐỔI: Hiệu ứng kính mờ (frosted glass) trên nền sáng */
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  /* ĐÃ THAY ĐỔI: Border và shadow cho nền sáng */
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 30px;
+  padding: 60px 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.header-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  /* ĐÃ THAY ĐỔI: Giảm độ sáng của hiệu ứng shimmer */
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.05), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.blog-title {
+  font-size: 72px;
+  font-weight: 800;
+  margin: 0 0 20px;
+  letter-spacing: -2px;
+  line-height: 1.1;
+  /* ĐÃ THAY ĐỔI: Màu chữ chính (tối) */
+  color: #111827;
+}
+
+.title-gradient {
+  background: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #14b8a6 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 5s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.blog-subtitle {
+  font-size: 20px;
+  /* ĐÃ THAY ĐỔI: Màu chữ phụ (xám) */
+  color: #4b5563;
+  margin: 0;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Filter Section */
+.filter-section {
+  max-width: 1400px;
+  margin: 0 auto 50px;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.filter-content {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.search-wrapper {
+  flex: 1;
+  min-width: 300px;
+}
+
+.blog-search {
+  /* ĐÃ THAY ĐỔI: Nền trắng cho ô tìm kiếm */
+  background: #ffffff !important;
+  /* Bỏ backdrop-filter vì nền đã là solid */
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 16px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.blog-search:hover,
+.blog-search:focus-within {
+  background: #ffffff !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  /* ĐÃ THAY ĐỔI: Shadow nhẹ hơn */
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1),
+              0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.blog-search input {
+  background: transparent !important;
+  /* ĐÃ THAY ĐỔI: Màu chữ input (tối) */
+  color: #111827 !important;
+  font-size: 16px;
+}
+
+.blog-search input::placeholder {
+  /* ĐÃ THAY ĐỔI: Màu placeholder (xám nhạt) */
+  color: #9ca3af;
+}
+
+.search-icon {
+  color: #10b981;
+  font-size: 18px;
+}
+
+.category-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* ĐÃ THAY ĐỔI: Nền trắng */
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 0 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.category-filter:hover {
+  background: #ffffff;
+  border-color: rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+  /* ĐÃ THAY ĐỔI: Shadow nhẹ */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.filter-icon {
+  color: #10b981;
+  font-size: 18px;
+}
+
+.category-select {
+  min-width: 180px;
+  background: transparent !important;
+}
+
+.category-select .ant-select-selector {
+  background: transparent !important;
+  border: none !important;
+  /* ĐÃ THAY ĐỔI: Màu chữ select (tối) */
+  color: #1f2937 !important;
+  font-size: 16px !important;
+  font-weight: 500;
+  box-shadow: none !important;
+}
+
+.category-select .ant-select-arrow {
+  color: #10b981;
+}
+
+.results-count {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* ĐÃ THAY ĐỔI: Nền trắng */
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 12px 24px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+}
+
+.count-text {
+  /* ĐÃ THAY ĐỔI: Màu chữ (xám) */
+  color: #4b5563;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Blog Grid */
+.blog-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 32px;
+  animation: fadeIn 0.8s ease-out 0.4s both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Blog Card */
+.blog-card {
+  /* ĐÃ THAY ĐỔI: Nền card (trắng) */
+  background: #ffffff !important;
+  /* Bỏ backdrop-filter */
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 24px !important;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  /* ĐÃ THAY ĐỔI: Shadow nhẹ */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  animation: cardSlideIn 0.6s ease-out both;
+  animation-delay: calc(var(--card-index, 0) * 0.1s);
+}
+
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.blog-card:hover {
+  transform: translateY(-12px) scale(1.02);
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  /* ĐÃ THAY ĐỔI: Shadow khi hover */
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1),
+              0 0 0 1px rgba(16, 185, 129, 0.2);
+}
+
+.blog-card .ant-card-body {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.card-image-wrapper {
+  position: relative;
+  height: 250px;
+  overflow: hidden;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.blog-card:hover .card-image {
+  transform: scale(1.1) rotate(2deg);
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Giữ lại gradient tối để tag nổi bật */
+  background: linear-gradient(180deg, 
+    rgba(0, 0, 0, 0) 0%, 
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.6) 100%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.blog-card:hover .image-overlay {
+  opacity: 1;
+}
+
+.category-tag {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+  border: none !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.blog-card:hover .category-tag {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Card Content */
+.card-content {
+  padding: 28px;
+}
+
+.card-title {
+  font-size: 22px;
+  font-weight: 700;
+  /* ĐÃ THAY ĐỔI: Màu tiêu đề (tối) */
+  color: #111827;
+  margin: 0 0 16px;
+  line-height: 1.4;
+  display: -webkit-box;
+  
+  -webkit-box-orient: vertical;
+  overflow: hidden; 
+  transition: color 0.3s ease;
+}
+ 
+.blog-card:hover .card-title {
+  color: #10b981;
+}
+
+.card-description {
+  font-size: 15px;
+  /* ĐÃ THAY ĐỔI: Màu mô tả (xám) */
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0 0 20px;
+  display: -webkit-box;
+  
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.post-tag {
+  /* Giữ nguyên màu accent */
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  padding: 4px 12px !important;
+  transition: all 0.3s ease;
+}
+
+.post-tag:hover {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  transform: translateY(-2px);
+}
+
+/* Card Meta */
+.card-meta {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  /* ĐÃ THAY ĐỔI: Màu border (xám nhạt) */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-avatar {
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+}
+
+.blog-card:hover .author-avatar {
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.author-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.author-name {
+  font-size: 14px;
+  font-weight: 600;
+  /* ĐÃ THAY ĐỔI: Màu tên (tối) */
+  color: #1f2937;
+}
+
+.post-date {
+  font-size: 13px;
+  /* ĐÃ THAY ĐỔI: Màu ngày tháng (xám nhạt) */
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Card Actions */
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.action-item,
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  /* ĐÃ THAY ĐỔI: Màu icon (xám nhạt) */
+  color: #6b7280;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.action-button {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.action-button:hover {
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+  transform: translateY(-2px);
+}
+
+.action-button.liked {
+  color: #ef4444 !important;
+}
+
+.action-button.liked:hover {
+  color: #dc2626 !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.action-count {
+  font-weight: 600;
+}
+
+.read-more-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  padding: 8px 24px !important;
+  height: auto !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.read-more-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* Empty State */
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  /* ĐÃ THAY ĐỔI: Nền trắng */
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 60px;
+}
+
+.empty-state .ant-empty-description {
+  /* ĐÃ THAY ĐỔI: Màu chữ (xám) */
+  color: #6b7280;
+  font-size: 16px;
+}
+
+/* Pagination */
+.pagination-wrapper {
+  max-width: 1400px;
+  margin: 60px auto 0;
+  display: flex;
+  justify-content: center;
+  animation: fadeInUp 0.8s ease-out 0.6s both;
+}
+
+.blog-pagination {
+  /* ĐÃ THAY ĐỔI: Nền trắng */
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 16px 24px;
+}
+
+.blog-pagination .ant-pagination-item {
+  background: transparent;
+  /* ĐÃ THAY ĐỔI: Màu border (xám nhạt) */
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.blog-pagination .ant-pagination-item a {
+  /* ĐÃ THAY ĐỔI: Màu chữ (xám) */
+  color: #4b5563;
+}
+
+.blog-pagination .ant-pagination-item:hover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  transform: translateY(-2px);
+}
+
+.blog-pagination .ant-pagination-item:hover a {
+  color: #10b981;
+}
+
+.blog-pagination .ant-pagination-item-active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.blog-pagination .ant-pagination-item-active a {
+  color: #ffffff;
+}
+
+.blog-pagination .ant-pagination-prev button,
+.blog-pagination .ant-pagination-next button {
+  /* ĐÃ THAY ĐỔI: Màu icon (xám) */
+  color: #6b7280;
+  background: transparent;
+  /* ĐÃ THAY ĐỔI: Màu border (xám nhạt) */
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.blog-pagination .ant-pagination-prev:hover button,
+.blog-pagination .ant-pagination-next:hover button {
+  color: #10b981;
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.blog-pagination .ant-pagination-disabled button {
+  /* ĐÃ THAY ĐỔI: Màu khi disabled (xám siêu nhạt) */
+  color: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(0, 0, 0, 0.05) !important;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .blog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .blog-container {
+    padding: 40px 16px;
+  }
+
+  .blog-title {
+    font-size: 48px;
+  }
+
+  .blog-subtitle {
+    font-size: 16px;
+  }
+
+  .header-content {
+    padding: 40px 24px;
+  }
+
+  .blog-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .filter-content {
+    flex-direction: column;
+  }
+
+  .category-filter {
+    width: 100%;
+  }
+
+  .card-title {
+    font-size: 20px;
+  }
+
+  .card-description {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .blog-title {
+    font-size: 36px;
+  }
+
+  .header-content {
+    padding: 30px 20px;
+    border-radius: 20px;
+  }
+
+  .card-content {
+    padding: 20px;
+  }
+
+  .card-image-wrapper {
+    height: 200px;
+  }
+
+  .card-actions {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .read-more-btn {
+    width: 100%;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  /* ĐÃ THAY ĐỔI: Nền track scrollbar (xám nhạt) */
+  background: #f0f2f5;
+}
+
+::-webkit-scrollbar-thumb {
+  /* ĐÃ THAY ĐỔI: Màu thumb đậm hơn */
+  background: rgba(16, 185, 129, 0.5);
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.7);
+}
+
+/* Ant Design Dropdown Custom Styling */
+.ant-select-dropdown {
+  /* ĐÃ THAY ĐỔI: Nền dropdown (trắng) */
+  background: #ffffff !important;
+  /* Bỏ backdrop-filter */
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+  /* ĐÃ THAY ĐỔI: Shadow nhẹ */
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15) !important;
+}
+
+.ant-select-item {
+  /* ĐÃ THAY ĐỔI: Màu chữ item (xám) */
+  color: #4b5563 !important;
+  transition: all 0.2s ease;
+}
+
+.ant-select-item:hover {
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #10b981 !important;
+}
+
+.ant-select-item-option-selected {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #10b981 !important;
+  font-weight: 600;
+}
+
+/* --- Bổ sung CSS cho Modal Chi Tiết Bài Viết (Blog Detail) --- */
+
+/* --- 1. Keyframe mới cho nội dung (Trượt lên + Mờ dần) --- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes contentFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- 2. Tùy chỉnh tổng thể Modal --- */
+/* Sử dụng lớp `blog-detail-modal` chúng ta đã thêm trong component React 
+  để tác động CHỈ modal này, không ảnh hưởng modal khác của AntD.
+*/
+.blog-detail-modal .ant-modal {
+  /* Áp dụng hiệu ứng cho toàn bộ khung modal */
+  animation: fadeInUp 0.4s ease-out;
+  transform-origin: center center;
+}
+
+/* Tùy chỉnh phần Header của Modal */
+.blog-detail-modal .ant-modal-header {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 20px 24px;
+}
+
+.blog-detail-modal .ant-modal-title h2 {
+  /* Tăng kích thước tiêu đề cho ấn tượng */
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #1a1a1a;
+}
+
+/* Tùy chỉnh phần Body (nơi chứa nội dung) */
+.blog-detail-modal .ant-modal-body {
+  /* Tắt padding mặc định để tự custom thanh cuộn */
+  padding: 0;
+}
+
+/* --- 3. Thanh cuộn "Siêu Đỉnh" (Custom Scrollbar) --- */
+/* Đây là lớp bọc nội dung có `overflow-y: auto` */
+.modal-post-content {
+  /* Chiều cao đã set trong React (60vh), 
+    giờ ta thêm padding và thanh cuộn 
+  */
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 24px; /* Thêm padding cho nội dung bên trong */
+
+  /* --- Tùy chỉnh thanh cuộn cho Chrome/Safari --- */
+}
+.modal-post-content::-webkit-scrollbar {
+  width: 8px;
+}
+.modal-post-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+.modal-post-content::-webkit-scrollbar-thumb {
+  background: #10b981; /* Dùng màu xanh lá chủ đạo của bạn */
+  border-radius: 10px;
+}
+.modal-post-content::-webkit-scrollbar-thumb:hover {
+  background: #0a8a61; /* Đậm hơn khi hover */
+}
+
+/* --- Tùy chỉnh thanh cuộn cho Firefox --- */
+.modal-post-content {
+  scrollbar-width: thin;
+  scrollbar-color: #10b981 #f1f1f1;
+}
+
+/* --- 4. Định dạng Nội dung bên trong (Typography) --- */
+.modal-post-content img {
+  width: 100%;
+  border-radius: 12px; /* Bo góc ảnh bìa cho mềm mại */
+  margin-bottom: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Đây là lớp bọc nội dung (P, H2, UL) mà ta đã thêm trong mock data */
+.post-content-detail p {
+  font-size: 17px;
+  line-height: 1.8; /* Giãn dòng để dễ đọc */
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.post-content-detail h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111;
+  margin-top: 32px;
+  margin-bottom: 16px;
+  /* Thêm một đường gạch trái làm điểm nhấn "cao cấp" */
+  border-left: 4px solid #10b981;
+  padding-left: 12px;
+}
+
+.post-content-detail ul {
+  list-style-type: none; /* Bỏ dấu chấm mặc định */
+  padding-left: 0;
+  margin-bottom: 20px;
+}
+
+.post-content-detail li {
+  font-size: 17px;
+  line-height: 1.9;
+  position: relative;
+  padding-left: 30px; /* Tạo không gian cho dấu tick */
+  margin-bottom: 12px;
+}
+
+/* Dùng ::before để tạo dấu tick (hoặc dấu •) tùy chỉnh */
+.post-content-detail li::before {
+  content: '✓'; /* Bạn có thể đổi thành '•' */
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #10b981; /* Màu xanh chủ đạo */
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.post-content-detail strong {
+  color: #000; /* Làm cho chữ in đậm nổi bật hơn */
+  font-weight: 600;
+}
+
+/* --- 5. Hiệu ứng "Đẳng Cấp" (Staggered Animation) --- */
+/* Chúng ta sẽ làm các phần tử bên trong .modal-post-content
+  xuất hiện lần lượt
+*/
+
+/* Tất cả các con trực tiếp của .modal-post-content 
+  (gồm <img/> và <div.post-content-detail/>)
+  và các con của .post-content-detail
+  sẽ được áp dụng animation
+*/
+
+.modal-post-meta,
+.modal-post-content > img,
+.post-content-detail > * {
+  /* Mặc định ẩn đi */
+  opacity: 0;
+  /* Áp dụng keyframe */
+  animation-name: contentFadeInUp;
+  animation-duration: 0.5s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards; /* Giữ trạng thái cuối */
+}
+
+/* Giờ là phần "ma thuật": Tạo độ trễ (delay) cho từng cái
+  để chúng xuất hiện lần lượt
+*/
+
+/* 1. Thông tin Meta (Tác giả, ngày) xuất hiện trước */
+.modal-post-meta {
+  animation-delay: 0.1s;
+}
+
+/* 2. Ảnh bìa trong Modal xuất hiện */
+.modal-post-content > img {
+  animation-delay: 0.2s;
+}
+
+/* 3. Các phần tử con của nội dung (p, h2, ul) lần lượt xuất hiện */
+.post-content-detail > *:nth-child(1) {
+  animation-delay: 0.3s;
+}
+.post-content-detail > *:nth-child(2) {
+  animation-delay: 0.4s;
+}
+.post-content-detail > *:nth-child(3) {
+  animation-delay: 0.5s;
+}
+.post-content-detail > *:nth-child(4) {
+  animation-delay: 0.6s;
+}
+.post-content-detail > *:nth-child(5) {
+  animation-delay: 0.7s;
+}
+/* (Bạn có thể thêm nth-child nếu bài viết có nhiều phần tử hơn) */
+/* --- CSS Bổ sung cho Nút "Thích" ở Footer Modal --- */
+.modal-like-btn {
+  font-weight: 500;
+  color: #555;
+  transition: all 0.3s ease;
+}
+.modal-like-btn .anticon {
+  font-size: 18px;
+}
+.modal-like-btn:hover {
+  color: #eb2f96;
+  border-color: #eb2f96;
+}
+.modal-like-btn.liked,
+.modal-like-btn.liked:hover {
+  background: #fff0f6;
+  color: #eb2f96;
+  border-color: #eb2f96;
+}
+
+
+/* --- CSS Bổ sung cho Phần Bình luận --- */
+.comment-section {
+  margin-top: 40px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 24px;
+}
+
+.comment-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 24px;
+}
+
+.comment-list .ant-list-item {
+  border-bottom: 1px dashed #f0f0f0 !important;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+.comment-list .ant-list-item:last-child {
+  border-bottom: none !important;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.comment-content {
+  color: #333;
+  margin-bottom: 8px;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.comment-date {
+  font-size: 12px;
+  color: #999;
+}
+
+/* Form nhập bình luận */
+.comment-form-wrapper {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 24px;
+  gap: 12px;
+}
+
+.comment-form {
+  display: flex;
+  flex: 1;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: #fff;
+}
+.comment-form:focus-within {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.comment-input {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent;
+  padding: 10px 12px;
+}
+.comment-input::placeholder {
+  color: #999;
+}
+
+.comment-submit-btn {
+  border: none;
+  background: transparent;
+  color: #10b981;
+  font-size: 20px;
+  height: 44px;
+  margin-right: 4px;
+  transition: all 0.2s ease;
+}
+.comment-submit-btn:hover {
+  background: transparent;
+  color: #0f9b6e;
+  transform: scale(1.1);
+}
+.comment-submit-btn:disabled {
+  color: #ccc !important;
+  background: transparent !important;
+  transform: none;
+}
+
+/* ===================================================================
+ * DARK MODE STYLES FOR BLOG PAGE
+ * =================================================================== */
+
+body.dark-mode .blog-container {
+  background-color: #141414;
+}
+
+body.dark-mode .blog-background {
+  background: linear-gradient(135deg, #141414 0%, #1f1f1f 100%);
+}
+
+body.dark-mode .gradient-orb {
+  opacity: 0.15;
+}
+
+/* Header */
+body.dark-mode .header-content {
+  background: rgba(30, 30, 30, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .blog-title {
+  background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.dark-mode .blog-subtitle {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Search & Filter */
+body.dark-mode .search-box {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .search-input .ant-input {
+  background: transparent !important;
+  color: #fff;
+}
+
+body.dark-mode .search-input .ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .search-icon {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .filter-select .ant-select-selector {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+body.dark-mode .filter-select .ant-select-arrow {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Blog Cards */
+body.dark-mode .blog-card {
+  background: #1f1f1f;
+  border: 1px solid #303030;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .blog-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .post-title {
+  color: #fff;
+}
+
+body.dark-mode .post-desc {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .post-meta {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .meta-item {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .read-more-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+body.dark-mode .read-more-btn:hover {
+  background: #10b981;
+  color: #fff;
+}
+
+/* Sidebar */
+body.dark-mode .sidebar-card {
+  background: #1f1f1f;
+  border: 1px solid #303030;
+}
+
+body.dark-mode .sidebar-title {
+  color: #fff;
+}
+
+body.dark-mode .sidebar-title::after {
+  background: linear-gradient(90deg, #10b981, transparent);
+}
+
+body.dark-mode .category-item {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .category-item:hover,
+body.dark-mode .category-item.active {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+body.dark-mode .category-count {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .popular-post-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .popular-post-info h4 {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark-mode .popular-post-date {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .tag-cloud .ant-tag {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .tag-cloud .ant-tag:hover {
+  color: #10b981;
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+/* Pagination */
+body.dark-mode .blog-pagination {
+  background: #1f1f1f;
+  border-color: #303030;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .ant-pagination-item {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .ant-pagination-item a {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .ant-pagination-item-active {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+body.dark-mode .ant-pagination-item-active a {
+  color: #fff;
+}
+
+body.dark-mode .ant-pagination-prev .ant-pagination-item-link,
+body.dark-mode .ant-pagination-next .ant-pagination-item-link {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Modal Detail */
+body.dark-mode .ant-modal-content {
+  background: #1f1f1f;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .ant-modal-close {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .ant-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+body.dark-mode .post-detail-header h1 {
+  color: #fff;
+}
+
+body.dark-mode .detail-meta-item {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .post-content-body {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .post-content-body h2,
+body.dark-mode .post-content-body h3 {
+  color: #fff;
+}
+
+body.dark-mode .post-content-body strong {
+  color: #fff;
+}
+
+body.dark-mode .post-tags-section {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .post-tags-section h4 {
+  color: #fff;
+}
+
+/* Comments in Modal */
+body.dark-mode .comments-section {
+  background: #141414;
+  border-top-color: #303030;
+}
+
+body.dark-mode .comments-section h3 {
+  color: #fff;
+}
+
+body.dark-mode .comment-item {
+  background: #1f1f1f;
+  border: 1px solid #303030;
+}
+
+body.dark-mode .comment-author-name {
+  color: #fff;
+}
+
+body.dark-mode .comment-content {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .comment-date {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .comment-form {
+  background: #1f1f1f;
+  border-color: #434343;
+}
+
+body.dark-mode .comment-form:focus-within {
+  border-color: #10b981;
+  background: #1f1f1f;
+}
+
+body.dark-mode .comment-input {
+  color: #fff;
+}
+
+body.dark-mode .comment-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Empty State */
+body.dark-mode .ant-empty-description {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Scrollbar */
+body.dark-mode ::-webkit-scrollbar-track {
+  background: #141414;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background: #434343;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Ant Design Overrides for Portals (Dropdowns, Tooltips) */
+body.dark-mode .ant-select-dropdown {
+  background-color: #1f1f1f;
+  border: 1px solid #303030;
+}
+
+body.dark-mode .ant-select-item {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .ant-select-item-option-selected {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+body.dark-mode .ant-select-item-option-active {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .ant-tooltip-inner {
+  background-color: #434343;
+  color: #fff;
+}
+
+body.dark-mode .ant-tooltip-arrow-content {
+  background-color: #434343;
+}
+
+/* ===================================================================
+ * FIXES FOR SEARCH, FILTER, AND COUNT IN DARK MODE
+ * =================================================================== */
+
+body.dark-mode .blog-search,
+body.dark-mode .blog-search .ant-input-wrapper,
+body.dark-mode .blog-search .ant-input-affix-wrapper {
+  background-color: #1f1f1f !important;
+  border-color: #303030 !important;
+}
+
+body.dark-mode .blog-search .ant-input-group-addon,
+body.dark-mode .blog-search .ant-btn {
+  background-color: #2a2a2a !important;
+  border-color: #303030 !important;
+  color: #fff !important;
+}
+
+body.dark-mode .blog-search:hover,
+body.dark-mode .blog-search:focus-within,
+body.dark-mode .blog-search .ant-input-affix-wrapper:hover,
+body.dark-mode .blog-search .ant-input-affix-wrapper:focus-within {
+  background-color: #1f1f1f !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1), 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+body.dark-mode .blog-search input.ant-input {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .category-filter {
+  background: #1f1f1f !important;
+  border-color: #303030 !important;
+}
+
+body.dark-mode .category-filter:hover {
+  background: #1f1f1f !important;
+  border-color: #10b981 !important;
+}
+
+body.dark-mode .category-select .ant-select-selector {
+  color: #ffffff !important;
+}
+
+body.dark-mode .results-count {
+  background: #1f1f1f !important;
+  border-color: #303030 !important;
+}
+
+body.dark-mode .count-text {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ===================================================================
+ * FIXES FOR MODAL DETAIL IN DARK MODE
+ * =================================================================== */
+
+/* Modal Header */
+body.dark-mode .blog-detail-modal .ant-modal-header {
+  background: #1f1f1f;
+  border-bottom: 1px solid #303030;
+}
+
+body.dark-mode .blog-detail-modal .ant-modal-title h2 {
+  color: #ffffff !important;
+}
+
+/* Modal Meta Section */
+body.dark-mode .modal-post-meta {
+  border-top-color: #303030 !important;
+  border-bottom-color: #303030 !important;
+}
+
+body.dark-mode .modal-post-meta strong {
+  color: #ffffff;
+}
+
+body.dark-mode .modal-post-meta span {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .action-item {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+body.dark-mode .action-item .action-count {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Modal Content */
+body.dark-mode .post-content-detail {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .post-content-detail p {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .post-content-detail h2,
+body.dark-mode .post-content-detail h3,
+body.dark-mode .post-content-detail h4 {
+  color: #ffffff;
+}
+
+body.dark-mode .post-content-detail strong {
+  color: #ffffff;
+}
+
+body.dark-mode .post-content-detail ul li,
+body.dark-mode .post-content-detail ol li {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Comments Section */
+body.dark-mode .comment-section .comment-title {
+  color: #ffffff;
+}
+
+body.dark-mode .comment-list .ant-list-item {
+  border-bottom-color: #303030;
+}
+
+body.dark-mode .comment-list .comment-author {
+  color: #ffffff !important;
+}
+
+body.dark-mode .comment-list .comment-content {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .comment-list .comment-date {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .comment-list .ant-list-empty-text {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Modal Footer */
+body.dark-mode .blog-detail-modal .ant-modal-footer {
+  border-top-color: #303030;
+}
+
+body.dark-mode .modal-like-btn {
+  background: transparent;
+  border-color: #303030;
+  color: #ffffff;
+}
+
+body.dark-mode .modal-like-btn:hover {
+  border-color: #ff4d4f;
+  color: #ff4d4f;
+}
+
+body.dark-mode .modal-like-btn.liked {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+  color: #ffffff;
+}

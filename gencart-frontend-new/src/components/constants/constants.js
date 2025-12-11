@@ -1,34 +1,43 @@
 // Category Colors Mapping
 export const CATEGORY_COLORS = {
   Electronics: {
-    primary: "#2196F3",
-    gradient: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
+    primary: "#3b82f6",
+    gradient: "linear-gradient(135deg, #60a5fa, #3b82f6)",
   },
   Clothing: {
-    primary: "#4CAF50",
-    gradient: "linear-gradient(135deg, #10b981, #059669)",
+    primary: "#10b981",
+    gradient: "linear-gradient(135deg, #34d399, #10b981)",
   },
   "Home & Kitchen": {
-    primary: "#FF9800",
-    gradient: "linear-gradient(135deg, #f59e0b, #d97706)",
+    primary: "#f59e0b",
+    gradient: "linear-gradient(135deg, #fbbf24, #f59e0b)",
   },
   Books: {
-    primary: "#9C27B0",
-    gradient: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+    primary: "#8b5cf6",
+    gradient: "linear-gradient(135deg, #a78bfa, #8b5cf6)",
   },
   "Sports & Outdoors": {
-    primary: "#F44336",
-    gradient: "linear-gradient(135deg, #ef4444, #dc2626)",
+    primary: "#ef4444",
+    gradient: "linear-gradient(135deg, #f87171, #ef4444)",
   },
   "Phone & Accessories": {
-    primary: "#009688",
-    gradient: "linear-gradient(135deg, #06b6d4, #0891b2)",
+    primary: "#06b6d4",
+    gradient: "linear-gradient(135deg, #22d3ee, #06b6d4)",
+  },
+  // Add common categories from screenshot
+  Jeans: {
+    primary: "#6366f1",
+    gradient: "linear-gradient(135deg, #818cf8, #6366f1)",
+  },
+  Shirt: {
+    primary: "#ec4899",
+    gradient: "linear-gradient(135deg, #f472b6, #ec4899)",
   },
 };
 
 export const DEFAULT_CATEGORY_COLOR = {
-  primary: "#607D8B",
-  gradient: "linear-gradient(135deg, #64748b, #475569)",
+  primary: "#8b5cf6",
+  gradient: "linear-gradient(135deg, #c4b5fd, #8b5cf6)",
 };
 
 // API Endpoints
@@ -38,24 +47,24 @@ export const API_ENDPOINTS = {
 
 // Hero Features
 export const HERO_FEATURES = [
-  { heading: "Free Shipping", description: "Over ₫500k", icon: "🚚" },
-  { heading: "Warranty", description: "1 Year", icon: "🛡️" },
-  { heading: "Support", description: "24/7", icon: "💬" },
+  { heading: "Free Shipping", heading_vi: "Miễn phí vận chuyển", description: "Over ₫500k", sub_vi: "Đơn từ 500.000₫", icon: "🚚" },
+  { heading: "Warranty", heading_vi: "Bảo hành", description: "1 Year", sub_vi: "1 năm", icon: "🛡️" },
+  { heading: "Support", heading_vi: "Hỗ trợ", description: "24/7", sub_vi: "24/7", icon: "💬" },
 ];
 
 // CTA Features
 export const CTA_FEATURES = [
-  { icon: "⚡", label: "Fast Search" },
-  { icon: "🛡️", label: "Secure Checkout" },
-  { icon: "🚚", label: "Free Shipping" },
-  { icon: "💬", label: "24/7 Support" },
+  { icon: "⚡", label: "Fast Search", label_vi: "Tìm kiếm siêu tốc" },
+  { icon: "🛡️", label: "Secure Checkout", label_vi: "Thanh toán an toàn" },
+  { icon: "🚚", label: "Free Shipping", label_vi: "Miễn phí vận chuyển" },
+  { icon: "💬", label: "24/7 Support", label_vi: "Hỗ trợ 24/7" },
 ];
 
 // Newsletter Trust Indicators
 export const NEWSLETTER_TRUST_INDICATORS = [
-  { icon: "🔒", label: "No spam" },
-  { icon: "✨", label: "Exclusive deals" },
-  { icon: "📧", label: "Weekly updates" },
+  { icon: "🔒", label: "No spam", label_vi: "Không spam" },
+  { icon: "✨", label: "Exclusive deals", label_vi: "Ưu đãi độc quyền" },
+  { icon: "📧", label: "Weekly updates", label_vi: "Cập nhật hàng tuần" },
 ];
 
 // Animation durations

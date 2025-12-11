@@ -1,7 +1,7 @@
 import React, {
   useState,
   useEffect,
-  useMemo,
+  // useMemo,
   useRef,
   useCallback,
 } from "react";
@@ -99,13 +99,13 @@ const ProductListPage = () => {
   const [totalCount, setTotalCount] = useState(0);
   const ITEMS_PER_PAGE = 12; // Match backend page_size
   // Advanced filters
-  const [priceRange, setPriceRange] = useState([0, 1000]); // Default max price
+  const [priceRange] = useState([0, 1000]); // Default max price
   const [selectedPriceRange, setSelectedPriceRange] = useState([0, 1000]);
   const [minRating, setMinRating] = useState(0);
   const [onlyOnSale, setOnlyOnSale] = useState(false);
   const [onlyInStock, setOnlyInStock] = useState(false);
-  const [showFilters, setShowFilters] = useState(true);
-  const [initialFetched, setInitialFetched] = useState(false);
+  // const [showFilters, setShowFilters] = useState(true);
+  // const [initialFetched, setInitialFetched] = useState(false);
   const [wishlist, setWishlist] = useState(() =>
     loadFromStorage("wishlistProductIds", []),
   );
@@ -386,22 +386,14 @@ const ProductListPage = () => {
       <div
         style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          padding: "40px 24px 48px", // reduced vertical padding
+          padding: "60px 24px",
           position: "relative",
           overflow: "hidden",
         }}
       >
-        {/* Subtle background pattern */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
+        {/* Animated Background Shapes */}
+        <div style={{ position: 'absolute', top: -50, right: -50, width: 300, height: 300, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(40px)', animation: 'float 6s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', bottom: -30, left: 100, width: 200, height: 200, background: 'rgba(255,255,255,0.05)', borderRadius: '50%', filter: 'blur(30px)', animation: 'float 8s ease-in-out infinite reverse' }} />
 
         <div
           style={{
@@ -411,110 +403,146 @@ const ProductListPage = () => {
             zIndex: 1,
           }}
         >
-          {/* Page Title */}
-          <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <Title
-              level={1}
-              style={{
-                color: "white",
-                marginBottom: "8px",
-                fontSize: "clamp(2.1rem, 4.2vw, 3.05rem)", // slightly smaller
-                fontWeight: "800",
-                textShadow: "0 4px 20px rgba(0,0,0,0.3)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Discover Amazing Products
-            </Title>
-            <Paragraph
-              style={{
-                color: "rgba(255,255,255,0.9)",
-                fontSize: "clamp(1rem, 2vw, 1.2rem)",
-                maxWidth: "600px",
-                margin: "0 auto",
-                lineHeight: "1.6",
-              }}
-            >
-              Find exactly what you're looking for from our curated collection
-              of premium products
-            </Paragraph>
-          </div>
+          <Row gutter={[48, 32]} align="middle">
+            <Col xs={24} md={14}>
+              <div style={{ textAlign: "left" }}>
+                <div style={{ display: 'inline-block', padding: '6px 16px', background: 'rgba(255,255,255,0.2)', borderRadius: '30px', marginBottom: 16, backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                   <Text style={{ color: '#fff', fontWeight: 600, fontSize: 13, letterSpacing: 1 }}>✨ BỘ SƯU TẬP CAO CẤP</Text>
+                </div>
+                <Title
+                  level={1}
+                  style={{
+                    color: "white",
+                    marginBottom: "16px",
+                    fontSize: "clamp(2.5rem, 5vw, 3.5rem)",
+                    fontWeight: "800",
+                    lineHeight: 1.1,
+                    textShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  Khám phá bộ sưu tập <br/>
+                  <span style={{ color: '#fbbf24' }}>Sản phẩm nổi bật</span>
+                </Title>
+                <Paragraph
+                  style={{
+                    color: "rgba(255,255,255,0.9)",
+                    fontSize: "clamp(1.1rem, 2vw, 1.25rem)",
+                    maxWidth: "540px",
+                    lineHeight: "1.6",
+                    marginBottom: 32,
+                  }}
+                >
+                  Tìm kiếm sản phẩm phù hợp từ bộ sưu tập chất lượng, giá tốt, đa dạng ngành hàng.
+                </Paragraph>
 
-          {/* Controls moved to main content */}
-
-          {/* Results Summary */}
-          {!loading && (
-          <div
-            style={{
-                textAlign: "center",
-                marginTop: "20px",
-                background: "rgba(255,255,255,0.1)",
-                backdropFilter: "blur(10px)",
-                padding: "14px 16px",
-                borderRadius: "14px",
-              border: "1px solid rgba(255,255,255,0.18)",
-              }}
-            >
-              <Text
-                style={{
-                  color: "white",
-                  fontSize: "18px",
-                  fontWeight: "600",
-                }}
-              >
-                {displayedProducts.length === 0 ? (
-                  totalCount === 0 ? (
-                    "No products found"
-                  ) : (
-                    "No products match your filters"
-                  )
-                ) : (
-                  <>
-                    Showing{" "}
-                    <span
-                      style={{
-                        color: "#fbbf24",
-                        fontWeight: "800",
-                        fontSize: "20px",
-                      }}
-                    >
-                      {displayedProducts.length}
-                    </span>{" "}
-                    of{" "}
-                    <span
-                      style={{
-                        color: "#fbbf24",
-                        fontWeight: "800",
-                        fontSize: "20px",
-                      }}
-                    >
-                      {totalCount}
-                    </span>{" "}
-                    amazing products
-                    {totalPages > 1 && (
-                      <span style={{ opacity: 0.85, fontSize: "16px" }}>
-                        {" "}
-                        (Page {currentPage} of {totalPages})
-                      </span>
-                    )}
-                    {selectedCategory && (
-                      <span style={{ opacity: 0.9 }}>
-                        {" "}
-                        in "{selectedCategory}"{" "}
-                        {/* Directly use category name */}
-                      </span>
-                    )}
-                    {searchTerm && (
-                      <span style={{ opacity: 0.9 }}>
-                        {" "}
-                        matching "{searchTerm}"
-                      </span>
-                    )}
-                  </>
+                {/* Results Summary Badge */}
+                {!loading && (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      background: "rgba(255,255,255,0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: "12px 24px",
+                      borderRadius: "16px",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: "16px", fontWeight: "500" }}>
+                      {displayedProducts.length === 0 ? (
+                        totalCount === 0 ? "Không tìm thấy sản phẩm nào" : "Không có sản phẩm phù hợp với bộ lọc"
+                      ) : (
+                        <>
+                          Hiển thị <span style={{ color: "#fbbf24", fontWeight: "800", fontSize: "18px" }}>{displayedProducts.length}</span> trên tổng <span style={{ color: "#fbbf24", fontWeight: "800", fontSize: "18px" }}>{totalCount}</span> sản phẩm
+                          {selectedCategory && <span style={{ opacity: 0.9 }}> thuộc danh mục "{selectedCategory}"</span>}
+                        </>
+                      )}
+                    </Text>
+                  </div>
                 )}
-                  </Text>
-            </div>
-          )}
+              </div>
+            </Col>
+            
+            <Col xs={24} md={10} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+               <div className="header-collage" style={{ position: 'relative', width: '100%', maxWidth: 500, height: 400 }}>
+                  {/* Image 1: Main Vertical (Left) */}
+                  <div className="collage-item item-1" style={{
+                      position: 'absolute',
+                      left: 0,
+                      bottom: 0,
+                      width: '55%',
+                      height: '85%',
+                      borderRadius: '24px',
+                      overflow: 'hidden',
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+                      zIndex: 2,
+                      transform: 'rotate(-3deg)',
+                      border: '4px solid rgba(255,255,255,0.3)',
+                      transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                  }}>
+                      <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=80" alt="Fashion 1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+
+                  {/* Image 2: Top Right */}
+                  <div className="collage-item item-2" style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      width: '55%',
+                      height: '60%',
+                      borderRadius: '24px',
+                      overflow: 'hidden',
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+                      zIndex: 1,
+                      transform: 'rotate(6deg)',
+                      border: '4px solid rgba(255,255,255,0.3)',
+                      transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                  }}>
+                       <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80" alt="Fashion 2" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+
+                  {/* Image 3: Small Detail (Bottom Right) */}
+                  <div className="collage-item item-3" style={{
+                      position: 'absolute',
+                      right: '10%',
+                      bottom: '5%',
+                      width: '35%',
+                      height: '35%',
+                      borderRadius: '20px',
+                      overflow: 'hidden',
+                      boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
+                      zIndex: 3,
+                      transform: 'rotate(12deg)',
+                      border: '4px solid #fff',
+                      transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                  }}>
+                       <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Fashion 3" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+
+                  {/* Static Floating Icons */}
+                  <div style={{ position: 'absolute', top: '40%', left: '-8%', background: '#fff', padding: 12, borderRadius: '50%', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 4 }}>
+                     <HeartFilled style={{ fontSize: 24, color: '#ef4444' }} />
+                  </div>
+                  <div style={{ position: 'absolute', top: '-5%', right: '45%', background: '#fff', padding: 12, borderRadius: '50%', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 4 }}>
+                     <StarFilled style={{ fontSize: 24, color: '#fbbf24' }} />
+                  </div>
+               </div>
+               <style jsx>{`
+                  .header-collage:hover .collage-item {
+                    transform: scale(0.95);
+                    filter: brightness(0.8);
+                  }
+                  .header-collage .collage-item:hover {
+                    transform: scale(1.1) rotate(0deg) !important;
+                    z-index: 10 !important;
+                    filter: brightness(1.1) !important;
+                    box-shadow: 0 30px 60px rgba(0,0,0,0.3) !important;
+                    border-color: #fff !important;
+                  }
+               `}</style>
+            </Col>
+          </Row>
         </div>
       </div>
 
@@ -540,10 +568,10 @@ const ProductListPage = () => {
           >
             <Row gutter={[16, 16]} align="middle">
               <Col xs={24} sm={24} md={12} lg={9} xl={9}>
-              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Search Products</Text>
+              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Tìm kiếm sản phẩm</Text>
 
                   <Search
-                  placeholder="Search products..."
+                  placeholder="Tìm kiếm sản phẩm..."
                     value={searchTerm}
                     allowClear
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -555,9 +583,9 @@ const ProductListPage = () => {
 
               <Col xs={24} sm={12} md={6} lg={5} xl={5}>
                 <div className="filter-group">
-                  <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Category</Text>
+                  <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Danh mục</Text>
                   <Select
-                    placeholder="All Categories"
+                    placeholder="Tất cả danh mục"
                     style={{ width: "100%" }}
                     value={selectedCategory}
                     onChange={handleCategoryChange}
@@ -585,52 +613,50 @@ const ProductListPage = () => {
               </Col>
 
               <Col xs={24} sm={12} md={6} lg={5} xl={5}>
-              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Sort By</Text>
+              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Sắp xếp</Text>
                   <Select
                     value={sortBy}
                     onChange={handleSortChange}
                     size="large"
                     style={{ width: "100%" }}
                   >
-                    <Option value="name">Name (A-Z)</Option>
-                    <Option value="-name">Name (Z-A)</Option>
-                    <Option value="price">Price: Low to High</Option>
-                    <Option value="-price">Price: High to Low</Option>
-                    <Option value="-average_rating">Rating: High to Low</Option>
-                    <Option value="average_rating">Rating: Low to High</Option>
-                    <Option value="-created_at">Newest First</Option>
-                    <Option value="created_at">Oldest First</Option>
+                    <Option value="name">Tên (A-Z)</Option>
+                    <Option value="-name">Tên (Z-A)</Option>
+                    <Option value="price">Giá tăng dần</Option>
+                    <Option value="-price">Giá giảm dần</Option>
+                    <Option value="-average_rating">Đánh giá cao nhất</Option>
+                    <Option value="average_rating">Đánh giá thấp nhất</Option>
+                    <Option value="-created_at">Mới nhất</Option>
+                    <Option value="created_at">Cũ nhất</Option>
                   </Select>
               </Col>
 
               <Col xs={12} sm={6} md={4} lg={3} xl={3}>
-              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>View Mode</Text>
-                <Button.Group size="large " style={{ width: "100%" }}>
-                    <Button
-                      type={viewMode === "grid" ? "primary" : "default"}
-                      icon={<AppstoreOutlined />}
-                      onClick={() => setViewMode("grid")}
-                    style={{ flex: 1 , marginRight: 10 }}
-                      loading={loading}
-                    />
-                    <Button
-                      type={viewMode === "list" ? "primary" : "default"}
-                      icon={<UnorderedListOutlined />}
-                      onClick={() => setViewMode("list")}
-                    style={{ flex: 1 }}
-                    />
-                  </Button.Group>
+              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Chế độ xem</Text>
+                <Select
+                  size="large"
+                  value={viewMode}
+                  style={{ width: "100%" }}
+                  onChange={setViewMode}
+                  options={[{
+                    value: "grid",
+                    label: <span><AppstoreOutlined style={{ marginRight: 6 }} />Lưới</span>
+                  }, {
+                    value: "list",
+                    label: <span><UnorderedListOutlined style={{ marginRight: 6 }} />Danh sách</span>
+                  }]}
+                />
               </Col>
 
               <Col xs={12} sm={6} md={4} lg={2} xl={2}>
-              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Refresh</Text>
+              <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>Làm mới</Text>
                     <Button
                       icon={<ReloadOutlined />}
                       onClick={handleRefresh}
                       size="large"
                   style={{ width: "100%" }}
-                      aria-label="Refresh products"
-                    />
+                      aria-label="Làm mới sản phẩm"
+                    >Làm mới</Button>
               </Col>
             </Row>
           </div>
@@ -651,11 +677,11 @@ const ProductListPage = () => {
               }}
             >
               <Title level={4} style={{ marginTop: 0, marginBottom: 12 }}>
-                Filters
+                Bộ lọc
               </Title>
               <div style={{ marginBottom: 16 }}>
                 <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>
-                      Price Range
+                      Khoảng giá
                     </Text>
                     <Slider
                       range
@@ -680,27 +706,27 @@ const ProductListPage = () => {
 
               <div style={{ marginBottom: 16 }}>
                 <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>
-                      Minimum Rating
+                      Đánh giá tối thiểu
                     </Text>
                 <Rate allowClear value={minRating} onChange={setMinRating} />
               </div>
 
               <div style={{ marginBottom: 16 }}>
                 <Text style={{ fontWeight: 600, display: "block", marginBottom: 8 }}>
-                      Flags
+                      Trạng thái
                     </Text>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       <Checkbox
                         checked={onlyOnSale}
                         onChange={(e) => setOnlyOnSale(e.target.checked)}
                       >
-                        On Sale
+                        Đang giảm giá
                       </Checkbox>
                       <Checkbox
                         checked={onlyInStock}
                         onChange={(e) => setOnlyInStock(e.target.checked)}
                       >
-                        In Stock
+                        Còn hàng
                       </Checkbox>
                     </div>
               </div>
@@ -720,7 +746,7 @@ const ProductListPage = () => {
                     fontWeight: 600,
                         }}
                       >
-                        Reset All Filters
+                        Đặt lại tất cả bộ lọc
                       </Button>
                       {(selectedPriceRange[0] !== priceRange[0] ||
                         selectedPriceRange[1] !== priceRange[1] ||
@@ -871,7 +897,7 @@ const ProductListPage = () => {
                     fontWeight: "600",
                   }}
                 >
-                  Clear All Filters
+                  Xóa tất cả bộ lọc
                 </Button>
               </div>
             )}
@@ -909,7 +935,7 @@ const ProductListPage = () => {
                     background: currentPage === 1 ? "#f8fafc" : "white",
                   }}
                 >
-                  Previous
+                  Trước
                 </Button>
 
                 {/* Page Buttons */}
@@ -977,7 +1003,7 @@ const ProductListPage = () => {
                       currentPage === totalPages ? "#f8fafc" : "white",
                   }}
                 >
-                  Next
+                  Tiếp
                 </Button>
               </div>
             )}
@@ -1031,7 +1057,7 @@ const ProductListPage = () => {
                 fontWeight: "600",
               }}
             >
-              Browse All Products
+              Xem tất cả sản phẩm
             </Button>
           </div>
         )}

@@ -1,5 +1,6 @@
-import React from "react";
-import { Row, Col, Button, Typography, Card } from "antd";
+import React, { useRef } from "react";
+import { Row, Col, Button, Typography, Card, Carousel } from "antd";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { PRODUCT_LIMITS } from "../constants/constants";
 
@@ -7,19 +8,13 @@ const { Title, Paragraph, Text } = Typography;
 
 const DealsSection = ({ products, loading, ProductCard }) => {
   const navigate = useNavigate();
+  const carouselRef = useRef(null);
 
   if (!loading && products.length === 0) return null;
 
   return (
     <section
-      style={{
-        padding: "80px 0 60px",
-        background: `
-          linear-gradient(135deg, #fef2f2 0%, #fef7f7 25%, #fefefe 50%, #f0f9ff 75%, #e0f2fe 100%)
-        `,
-        position: "relative",
-        overflow: "hidden",
-      }}
+      className="home-section deals-section"
     >
       {/* Animated background elements */}
       <div
@@ -59,6 +54,7 @@ const DealsSection = ({ products, loading, ProductCard }) => {
       >
         {/* Enhanced Section Header */}
         <div
+          className="section-header"
           style={{
             textAlign: "center",
             marginBottom: 60,
@@ -66,58 +62,18 @@ const DealsSection = ({ products, loading, ProductCard }) => {
           }}
         >
           {/* Urgency badge */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 20px",
-              background:
-                "linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))",
-              border: "1px solid rgba(239, 68, 68, 0.2)",
-              borderRadius: 25,
-              marginBottom: 24,
-            }}
-          >
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "#ef4444",
-                animation: "pulse 1.5s infinite",
-              }}
-            />
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: "#dc2626",
-                textTransform: "uppercase",
-                letterSpacing: 0.8,
-              }}
-            >
-              Limited Time Offers
+          <div className="deals-badge">
+            <div className="deals-badge-dot" />
+            <Text className="deals-badge-text">
+              Ưu đãi giới hạn
             </Text>
           </div>
 
           <Title
+            className="deals-title"
             level={2}
-            style={{
-              margin: 0,
-              fontWeight: 800,
-              fontSize: "clamp(32px, 4vw, 48px)",
-              lineHeight: 1.2,
-              background:
-                "linear-gradient(135deg, #dc2626 0%, #ef4444 25%, #f97316 50%, #ea580c 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              letterSpacing: "-0.02em",
-              marginBottom: 16,
-            }}
           >
-            Hot Deals
+            Khuyến mãi hot
           </Title>
 
           <Paragraph
@@ -130,34 +86,16 @@ const DealsSection = ({ products, loading, ProductCard }) => {
               fontWeight: 500,
             }}
           >
-            Don't miss out on these incredible discounts! Limited time offers
-            with massive savings on premium products.
+            Đừng bỏ lỡ những ưu đãi hấp dẫn này! Thời gian có hạn với mức giảm giá cực lớn cho các sản phẩm cao cấp.
           </Paragraph>
 
           {/* Action button */}
           <Button
+            className="deals-button"
             size="large"
             onClick={() => navigate("/products")}
-            style={{
-              fontWeight: 600,
-              padding: "0 32px",
-              height: 48,
-              borderRadius: 16,
-              background: "linear-gradient(135deg, #dc2626, #ef4444)",
-              border: "none",
-              boxShadow: "0 8px 25px rgba(220, 38, 38, 0.3)",
-              transition: "all 0.3s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = "translateY(-2px)";
-              e.target.style.boxShadow = "0 12px 35px rgba(220, 38, 38, 0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = "translateY(0)";
-              e.target.style.boxShadow = "0 8px 25px rgba(220, 38, 38, 0.3)";
-            }}
           >
-            View All Deals
+            Xem tất cả khuyến mãi
           </Button>
         </div>
 
@@ -171,19 +109,64 @@ const DealsSection = ({ products, loading, ProductCard }) => {
             ))}
           </Row>
         ) : (
-          <Row gutter={[24, 32]} justify="center">
-            {products.slice(0, PRODUCT_LIMITS.DEALS).map((product, index) => (
-              <Col key={product.id} xs={24} sm={12} md={8} lg={5}>
-                <div
-                  style={{
-                    animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
-                  }}
-                >
-                  <ProductCard product={product} compact />
+          <div className="deals-carousel-container">
+            <div 
+              className="carousel-arrow left" 
+              onClick={() => carouselRef.current?.prev()}
+            >
+              <LeftOutlined />
+            </div>
+            
+            <Carousel
+              ref={carouselRef}
+              autoplay
+              dots={false}
+              slidesToShow={4}
+              slidesToScroll={1}
+              infinite={true}
+              className="deals-carousel"
+              responsive={[
+                {
+                  breakpoint: 1200,
+                  settings: {
+                    slidesToShow: 3,
+                  }
+                },
+                {
+                  breakpoint: 992,
+                  settings: {
+                    slidesToShow: 2,
+                  }
+                },
+                {
+                  breakpoint: 576,
+                  settings: {
+                    slidesToShow: 1,
+                  }
+                }
+              ]}
+            >
+              {products.slice(0, PRODUCT_LIMITS.DEALS).map((product, index) => (
+                <div key={product.id}>
+                  <div
+                    style={{
+                      animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
+                      padding: "10px" // Add padding to prevent shadow clipping
+                    }}
+                  >
+                    <ProductCard product={product} compact isHotDeal />
+                  </div>
                 </div>
-              </Col>
-            ))}
-          </Row>
+              ))}
+            </Carousel>
+
+            <div 
+              className="carousel-arrow right" 
+              onClick={() => carouselRef.current?.next()}
+            >
+              <RightOutlined />
+            </div>
+          </div>
         )}
 
         {/* Countdown timer element */}
@@ -206,7 +189,7 @@ const DealsSection = ({ products, loading, ProductCard }) => {
               marginRight: 16,
             }}
           >
-            ⏰ Offers end soon!
+            ⏰ Ưu đãi sắp kết thúc!
           </Text>
           <Text
             style={{
@@ -214,7 +197,7 @@ const DealsSection = ({ products, loading, ProductCard }) => {
               color: "#64748b",
             }}
           >
-            Don't wait - these deals won't last forever
+            Đừng chần chừ - các ưu đãi này sẽ không kéo dài lâu đâu
           </Text>
         </div>
       </div>

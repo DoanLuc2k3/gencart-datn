@@ -39,6 +39,8 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
+const Blog = lazy(() => import("./pages/Blog"));
+const ContactPage = lazy(() => import("./pages/Contact"));
 const OrdersPage = lazy(() => import("./pages/OrdersPage"));
 const OrderDetailsPage = lazy(() => import("./pages/OrderDetailsPage"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
@@ -48,6 +50,8 @@ const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const AdminHelp = lazy(() => import("./pages/admin/AdminHelp"));
+
 
 const { Content } = Layout;
 
@@ -86,6 +90,7 @@ function App() {
                 <Route path="orders" element={<AdminOrders />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="categories" element={<AdminCategories />} />
+                <Route path="help" element={<AdminHelp />} />
               </Route>
 
               {/* Regular routes with standard layout */}
@@ -126,6 +131,8 @@ function App() {
                               element={<OrderDetailsPage />}
                             />
                             <Route path="/about" element={<AboutPage />} />
+                            <Route path="/blog" element={<Blog />} />
+                            <Route path="/contact" element={<ContactPage />} />
                             <Route path="*" element={<NotFoundPage />} />
                           </Routes>
                         </Suspense>

@@ -17,6 +17,7 @@ import {
   message,
   Modal,
   Form,
+  Steps,
   Rate,
   Input
 } from 'antd';
@@ -40,6 +41,7 @@ import {
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+
 
 const OrderDetailsPage = () => {
   useScrollToTop();
@@ -111,6 +113,27 @@ const OrderDetailsPage = () => {
     whiteSpace: 'nowrap'
   };
 
+  // Format number to VND currency
+  const formatCurrency = (value) => {
+    try {
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+    } catch (e) {
+      return `₫${Number(value).toFixed(2)}`;
+    }
+  };
+
+  // Map order status to steps index
+  const statusToStepIndex = (status) => {
+    const map = {
+      processing: 0,
+      shipped: 1,
+      delivered: 2,
+      cancelled: 1
+    };
+
+    return map[status] ?? 0;
+  };
+
   // Fetch order details
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -120,7 +143,7 @@ const OrderDetailsPage = () => {
         const token = localStorage.getItem('access_token');
 
         if (!token) {
-          message.error('Please login to view order details');
+          message.error('Vui lòng đăng nhập để xem chi tiết đơn hàng');
           navigate('/login');
           return;
         }
@@ -199,7 +222,7 @@ const OrderDetailsPage = () => {
         }
       } catch (error) {
         console.error('Error fetching order details:', error);
-        message.error('Failed to load order details. Please try again.');
+        message.error('Tải chi tiết đơn hàng thất bại. Vui lòng thử lại.');
       } finally {
         setLoading(false);
       }
@@ -258,7 +281,7 @@ const OrderDetailsPage = () => {
       const token = localStorage.getItem('access_token');
 
       if (!token) {
-        message.error('Authentication error. Please login again.');
+        message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
         navigate('/login');
         return;
       }
@@ -274,10 +297,10 @@ const OrderDetailsPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to cancel order');
+        throw new Error(errorData.detail || 'Hủy đơn thất bại');
       }
 
-      message.success('Order cancelled successfully');
+      message.success('Hủy đơn thành công');
       setModalVisible(false);
 
       // Refresh order details
@@ -294,9 +317,9 @@ const OrderDetailsPage = () => {
           status: updatedData.status
         });
       }
-    } catch (error) {
+      } catch (error) {
       console.error('Error cancelling order:', error);
-      message.error(error.message || 'Failed to cancel order. Please try again.');
+      message.error(error.message || 'Hủy đơn thất bại. Vui lòng thử lại.');
     } finally {
       setCancelLoading(false);
     }
@@ -335,17 +358,17 @@ const OrderDetailsPage = () => {
       if (response.ok) {
         setReviewModalVisible(false);
         reviewForm.resetFields();
-        message.success('Review added successfully!');
+        message.success('Đã thêm đánh giá!');
         
         // Update reviewed products set
         setReviewedProducts(prev => new Set([...prev, selectedProduct.product_id]));
       } else {
         const errorData = await response.json();
-        message.error(errorData.error || 'Failed to add review');
+        message.error(errorData.error || 'Thêm đánh giá thất bại');
       }
     } catch (error) {
       console.error('Error adding review:', error);
-      message.error('Failed to add review. Please try again.');
+      message.error('Thêm đánh giá thất bại. Vui lòng thử lại.');
     } finally {
       setSubmittingReview(false);
     }
@@ -354,10 +377,10 @@ const OrderDetailsPage = () => {
   // Get status tag
   const getStatusTag = (status) => {
     const config = {
-      processing: { color: 'gold', text: 'Processing', icon: <ClockCircleOutlined /> },
-      shipped: { color: 'cyan', text: 'Shipped', icon: <CarOutlined /> },
-      delivered: { color: 'green', text: 'Delivered', icon: <CheckCircleOutlined /> },
-      cancelled: { color: 'red', text: 'Cancelled', icon: <ExclamationCircleOutlined /> }
+      processing: { color: 'gold', text: 'Đang xử lý', icon: <ClockCircleOutlined /> },
+      shipped: { color: 'cyan', text: 'Đã gửi', icon: <CarOutlined /> },
+      delivered: { color: 'green', text: 'Đã giao', icon: <CheckCircleOutlined /> },
+      cancelled: { color: 'red', text: 'Đã hủy', icon: <ExclamationCircleOutlined /> }
     };
 
     const { color, text, icon } = config[status] || { color: 'default', text: status, icon: null };
@@ -395,9 +418,9 @@ const OrderDetailsPage = () => {
     return (
       <div style={{ textAlign: 'center', padding: '80px' }}>
         <Card style={detailCardStyle} bodyStyle={{ padding: '40px' }}>
-          <Empty description="Order not found" image={Empty.PRESENTED_IMAGE_SIMPLE}>
+          <Empty description="Không tìm thấy đơn hàng" image={Empty.PRESENTED_IMAGE_SIMPLE}>
             <Button type="primary" onClick={handleGoBack}>
-              Back to Orders
+              Quay lại danh sách đơn
             </Button>
           </Empty>
         </Card>
@@ -414,7 +437,7 @@ const OrderDetailsPage = () => {
           onClick={handleGoBack}
           style={{ marginBottom: 16, padding: 0, color: '#6366f1', fontWeight: 500 }}
         >
-          Back to Orders
+          Quay lại danh sách đơn
         </Button>
 
         <div style={headerCardStyle}>
@@ -424,25 +447,37 @@ const OrderDetailsPage = () => {
               <Space size={12} wrap>
                 <ShoppingOutlined style={{ fontSize: 26 }} />
                 <Title level={3} style={{ margin: 0, color: '#fff' }}>
-                  Order #{order.id}
+                  Đơn hàng #{order.id}
                 </Title>
               </Space>
               <Space size={24} wrap>
                 <div style={headerMetaStyle}>
                   <ClockCircleOutlined />
-                  <span>Placed {new Date(order.date).toLocaleDateString('en-IN')}</span>
+                  <span>Đặt vào {new Date(order.date).toLocaleDateString('en-IN')}</span>
                 </div>
                 <div style={headerMetaStyle}>
                   <CarOutlined />
-                  <span>Expected delivery: {order.deliveryDate}</span>
+                  <span>Dự kiến giao hàng: {order.deliveryDate}</span>
                 </div>
               </Space>
+            <div style={{ marginTop: 8 }}>
+              <Steps
+                current={statusToStepIndex(order.status)}
+                size="small"
+                items={[
+                  { title: 'Đang xử lý' },
+                  { title: 'Đã gửi' },
+                  { title: 'Đã giao' }
+                ]}
+                style={{ maxWidth: 520 }}
+              />
+            </div>
             </Space>
 
             <div style={{ position: 'absolute', top: 0, right: 28, textAlign: 'right' }}>
               <div style={{ marginBottom: 8 }}>{getStatusTag(order.status)}</div>
               <Text style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
-                Total: ₫{order.total.toFixed(2)}
+                Tổng: {formatCurrency(order.total)}
               </Text>
             </div>
 
@@ -453,7 +488,7 @@ const OrderDetailsPage = () => {
                 onClick={showCancelConfirm}
                 style={{ marginTop: 20 }}
               >
-                Cancel Order
+                Hủy đơn
               </Button>
             )}
           </div>
@@ -467,20 +502,20 @@ const OrderDetailsPage = () => {
           <Row gutter={[24, 24]} align="stretch">
             <Col xs={24} md={14}>
               <Card
-                title="Shipping Information"
+                title="Thông tin giao hàng"
                 bordered={false}
                 style={{ ...sectionCardStyle, height: '100%' }}
                 headStyle={{ background: 'transparent', borderBottom: '1px solid rgba(148,163,184,0.18)', fontWeight: 600 }}
                 bodyStyle={{ padding: '18px 20px' }}
               >
                 <Descriptions column={1} size="small">
-                  <Descriptions.Item label={<><UserOutlined /> Name</>}>
+                  <Descriptions.Item label={<><UserOutlined /> Tên</>}>
                     {order.shipping.name}
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><HomeOutlined /> Address</>}>
+                  <Descriptions.Item label={<><HomeOutlined /> Địa chỉ</>}>
                     {order.shipping.address}
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><PhoneOutlined /> Phone</>}>
+                  <Descriptions.Item label={<><PhoneOutlined /> Số điện thoại</>}>
                     {order.shipping.phone}
                   </Descriptions.Item>
                   <Descriptions.Item label={<><MailOutlined /> Email</>}>
@@ -492,18 +527,18 @@ const OrderDetailsPage = () => {
 
             <Col xs={24} md={10}>
               <Card
-                title="Payment Information"
+                title="Thông tin thanh toán"
                 bordered={false}
                 style={{ ...sectionCardStyle, height: '100%' }}
                 headStyle={{ background: 'transparent', borderBottom: '1px solid rgba(148,163,184,0.18)', fontWeight: 600 }}
                 bodyStyle={{ padding: '18px 20px' }}
               >
                 <Descriptions column={1} size="small">
-                  <Descriptions.Item label="Method">
+                  <Descriptions.Item label="Phương thức">
                     {order.payment.method}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Status">
-                    {order.payment.status ? 'Paid' : 'Pending'}
+                  <Descriptions.Item label="Trạng thái">
+                    {order.payment.status ? 'Đã thanh toán' : 'Chưa thanh toán'}
                   </Descriptions.Item>
                 </Descriptions>
               </Card>
@@ -512,7 +547,7 @@ const OrderDetailsPage = () => {
 
           <Divider style={{ margin: '28px 0' }} />
 
-          <Title level={4} style={{ marginBottom: 18 }}>Ordered Items</Title>
+          <Title level={4} style={{ marginBottom: 18 }}>Sản phẩm đã đặt ({order.items.length})</Title>
           <Row gutter={[18, 18]}>
             {order.items.map(item => (
               <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
@@ -550,11 +585,11 @@ const OrderDetailsPage = () => {
                             order.status === 'delivered' && item.product_id ? [
                               reviewedProducts.has(item.product_id) ? (
                                 <span style={{ color: '#16a34a', fontWeight: 500 }}>
-                                  <CheckCircleOutlined /> Reviewed
+                                  <CheckCircleOutlined /> Đã đánh giá
                                 </span>
                               ) : (
                                 <Button type="link" icon={<StarOutlined />} onClick={() => handleReviewProduct(item)}>
-                                  Review Product
+                                  Đánh giá sản phẩm
                                 </Button>
                               )
                             ] : []
@@ -562,8 +597,8 @@ const OrderDetailsPage = () => {
                 >
                           <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: 8, flexGrow: 1 }}>{item.name}</div>
                           <Space direction="vertical" size={4}>
-                    <Text type="secondary">Quantity: {item.quantity}</Text>
-                    <Text strong style={{ fontSize: '15px' }}>₫{(item.price * item.quantity).toFixed(2)}</Text>
+                    <Text type="secondary">Số lượng: {item.quantity}</Text>
+                          <Text strong style={{ fontSize: '15px' }}>{formatCurrency(item.price * item.quantity)}</Text>
                   </Space>
                 </Card>
               </Col>
@@ -574,22 +609,22 @@ const OrderDetailsPage = () => {
 
       {/* Cancel Order Confirmation Modal */}
       <Modal
-        title="Cancel Order"
+        title="Hủy đơn"
         open={modalVisible}
         onOk={handleCancelOrder}
         confirmLoading={cancelLoading}
         onCancel={() => setModalVisible(false)}
-        okText="Yes, Cancel Order"
-        cancelText="No, Keep Order"
+        okText="Có, hủy đơn"
+        cancelText="Không, giữ đơn"
         okButtonProps={{ danger: true }}
       >
-        <p>Are you sure you want to cancel this order?</p>
-        <p>This action cannot be undone.</p>
+        <p>Bạn có chắc muốn hủy đơn hàng này?</p>
+        <p>Hành động này không thể hoàn tác.</p>
       </Modal>
 
       {/* Review Modal */}
       <Modal
-        title={`Review ${selectedProduct?.name}`}
+        title={`Đánh giá ${selectedProduct?.name}`}
         open={reviewModalVisible}
         onCancel={() => setReviewModalVisible(false)}
         footer={null}
@@ -602,41 +637,41 @@ const OrderDetailsPage = () => {
         >
           <Form.Item
             name="rating"
-            label="Rating"
-            rules={[{ required: true, message: 'Please provide a rating!' }]}
+            label="Đánh giá"
+            rules={[{ required: true, message: 'Vui lòng cho điểm!' }]}
           >
             <Rate />
           </Form.Item>
 
           <Form.Item
             name="title"
-            label="Review Title"
+            label="Tiêu đề đánh giá"
             rules={[
-              { required: true, message: 'Please provide a review title!' },
-              { max: 200, message: 'Title must be less than 200 characters!' }
+              { required: true, message: 'Vui lòng nhập tiêu đề đánh giá!' },
+              { max: 200, message: 'Tiêu đề không quá 200 ký tự!' }
             ]}
           >
-            <Input placeholder="Summarize your experience" />
+            <Input placeholder="Tóm tắt trải nghiệm của bạn" />
           </Form.Item>
 
           <Form.Item
             name="comment"
-            label="Review"
-            rules={[{ required: true, message: 'Please write your review!' }]}
+            label="Nội dung đánh giá"
+            rules={[{ required: true, message: 'Vui lòng viết đánh giá!' }]}
           >
             <TextArea
               rows={4}
-              placeholder="Tell us about your experience with this product"
+              placeholder="Hãy kể về trải nghiệm của bạn với sản phẩm này"
             />
           </Form.Item>
 
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={submittingReview}>
-                Submit Review
+                Gửi đánh giá
               </Button>
               <Button onClick={() => setReviewModalVisible(false)}>
-                Cancel
+                Hủy
               </Button>
             </Space>
           </Form.Item>

@@ -864,75 +864,77 @@ const AdminProducts = () => {
     </Card>
   );
 
+  // Simplified, more modern header
   const headerSection = (
     <Card
       style={{
         borderRadius: 24,
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
         color: "#fff",
-        boxShadow: "0 28px 60px rgba(15, 23, 42, 0.45)",
-        marginBottom: 24,
+        boxShadow: "0 20px 40px rgba(15, 23, 42, 0.25)",
+        marginBottom: 12,
         border: "none",
       }}
-      bodyStyle={{ padding: 28 }}
+      bodyStyle={{ padding: 20 }}
     >
       <Row gutter={[24, 24]} align="middle" justify="space-between">
-        <Col xs={24} md={14} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <Space size={12} align="center">
-            <Badge
-              status="processing"
-              text="Product Dashboard"
-              style={{ color: "rgba(255,255,255,0.78)" }}
-            />
-          </Space>
-          <Title level={2} style={{ color: "#fff", margin: 0 }}>
-            Product Management
-          </Title>
+        <Col xs={24} md={14} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <Title level={2} style={{ color: "#fff", margin: 0, fontWeight: 650 }}>
+              Product Management
+            </Title>
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <Tag color="geekblue" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+              Total: {productMetrics.total}
+            </Tag>
+            <Tag color="green" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+              Active: {productMetrics.active}
+            </Tag>
+            <Tag color="volcano" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+              Low stock: {productMetrics.lowStock}
+            </Tag>
+          </div>
         </Col>
         <Col xs={24} md={10}>
-          <Space
-            direction="vertical"
-            size={16}
-            style={{ width: "100%", alignItems: "flex-end" }}
-          >
-            <Segmented
-              size="large"
-              options={[
-                {
-                  label: "Table",
-                  value: "Table",
-                  icon: <UnorderedListOutlined />,
-                },
-                {
-                  label: "Grid",
-                  value: "Grid",
-                  icon: <AppstoreOutlined />,
-                },
-              ]}
-              value={viewMode}
-              onChange={setViewMode}
-            />
-            <Space size={12} wrap>
+          <Space size={12} style={{ width: '100%', justifyContent: 'flex-end', alignItems: 'center' }}>
+            <Tooltip title={viewMode === 'Table' ? 'Table view' : 'Grid view'}>
+              <Segmented
+                size="middle"
+                options={[
+                  {
+                    label: <Tooltip title="Table"><UnorderedListOutlined style={{ fontSize: 16 }} /></Tooltip>,
+                    value: "Table",
+                  },
+                  {
+                    label: <Tooltip title="Grid"><AppstoreOutlined style={{ fontSize: 16 }} /></Tooltip>,
+                    value: "Grid",
+                  },
+                ]}
+                value={viewMode}
+                onChange={setViewMode}
+                style={{ minWidth: 120, borderRadius: 8 }}
+              />
+            </Tooltip>
+
+            <Tooltip title="Refresh products">
               <Button
+                shape="circle"
                 icon={<ReloadOutlined />}
                 onClick={handleRefresh}
                 loading={loading}
-                style={{
-                  background: "rgba(255, 255, 255, 0.14)",
-                  color: "#fff",
-                  border: "1px solid rgba(255,255,255,0.25)",
-                }}
-              >
-                Refresh
-              </Button>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => showModal()}
-              >
-                Add Product
-              </Button>
-            </Space>
+                style={{ border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: '#fff' }}
+              />
+            </Tooltip>
+
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => showModal()}
+              style={{ borderRadius: 10 }}
+            >
+              Add Product
+            </Button>
           </Space>
         </Col>
       </Row>
@@ -942,7 +944,8 @@ const AdminProducts = () => {
   return (
     <div
       style={{
-        padding: 24,
+        // reduce padding so content aligns closer to header
+        padding: 8,
         background: "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
         borderRadius: 24,
         minHeight: "100%",

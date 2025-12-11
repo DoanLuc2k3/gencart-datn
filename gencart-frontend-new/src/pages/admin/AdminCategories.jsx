@@ -218,6 +218,14 @@ const AdminCategories = () => {
     fileList,
   };
 
+  // Categories metrics
+  const categoriesMetrics = useMemo(() => {
+    const total = categories.length;
+    const active = categories.filter((c) => c.is_active).length;
+    const withProducts = categories.filter((c) => c.product_count && c.product_count > 0).length;
+    return { total, active, withProducts };
+  }, [categories]);
+
   // Table columns
   const columns = [
     {
@@ -255,6 +263,7 @@ const AdminCategories = () => {
       dataIndex: "product_count",
       key: "product_count",
       sorter: (a, b) => a.product_count - b.product_count,
+      render: (count) => (count || count === 0 ? formatNumber(count) : "—"),
     },
     {
       title: "Active",
@@ -273,10 +282,14 @@ const AdminCategories = () => {
       render: (_, record) => (
         <Space size="small">
           <Button
-            type="primary"
             icon={<EditOutlined />}
             onClick={() => showModal(record)}
             size="small"
+            style={{
+              background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
+              border: "none",
+              color: "#fff",
+            }}
           />
           <Popconfirm
             title="Are you sure you want to delete this category?"
@@ -300,7 +313,7 @@ const AdminCategories = () => {
   return (
     <div
       style={{
-        padding: isMobile ? 12 : 24,
+        padding: isMobile ? 8 : 12,
         background: "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
         borderRadius: isMobile ? 12 : 24,
         minHeight: "100%",
@@ -309,33 +322,54 @@ const AdminCategories = () => {
       <Card
         style={{
           borderRadius: isMobile ? 12 : 24,
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
           color: "#fff",
-          boxShadow: "0 28px 60px rgba(15, 23, 42, 0.45)",
-          marginBottom: isMobile ? 16 : 24,
+          boxShadow: "0 20px 40px rgba(15, 23, 42, 0.25)",
+          marginBottom: isMobile ? 12 : 12,
           border: "none",
         }}
-        bodyStyle={{ padding: isMobile ? 16 : 28 }}
+        bodyStyle={{ padding: isMobile ? 12 : 20 }}
       >
         <Row gutter={[16, 16]} align="middle" justify="space-between">
-          <Col xs={24} md={16}>
-            <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0 }}>
-              Product Categories
-            </Title>
-            <Text style={{ color: "rgba(255,255,255,0.72)", fontSize: isMobile ? 13 : 14 }}>
-              Manage categories, images, and activation status.
-            </Text>
+          <Col xs={24} md={16} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0, fontWeight: 650 }}>
+                Product Categories
+              </Title>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <Tag color="geekblue" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Total: {formatNumber(categoriesMetrics.total)}
+              </Tag>
+              <Tag color="green" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Active: {formatNumber(categoriesMetrics.active)}
+              </Tag>
+              <Tag color="volcano" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                With Products: {formatNumber(categoriesMetrics.withProducts)}
+              </Tag>
+            </div>
           </Col>
           <Col xs={24} md={8} style={{ textAlign: isMobile ? "left" : "right" }}>
             <Space wrap>
-              <Button onClick={fetchCategories} loading={loading} size={isMobile ? "middle" : "default"}>
+              <Button
+                onClick={fetchCategories}
+                loading={loading}
+                size={isMobile ? "middle" : "default"}
+                type="primary"
+                style={{ background: "rgba(255,255,255,0.12)", border: "none", color: "#fff" }}
+              >
                 Refresh
               </Button>
-              <Button 
-                type="primary" 
-                icon={!isMobile && <PlusOutlined />} 
+              <Button
+                type="primary"
+                icon={!isMobile && <PlusOutlined />}
                 onClick={() => showModal()}
                 size={isMobile ? "middle" : "default"}
+                style={{
+                  background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
+                  border: "none",
+                  color: "#fff",
+                }}
               >
                 {isMobile ? "Add" : "Add Category"}
               </Button>
@@ -351,7 +385,8 @@ const AdminCategories = () => {
           border: "1px solid rgba(148, 163, 184, 0.25)",
           boxShadow: "0 18px 36px rgba(15, 23, 42, 0.12)",
           background: "linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)",
-          marginBottom: 20,
+          marginTop: -8,
+          marginBottom: 12,
         }}
         bodyStyle={{ padding: "20px 24px" }}
       >

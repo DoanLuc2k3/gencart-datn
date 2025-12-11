@@ -55,7 +55,7 @@ const UserMenu = ({
       ></div>
       <div className={`user-menu ${userMenuVisible ? "visible" : ""}`}>
         <div className="user-menu-header">
-          <h3>User Menu</h3>
+          <h3>Menu người dùng</h3>
           <button className="user-menu-close" onClick={closeUserMenu}>
             ×
           </button>
@@ -87,7 +87,7 @@ const UserMenu = ({
               {/* Navigation Section - Only on Mobile */}
               {isMobile && (
                 <>
-                  <li className="user-menu-section-title">Navigation</li>
+                  <li className="user-menu-section-title">Điều hướng</li>
                   <li className="user-menu-item" onClick={closeUserMenu}>
                     <Link
                       to="/"
@@ -100,7 +100,7 @@ const UserMenu = ({
                       <HomeOutlined
                         style={{ marginRight: "10px", fontSize: "18px" }}
                       />
-                      <span style={{ fontWeight: "500" }}>Home</span>
+                      <span style={{ fontWeight: "500" }}>Trang chủ</span>
                     </Link>
                   </li>
                   <li className="user-menu-item" onClick={closeUserMenu}>
@@ -115,10 +115,9 @@ const UserMenu = ({
                       <AppstoreOutlined
                         style={{ marginRight: "10px", fontSize: "18px" }}
                       />
-                      <span style={{ fontWeight: "500" }}>All Products</span>
+                      <span style={{ fontWeight: "500" }}>Tất cả sản phẩm</span>
                     </Link>
                   </li>
-                  
                   {/* Categories toggle button */}
                   <li className="user-menu-item" 
                       onClick={() => setCategoriesExpanded(!categoriesExpanded)}
@@ -139,7 +138,7 @@ const UserMenu = ({
                         <TagsOutlined
                           style={{ marginRight: "10px", fontSize: "18px" }}
                         />
-                        <span style={{ fontWeight: "500" }}>Categories</span>
+                        <span style={{ fontWeight: "500" }}>Danh mục</span>
                       </div>
                       <DownOutlined
                         style={{ 
@@ -176,7 +175,7 @@ const UserMenu = ({
               )}
 
               {/* Account Section */}
-              <li className="user-menu-section-title">My Account</li>
+              <li className="user-menu-section-title">Tài khoản của tôi</li>
               <li className="user-menu-item" onClick={closeUserMenu}>
                 <Link
                   to="/profile"
@@ -189,7 +188,7 @@ const UserMenu = ({
                   <UserOutlined
                     style={{ marginRight: "10px", fontSize: "18px" }}
                   />
-                  <span style={{ fontWeight: "500" }}>Profile</span>
+                  <span style={{ fontWeight: "500" }}>Hồ sơ</span>
                 </Link>
               </li>
               <li className="user-menu-item" onClick={closeUserMenu}>
@@ -205,14 +204,14 @@ const UserMenu = ({
                     style={{ marginRight: "10px", fontSize: "18px" }}
                   />
                   <span style={{ fontWeight: "500" }}>
-                    {isAdmin ? "Xem tất cả đơn hàng" : "View My Orders"}
+                    {isAdmin ? "Xem tất cả đơn hàng" : "Đơn hàng của tôi"}
                   </span>
                 </Link>
               </li>
 
               {/* Shopping Section */}
               <li className="user-menu-divider"></li>
-              <li className="user-menu-section-title">Shopping</li>
+              <li className="user-menu-section-title">Mua sắm</li>
               <li className="user-menu-item" onClick={closeUserMenu}>
                 <Link
                   to="/cart"
@@ -225,7 +224,7 @@ const UserMenu = ({
                   <ShoppingCartOutlined
                     style={{ marginRight: "10px", fontSize: "18px" }}
                   />
-                  <span style={{ fontWeight: "500" }}>My Cart</span>
+                  <span style={{ fontWeight: "500" }}>Giỏ hàng</span>
                   {cartCount > 0 && (
                     <Badge
                       count={cartCount}
@@ -238,7 +237,7 @@ const UserMenu = ({
 
               {/* Other Section */}
               <li className="user-menu-divider"></li>
-              <li className="user-menu-section-title">More</li>
+              <li className="user-menu-section-title">Khác</li>
               {isAdmin && (
                 <li className="user-menu-item" onClick={closeUserMenu}>
                   <Link
@@ -252,7 +251,7 @@ const UserMenu = ({
                     <SettingOutlined
                       style={{ marginRight: "10px", fontSize: "18px" }}
                     />
-                    <span style={{ fontWeight: "500" }}>Admin Panel</span>
+                    <span style={{ fontWeight: "500" }}>Quản trị</span>
                   </Link>
                 </li>
               )}
@@ -268,7 +267,7 @@ const UserMenu = ({
                   <InfoCircleOutlined
                     style={{ marginRight: "10px", fontSize: "18px" }}
                   />
-                  <span style={{ fontWeight: "500" }}>About Us</span>
+                  <span style={{ fontWeight: "500" }}>Về chúng tôi</span>
                 </Link>
               </li>
               <li className="user-menu-divider"></li>
@@ -283,7 +282,7 @@ const UserMenu = ({
                 <LogoutOutlined
                   style={{ marginRight: "10px", fontSize: "18px" }}
                 />
-                <span style={{ fontWeight: "500" }}>Logout</span>
+                <span style={{ fontWeight: "500" }}>Đăng xuất</span>
               </li>
             </ul>
           </>
@@ -291,15 +290,15 @@ const UserMenu = ({
           <>
             {/* User not logged in */}
             <div className="user-menu-profile" style={{ textAlign: "center", padding: "20px" }}>
-              <h3 style={{ marginBottom: "20px" }}>Welcome!</h3>
-              <p style={{ color: "#666", marginBottom: "20px" }}>Please login to access your account</p>
+              <h3 style={{ marginBottom: "20px" }}>Chào mừng!</h3>
+              <p style={{ color: "#666", marginBottom: "20px" }}>Vui lòng đăng nhập để truy cập tài khoản của bạn</p>
             </div>
 
             <ul className="user-menu-items">
               {/* Navigation Section - Only on Mobile */}
               {isMobile && (
                 <>
-                  <li className="user-menu-section-title">Navigation</li>
+                  <li className="user-menu-section-title">Điều hướng</li>
                   <li className="user-menu-item" onClick={closeUserMenu}>
                     <Link
                       to="/"
@@ -312,7 +311,7 @@ const UserMenu = ({
                       <HomeOutlined
                         style={{ marginRight: "10px", fontSize: "18px" }}
                       />
-                      <span style={{ fontWeight: "500" }}>Home</span>
+                      <span style={{ fontWeight: "500" }}>Trang chủ</span>
                     </Link>
                   </li>
                   <li className="user-menu-item" onClick={closeUserMenu}>
@@ -327,10 +326,9 @@ const UserMenu = ({
                       <AppstoreOutlined
                         style={{ marginRight: "10px", fontSize: "18px" }}
                       />
-                      <span style={{ fontWeight: "500" }}>All Products</span>
+                      <span style={{ fontWeight: "500" }}>Tất cả sản phẩm</span>
                     </Link>
                   </li>
-                  
                   {/* Categories toggle button */}
                   <li className="user-menu-item" 
                       onClick={() => setCategoriesExpanded(!categoriesExpanded)}
@@ -351,7 +349,7 @@ const UserMenu = ({
                         <TagsOutlined
                           style={{ marginRight: "10px", fontSize: "18px" }}
                         />
-                        <span style={{ fontWeight: "500" }}>Categories</span>
+                        <span style={{ fontWeight: "500" }}>Danh mục</span>
                       </div>
                       <DownOutlined
                         style={{ 
@@ -388,7 +386,7 @@ const UserMenu = ({
               )}
 
               {/* Authentication Section */}
-              <li className="user-menu-section-title">Account</li>
+              <li className="user-menu-section-title">Tài khoản</li>
               <li className="user-menu-item" onClick={closeUserMenu}>
                 <Link
                   to="/login"
@@ -401,7 +399,7 @@ const UserMenu = ({
                   <UserOutlined
                     style={{ marginRight: "10px", fontSize: "18px" }}
                   />
-                  <span style={{ fontWeight: "500" }}>Login</span>
+                  <span style={{ fontWeight: "500" }}>Đăng nhập</span>
                 </Link>
               </li>
               
@@ -417,13 +415,13 @@ const UserMenu = ({
                   <UserOutlined
                     style={{ marginRight: "10px", fontSize: "18px" }}
                   />
-                  <span style={{ fontWeight: "500" }}>Register</span>
+                  <span style={{ fontWeight: "500" }}>Đăng ký</span>
                 </Link>
               </li>
 
               {/* Shopping Section - available for all users */}
               <li className="user-menu-divider"></li>
-              <li className="user-menu-section-title">Shopping</li>
+              <li className="user-menu-section-title">Mua sắm</li>
               <li className="user-menu-item" onClick={closeUserMenu}>
                 <Link
                   to="/cart"
@@ -436,7 +434,7 @@ const UserMenu = ({
                   <ShoppingCartOutlined
                     style={{ marginRight: "10px", fontSize: "18px" }}
                   />
-                  <span style={{ fontWeight: "500" }}>My Cart</span>
+                  <span style={{ fontWeight: "500" }}>Giỏ hàng</span>
                   {cartCount > 0 && (
                     <Badge
                       count={cartCount}
@@ -459,7 +457,7 @@ const UserMenu = ({
                   <InfoCircleOutlined
                     style={{ marginRight: "10px", fontSize: "18px" }}
                   />
-                  <span style={{ fontWeight: "500" }}>About Us</span>
+                  <span style={{ fontWeight: "500" }}>Về chúng tôi</span>
                 </Link>
               </li>
             </ul>

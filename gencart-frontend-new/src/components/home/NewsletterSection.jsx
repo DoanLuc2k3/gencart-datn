@@ -7,19 +7,12 @@ const { Title, Paragraph, Text } = Typography;
 const NewsletterSection = () => {
   const handleSubmit = (values) => {
     console.log("Newsletter subscription:", values);
-    message.success("🎉 Welcome to our newsletter!");
+    message.success("🎉 Chào mừng bạn đến với bản tin của chúng tôi!");
   };
 
   return (
     <section
-      style={{
-        padding: "80px 0",
-        background: `
-          linear-gradient(135deg, #fafbff 0%, #f8fafc 25%, #f1f5f9 50%, #fafbff 100%)
-        `,
-        position: "relative",
-        overflow: "hidden",
-      }}
+      className="home-section newsletter-section"
     >
       {/* Background decoration */}
       <div
@@ -60,13 +53,12 @@ const NewsletterSection = () => {
       >
         {/* Newsletter badge */}
         <div
+          className="newsletter-badge"
           style={{
             display: "inline-flex",
             alignItems: "center",
             gap: 8,
             padding: "8px 20px",
-            background: "rgba(139, 92, 246, 0.1)",
-            border: "1px solid rgba(139, 92, 246, 0.2)",
             borderRadius: 25,
             marginBottom: 32,
           }}
@@ -76,55 +68,51 @@ const NewsletterSection = () => {
               width: 6,
               height: 6,
               borderRadius: "50%",
-              background: "#8b5cf6",
+              background: "#fff",
               animation: "pulse 2s infinite",
             }}
           />
           <Text
+            className="newsletter-badge-text"
             style={{
               fontSize: 13,
               fontWeight: 600,
-              color: "#8b5cf6",
               textTransform: "uppercase",
               letterSpacing: 0.8,
             }}
           >
-            Newsletter
+            Bản tin
           </Text>
         </div>
 
         <Title
+          className="newsletter-title"
           level={2}
           style={{
             fontWeight: 800,
             fontSize: "clamp(28px, 3.5vw, 40px)",
             marginBottom: 20,
-            background:
-              "linear-gradient(135deg, #1e293b 0%, #475569 50%, #64748b 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
             letterSpacing: "-0.02em",
           }}
         >
-          Stay in the loop
+          Đăng ký nhận tin
         </Title>
 
         <Paragraph
+          className="newsletter-description"
           style={{
             margin: "0 auto 40px",
             maxWidth: 580,
-            color: "#64748b",
             fontSize: "clamp(16px, 2vw, 18px)",
             lineHeight: 1.6,
           }}
         >
-          Get exclusive product updates, special promotions, and insider tips.
-          Join thousands of satisfied customers who never miss a deal!
+          Nhận thông tin sản phẩm mới, khuyến mãi đặc biệt và bí quyết mua sắm hữu ích. Tham gia cùng hàng ngàn khách hàng hài lòng không bỏ lỡ ưu đãi nào!
         </Paragraph>
 
         {/* Enhanced form container */}
         <div
+          className="newsletter-container"
           style={{
             background: "rgba(255, 255, 255, 0.8)",
             borderRadius: 20,
@@ -142,62 +130,27 @@ const NewsletterSection = () => {
             onFinish={handleSubmit}
           >
             <Form.Item
+              className="newsletter-input"
               name="email"
               rules={[
-                { required: true, message: "Email required" },
-                { type: "email", message: "Invalid email" },
+                { required: true, message: "Vui lòng nhập email" },
+                { type: "email", message: "Email không hợp lệ" },
               ]}
               style={{ margin: 0, flex: 1, maxWidth: 320 }}
             >
               <Input
                 size="large"
-                placeholder="Enter your email address"
-                style={{
-                  height: 52,
-                  borderRadius: 14,
-                  border: "2px solid #e2e8f0",
-                  fontSize: 16,
-                  transition: "all 0.3s ease",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#8b5cf6";
-                  e.target.style.boxShadow =
-                    "0 0 0 3px rgba(139, 92, 246, 0.1)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#e2e8f0";
-                  e.target.style.boxShadow = "none";
-                }}
+                placeholder="Nhập email của bạn"
               />
             </Form.Item>
             <Form.Item style={{ margin: 0 }}>
               <Button
+                className="newsletter-button"
                 htmlType="submit"
                 type="primary"
                 size="large"
-                style={{
-                  height: 52,
-                  borderRadius: 14,
-                  padding: "0 32px",
-                  fontWeight: 600,
-                  fontSize: 16,
-                  background: "linear-gradient(135deg, #8b5cf6, #a855f7)",
-                  border: "none",
-                  boxShadow: "0 8px 25px rgba(139, 92, 246, 0.3)",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = "translateY(-2px)";
-                  e.target.style.boxShadow =
-                    "0 12px 35px rgba(139, 92, 246, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = "translateY(0)";
-                  e.target.style.boxShadow =
-                    "0 8px 25px rgba(139, 92, 246, 0.3)";
-                }}
               >
-                Subscribe
+                Đăng ký
               </Button>
             </Form.Item>
           </Form>
@@ -219,38 +172,17 @@ const NewsletterSection = () => {
                 key={index}
                 style={{ display: "flex", alignItems: "center", gap: 8 }}
               >
-                <Text style={{ fontSize: 12, color: "#64748b" }}>
+                <Text className="newsletter-trust-text">
                   {indicator.icon}
                 </Text>
-                <Text style={{ fontSize: 12, color: "#64748b" }}>
-                  {indicator.label}
+                <Text className="newsletter-trust-text">
+                  {indicator.label_vi}
                 </Text>
               </div>
             ))}
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
-        }
-        @keyframes pulse {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-      `}</style>
     </section>
   );
 };

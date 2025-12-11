@@ -69,7 +69,7 @@ const GridProductCard = ({
       <div
         style={{
           height: compact ? 120 : 160,
-          background: getCategoryGradient(categoryName),
+          background: "#f8fafc",
           position: "relative",
           display: "flex",
           alignItems: "center",
@@ -78,32 +78,6 @@ const GridProductCard = ({
           zIndex: 0,
         }}
       >
-        {/* Background pattern */}
-        <div
-          style={{
-            position: "absolute",
-            top: -20,
-            right: -20,
-            width: 80,
-            height: 80,
-            background: "rgba(255, 255, 255, 0.1)",
-            borderRadius: "50%",
-            zIndex: 1,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: -30,
-            left: -30,
-            width: 100,
-            height: 100,
-            background: "rgba(255, 255, 255, 0.05)",
-            borderRadius: "50%",
-            zIndex: 1,
-          }}
-        />
-
         {/* Product Image - Background */}
         <img
           src={
@@ -121,12 +95,14 @@ const GridProductCard = ({
             objectFit: 'contain',
             zIndex: 0,
             padding: compact ? 10 : 20,
+            mixBlendMode: "multiply"
           }}
         />
 
         {/* Wishlist button */}
         {toggleWishlist && (
           <Button
+            className="wishlist-button"
             shape="circle"
             size="large"
             aria-label="wishlist"
@@ -136,32 +112,21 @@ const GridProductCard = ({
                 <HeartFilled style={{ color: "#ef4444", fontSize: 18 }} />
               ) : (
                 <HeartOutlined
-                  style={{ color: "rgba(255,255,255,0.8)", fontSize: 18 }}
+                  style={{ color: "#94a3b8", fontSize: 18 }}
                 />
               )
             }
             style={{
               position: "absolute",
-              top: 16,
-              right: 16,
-              background: inWishlist ? "#fff" : "rgba(255, 255, 255, 0.2)",
-              border: "none",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-              backdropFilter: "blur(10px)",
-              transition: "all 0.3s ease",
+              top: 12,
+              right: 12,
+              background: "#ffffff",
+              border: "1px solid #f1f5f9",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
               zIndex: 10,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = inWishlist
-                ? "#fef2f2"
-                : "rgba(255, 255, 255, 0.3)";
-              e.currentTarget.style.transform = "scale(1.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = inWishlist
-                ? "#fff"
-                : "rgba(255, 255, 255, 0.2)";
-              e.currentTarget.style.transform = "scale(1)";
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           />
         )}
@@ -173,18 +138,17 @@ const GridProductCard = ({
               position: "absolute",
               left: 16,
               top: 16,
-              background: "rgba(255, 255, 255, 0.95)",
-              color: "#dc2626",
-              padding: "6px 12px",
+              background: "linear-gradient(135deg, #ff4d4f, #f5222d)",
+              color: "#fff",
+              padding: "4px 10px",
               fontSize: 12,
-              borderRadius: 20,
+              borderRadius: 12,
               fontWeight: 700,
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-              backdropFilter: "blur(10px)",
+              boxShadow: "0 4px 10px rgba(245, 34, 45, 0.3)",
               zIndex: 10,
             }}
           >
-            {discountPercent(product)}% OFF
+            -{discountPercent(product)}%
           </div>
         )}
 
@@ -213,6 +177,21 @@ const GridProductCard = ({
 
       {/* Product content */}
       <div style={{ padding: 20 }}>
+        {/* Category Tag */}
+        <Text
+          style={{
+            display: "block",
+            fontSize: 11,
+            fontWeight: 700,
+            color: "#8b5cf6",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            marginBottom: 4,
+          }}
+        >
+          {categoryName}
+        </Text>
+
         {/* Product name */}
         <Text
           strong
@@ -298,7 +277,7 @@ const GridProductCard = ({
         {/* Add to cart button */}
         <Button
           type="primary"
-          icon={<ShoppingCartOutlined />}
+          icon={!outOfStock && <ShoppingCartOutlined />}
           disabled={outOfStock}
           block
           onClick={handleAddToCart}
@@ -306,30 +285,35 @@ const GridProductCard = ({
             fontWeight: 600,
             height: 44,
             borderRadius: 12,
-            background: hasDiscountValue
-              ? "linear-gradient(135deg, #dc2626, #ef4444)"
-              : "linear-gradient(135deg, #8b5cf6, #a855f7)",
-            border: "none",
+            background: outOfStock
+              ? "#f1f5f9"
+              : hasDiscountValue
+              ? "linear-gradient(135deg, #f43f5e, #e11d48)"
+              : "linear-gradient(135deg, #6366f1, #4f46e5)",
+            border: outOfStock ? "1px solid #e2e8f0" : "none",
+            color: outOfStock ? "#94a3b8" : "#fff",
             fontSize: 14,
             transition: "all 0.3s ease",
-            boxShadow: hasDiscountValue
-              ? "0 4px 15px rgba(220, 38, 38, 0.3)"
-              : "0 4px 15px rgba(139, 92, 246, 0.3)",
+            boxShadow: outOfStock
+              ? "none"
+              : hasDiscountValue
+              ? "0 4px 15px rgba(244, 63, 94, 0.3)"
+              : "0 4px 15px rgba(99, 102, 241, 0.3)",
           }}
           onMouseEnter={(e) => {
             if (!outOfStock) {
               e.currentTarget.style.transform = "translateY(-2px)";
               e.currentTarget.style.boxShadow = hasDiscountValue
-                ? "0 8px 25px rgba(220, 38, 38, 0.4)"
-                : "0 8px 25px rgba(139, 92, 246, 0.4)";
+                ? "0 8px 25px rgba(244, 63, 94, 0.4)"
+                : "0 8px 25px rgba(99, 102, 241, 0.4)";
             }
           }}
           onMouseLeave={(e) => {
             if (!outOfStock) {
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow = hasDiscountValue
-                ? "0 4px 15px rgba(220, 38, 38, 0.3)"
-                : "0 4px 15px rgba(139, 92, 246, 0.3)";
+                ? "0 4px 15px rgba(244, 63, 94, 0.3)"
+                : "0 4px 15px rgba(99, 102, 241, 0.3)";
             }
           }}
         >

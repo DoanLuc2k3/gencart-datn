@@ -1,55 +1,260 @@
 import React from "react";
-import { Row, Col, Button, Typography, Space } from "antd";
+import { Row, Col, Button, Typography, Space, Carousel } from "antd";
 import { useNavigate } from "react-router-dom";
 import { HERO_FEATURES } from "../constants/constants";
 import { handleImageError } from "../../utils/productUtils";
 
 const { Title, Paragraph, Text } = Typography;
 
+const BANNERS = [
+  {
+    id: 1,
+    badge: "Trải nghiệm mới đang chờ bạn",
+    title: (
+      <>
+        Mua sắm thông minh 
+        <br />
+        <span style={{ color: "#1e293b" }}>Cảm nhận nhẹ nhàng </span>
+      </>
+    ),
+    subtitle: "Khám phá giá cả minh bạch, chất lượng được chọn lọc và giao diện thân thiện giúp mỗi khoảnh khắc mua sắm đều dễ chịu, tiện lợi.",
+    primaryButton: "Xem sản phẩm",
+    secondaryButton: "Tạo tài khoản",
+    image: "https://images.unsplash.com/photo-1556742111-a301076d9d18?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    primaryLink: "/products",
+    secondaryLink: "/register",
+    theme: {
+      badgeBg: "rgba(6, 182, 212, 0.1)",
+      badgeBorder: "rgba(6, 182, 212, 0.2)",
+      badgeDot: "#06b6d4",
+      badgeText: "#0891b2",
+      titleColor: "#0284c7",
+      buttonGradient: "linear-gradient(135deg, #0284c7, #0ea5e9)",
+      buttonShadow: "rgba(14, 165, 233, 0.4)"
+    }
+  },
+  {
+    id: 2,
+    badge: "Bộ sưu tập Hè 2025",
+    title: (
+      <>
+        Phong cách mới
+        <br />
+        <span style={{ color: "#1e293b" }}>Chọn lựa táo bạo</span>
+      </>
+    ),
+    subtitle: "Nâng cấp tủ đồ với bộ sưu tập hè mới nhất. Chất liệu cao cấp, thiết kế hợp xu hướng, thoải mái cả ngày dài.",
+    primaryButton: "Mua ngay",
+    secondaryButton: "Xem Lookbook",
+    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    primaryLink: "/products?category=summer",
+    secondaryLink: "/lookbook",
+    theme: {
+      badgeBg: "rgba(249, 115, 22, 0.1)",
+      badgeBorder: "rgba(249, 115, 22, 0.2)",
+      badgeDot: "#f97316",
+      badgeText: "#ea580c",
+      titleColor: "#ea580c",
+      buttonGradient: "linear-gradient(135deg, #ea580c, #f43f5e)",
+      buttonShadow: "rgba(249, 115, 22, 0.4)"
+    }
+  }
+];
+
+const BannerContent = ({ banner, navigate }) => (
+  <Space direction="vertical" size={32} style={{ width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+      {/* Badge */}
+      <div
+        className="hero-badge-interactive"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "8px 16px",
+          background: banner.theme.badgeBg,
+          border: `1px solid ${banner.theme.badgeBorder}`,
+          borderRadius: 20,
+          marginBottom: 24,
+        }}
+      >
+        <div
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: banner.theme.badgeDot,
+            animation: "pulse 2s infinite",
+          }}
+        />
+        <Text
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: banner.theme.badgeText,
+            textTransform: "uppercase",
+            letterSpacing: 0.5,
+          }}
+        >
+          {banner.badge}
+        </Text>
+      </div>
+
+      <Title
+        className="hero-title hero-title-interactive"
+        level={1}
+        style={{
+          margin: 0,
+          fontWeight: 900,
+          fontSize: "clamp(36px, 5vw, 56px)",
+          lineHeight: 1.1,
+          color: banner.theme.titleColor,
+          letterSpacing: "-0.02em",
+          marginBottom: 20,
+        }}
+      >
+        {banner.title}
+      </Title>
+
+      <Paragraph
+        className="hero-subtitle hero-subtitle-interactive"
+        style={{
+          fontSize: "clamp(16px, 2.5vw, 20px)",
+          maxWidth: 580,
+          marginTop: 0,
+          color: "#64748b",
+          lineHeight: 1.6,
+          fontWeight: 400,
+        }}
+      >
+        {banner.subtitle}
+      </Paragraph>
+    </div>
+
+    <Space size={20} wrap>
+      <Button
+        type="primary"
+        size="large"
+        onClick={() => navigate(banner.primaryLink)}
+        style={{
+          fontWeight: 700,
+          padding: "0 40px",
+          height: 56,
+          borderRadius: 16,
+          background: banner.theme.buttonGradient,
+          border: "none",
+          boxShadow: `0 8px 25px -8px ${banner.theme.buttonShadow}`,
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          fontSize: 16,
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = "translateY(-2px)";
+          e.target.style.boxShadow = `0 12px 35px -8px ${banner.theme.buttonShadow}`;
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = `0 8px 25px -8px ${banner.theme.buttonShadow}`;
+        }}
+      >
+        {banner.primaryButton}
+      </Button>
+      <Button
+        size="large"
+        onClick={() => navigate(banner.secondaryLink)}
+        style={{
+          fontWeight: 600,
+          padding: "0 36px",
+          height: 56,
+          borderRadius: 16,
+          background: "#ffffff",
+          border: "2px solid #e2e8f0",
+          color: "#475569",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          fontSize: 16,
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = "translateY(-2px)";
+          e.target.style.borderColor = "#c7d2fe";
+          e.target.style.boxShadow = "0 8px 25px -8px rgba(0, 0, 0, 0.1)";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = "translateY(0)";
+          e.target.style.borderColor = "#e2e8f0";
+          e.target.style.boxShadow = "none";
+        }}
+      >
+        {banner.secondaryButton}
+      </Button>
+    </Space>
+
+    {/* Enhanced features */}
+    <Row gutter={[24, 16]} style={{ marginTop: 8 }}>
+      {HERO_FEATURES.map((feature) => (
+        <Col key={feature.heading_vi} xs={24} sm={8} style={{ minWidth: 140 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "12px 16px",
+              background: "rgba(255, 255, 255, 0.6)",
+              border: "1px solid rgba(139, 92, 246, 0.1)",
+              borderRadius: 12,
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.8)";
+              e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.2)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.6)";
+              e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.1)";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <Text style={{ fontSize: 20 }}>{feature.icon}</Text>
+            <div>
+              <Text
+                style={{
+                  display: "block",
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.8,
+                  color: "#8b5cf6",
+                  fontWeight: 700,
+                }}
+              >
+                {feature.heading_vi}
+              </Text>
+              <Text
+                strong
+                style={{
+                  fontSize: 15,
+                  color: "#1e293b",
+                  fontWeight: 600,
+                }}
+              >
+                {feature.sub_vi}
+              </Text>
+            </div>
+          </div>
+        </Col>
+      ))}
+    </Row>
+  </Space>
+);
+
 const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
     <section
-      style={{
-        padding: "80px 0 60px",
-        background: `
-          radial-gradient(ellipse at top left, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-          radial-gradient(ellipse at top right, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-          radial-gradient(ellipse at bottom center, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
-          linear-gradient(135deg, #fafbff 0%, #f8fafc 25%, #f1f5f9 50%, #fafbff 100%)
-        `,
-        position: "relative",
-        overflow: "hidden",
-      }}
+      className="home-section hero-section"
     >
       {/* Animated background elements */}
-      <div
-        style={{
-          position: "absolute",
-          top: "-50%",
-          right: "-20%",
-          width: "600px",
-          height: "600px",
-          background:
-            "linear-gradient(45deg, rgba(139, 92, 246, 0.03), rgba(59, 130, 246, 0.03))",
-          borderRadius: "50%",
-          animation: "float 20s ease-in-out infinite",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: "-30%",
-          left: "-10%",
-          width: "400px",
-          height: "400px",
-          background:
-            "linear-gradient(135deg, rgba(168, 85, 247, 0.04), rgba(139, 92, 246, 0.02))",
-          borderRadius: "50%",
-          animation: "float 25s ease-in-out infinite reverse",
-        }}
-      />
+      <div className="hero-blob hero-blob-1" />
+      <div className="hero-blob hero-blob-2" />
 
       <div
         style={{
@@ -59,213 +264,42 @@ const HeroSection = () => {
           position: "relative",
         }}
       >
-        <Row gutter={[48, 32]} align="middle">
-          <Col xs={24} md={14}>
-            <Space direction="vertical" size={32} style={{ width: "100%" }}>
-              <div>
-                {/* Badge */}
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "8px 16px",
-                    background: "rgba(139, 92, 246, 0.1)",
-                    border: "1px solid rgba(139, 92, 246, 0.2)",
-                    borderRadius: 20,
-                    marginBottom: 24,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: "#8b5cf6",
-                      animation: "pulse 2s infinite",
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "#8b5cf6",
-                      textTransform: "uppercase",
-                      letterSpacing: 0.5,
-                    }}
-                  >
-                    New Experience Awaits
-                  </Text>
-                </div>
-
-                <Title
-                  level={1}
-                  style={{
-                    margin: 0,
-                    fontWeight: 900,
-                    fontSize: "clamp(36px, 5vw, 56px)",
-                    lineHeight: 1.1,
-                    background:
-                      "linear-gradient(135deg, #4338ca 0%, #7c3aed 25%, #a855f7 50%, #c084fc 75%, #e879f9 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                    letterSpacing: "-0.02em",
-                    marginBottom: 20,
-                  }}
-                >
-                  Shop smarter.
-                  <br />
-                  <span style={{ color: "#1e293b" }}>Feel lighter.</span>
-                </Title>
-
-                <Paragraph
-                  style={{
-                    fontSize: "clamp(16px, 2.5vw, 20px)",
-                    maxWidth: 580,
-                    marginTop: 0,
-                    color: "#64748b",
-                    lineHeight: 1.6,
-                    fontWeight: 400,
-                  }}
-                >
-                  Discover honest pricing, curated quality, and a thoughtfully
-                  designed interface that makes every browsing moment delightful
-                  and effortless.
-                </Paragraph>
-              </div>
-
-              <Space size={20} wrap>
-                <Button
-                  type="primary"
-                  size="large"
-                  onClick={() => navigate("/products")}
-                  style={{
-                    fontWeight: 700,
-                    padding: "0 40px",
-                    height: 56,
-                    borderRadius: 16,
-                    background:
-                      "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-                    border: "none",
-                    boxShadow: "0 8px 25px -8px rgba(79, 70, 229, 0.4)",
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    fontSize: 16,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.transform = "translateY(-2px)";
-                    e.target.style.boxShadow =
-                      "0 12px 35px -8px rgba(79, 70, 229, 0.5)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = "translateY(0)";
-                    e.target.style.boxShadow =
-                      "0 8px 25px -8px rgba(79, 70, 229, 0.4)";
-                  }}
-                >
-                  Browse Products
-                </Button>
-                <Button
-                  size="large"
-                  onClick={() => navigate("/register")}
-                  style={{
-                    fontWeight: 600,
-                    padding: "0 36px",
-                    height: 56,
-                    borderRadius: 16,
-                    background: "#ffffff",
-                    border: "2px solid #e2e8f0",
-                    color: "#475569",
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    fontSize: 16,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.transform = "translateY(-2px)";
-                    e.target.style.borderColor = "#c7d2fe";
-                    e.target.style.boxShadow =
-                      "0 8px 25px -8px rgba(0, 0, 0, 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = "translateY(0)";
-                    e.target.style.borderColor = "#e2e8f0";
-                    e.target.style.boxShadow = "none";
-                  }}
-                >
-                  Create Account
-                </Button>
-              </Space>
-
-              {/* Enhanced features */}
-              <Row gutter={[24, 16]} style={{ marginTop: 8 }}>
-                {HERO_FEATURES.map((feature) => (
-                  <Col
-                    key={feature.heading}
-                    xs={24}
-                    sm={8}
-                    style={{ minWidth: 140 }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                        padding: "12px 16px",
-                        background: "rgba(255, 255, 255, 0.6)",
-                        border: "1px solid rgba(139, 92, 246, 0.1)",
-                        borderRadius: 12,
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "rgba(255, 255, 255, 0.8)";
-                        e.currentTarget.style.borderColor =
-                          "rgba(139, 92, 246, 0.2)";
-                        e.currentTarget.style.transform = "translateY(-1px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background =
-                          "rgba(255, 255, 255, 0.6)";
-                        e.currentTarget.style.borderColor =
-                          "rgba(139, 92, 246, 0.1)";
-                        e.currentTarget.style.transform = "translateY(0)";
-                      }}
-                    >
-                      <Text style={{ fontSize: 20 }}>{feature.icon}</Text>
-                      <div>
-                        <Text
-                          style={{
-                            display: "block",
-                            fontSize: 11,
-                            textTransform: "uppercase",
-                            letterSpacing: 0.8,
-                            color: "#8b5cf6",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {feature.heading}
-                        </Text>
-                        <Text
-                          strong
-                          style={{
-                            fontSize: 15,
-                            color: "#1e293b",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {feature.description}
-                        </Text>
+        <Carousel 
+          autoplay 
+          autoplaySpeed={5000} 
+          speed={800} 
+          effect="scrollx" 
+          dots={{ className: "hero-dots" }}
+          easing="cubic-bezier(0.645, 0.045, 0.355, 1)"
+        >
+          {BANNERS.map((banner) => (
+            <div key={banner.id}>
+              <div style={{ padding: "10px 24px" }}>
+                {banner.id === 2 ? (
+                  <Row gutter={[48, 32]} align="middle">
+                    <Col xs={24} md={10}>
+                      <HeroImage src={banner.image} />
+                    </Col>
+                    <Col xs={24} md={14}>
+                      <div style={{ paddingLeft: 40 }}>
+                        <BannerContent banner={banner} navigate={navigate} />
                       </div>
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-            </Space>
-          </Col>
-
-          <Col xs={24} md={10}>
-            <HeroImage />
-          </Col>
-        </Row>
+                    </Col>
+                  </Row>
+                ) : (
+                  <Row gutter={[48, 32]} align="middle">
+                    <Col xs={24} md={14}>
+                      <BannerContent banner={banner} navigate={navigate} />
+                    </Col>
+                    <Col xs={24} md={10}>
+                      <HeroImage src={banner.image} />
+                    </Col>
+                  </Row>
+                )}
+              </div>
+            </div>
+          ))}
+        </Carousel>
       </div>
 
       <style jsx>{`
@@ -301,7 +335,7 @@ const HeroSection = () => {
   );
 };
 
-const HeroImage = () => {
+const HeroImage = ({ src }) => {
   return (
     <div style={{ position: "relative", width: "100%", minHeight: 420 }}>
       {/* Geometric background shapes */}
@@ -395,7 +429,7 @@ const HeroImage = () => {
           >
             <img
               alt="Hero"
-              src="https://images.unsplash.com/photo-1556742111-a301076d9d18?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+              src={src}
               style={{
                 width: "100%",
                 height: "100%",

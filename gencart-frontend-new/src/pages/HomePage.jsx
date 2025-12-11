@@ -9,6 +9,7 @@ import DealsSection from "../components/home/DealsSection";
 import NewsletterSection from "../components/home/NewsletterSection";
 import FinalCTASection from "../components/home/FinalCTASection";
 import ProductCard from "../components/home/ProductCard";
+import "../user-css/HomePage.css";
 
 /**
  * HomePage Component
@@ -40,7 +41,7 @@ const HomePage = () => {
   );
 
   return (
-    <div>
+    <div className="home-page">
       {/* Hero Section */}
       <HeroSection />
 

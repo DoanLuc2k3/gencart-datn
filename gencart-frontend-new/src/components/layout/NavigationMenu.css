@@ -1,0 +1,81 @@
+.desktop-menu .ant-menu-item,
+.desktop-menu .ant-menu-submenu,
+.desktop-menu .ant-menu-item a,
+.desktop-menu .ant-menu-submenu-title {
+  background: transparent !important;
+}
+
+/* Prevent the default hover/active background color */
+.desktop-menu .ant-menu-item:hover,
+.desktop-menu .ant-menu-submenu:hover,
+.desktop-menu .ant-menu-item-selected,
+.desktop-menu .ant-menu-item-active,
+.desktop-menu .ant-menu-submenu-open {
+  background: transparent !important;
+}
+
+/* Keep the label content transparent on hover */
+.desktop-menu .ant-menu-item > span,
+.desktop-menu .ant-menu-item a > span,
+.desktop-menu .ant-menu-submenu-title > span {
+  background: transparent !important;
+}
+
+/* Optional: keep a subtle hover underline instead of background */
+.desktop-menu .ant-menu-item:hover > span,
+.desktop-menu .ant-menu-item a:hover > span,
+.desktop-menu .ant-menu-submenu:hover > .ant-menu-submenu-title > span {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+/* Reduce horizontal spacing between top-level menu items (make them closer) */
+.desktop-menu {
+  /* smaller gap for flex layout; Menu is a flex container in the component */
+  gap: 8px;
+}
+
+/* Override Ant Design horizontal item padding to bring items closer together */
+.desktop-menu .ant-menu-item,
+.desktop-menu .ant-menu-submenu,
+.desktop-menu .ant-menu-submenu-title {
+  padding: 0 10px !important;
+  margin: 0 !important;
+}
+
+/* Ensure link contents inside items don't add extra horizontal padding */
+.desktop-menu .ant-menu-item a,
+.desktop-menu .ant-menu-item > span,
+.desktop-menu .ant-menu-submenu-title > span {
+  padding: 6px 4px !important;
+}
+
+/* Slightly reduce the default dropdown trigger gap if present */
+.desktop-menu .ant-dropdown-trigger {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove the curved/rounded decorative background that Antd may add
+   (pseudo-elements or hover backgrounds) so menu items don't show
+   the left curved shape on hover. Use high-specificity overrides. */
+.desktop-menu .ant-menu-item::before,
+.desktop-menu .ant-menu-submenu::before,
+.desktop-menu .ant-menu-item::after,
+.desktop-menu .ant-menu-submenu::after,
+.desktop-menu .ant-menu-item .ant-menu-title-content::before,
+.desktop-menu .ant-menu-item .ant-menu-title-content::after {
+  display: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Also force transparent backgrounds for hover/active states */
+.desktop-menu .ant-menu-item:hover,
+.desktop-menu .ant-menu-submenu:hover,
+.desktop-menu .ant-menu-item-active,
+.desktop-menu .ant-menu-item-selected,
+.desktop-menu .ant-menu-submenu-open {
+  background: transparent !important;
+}

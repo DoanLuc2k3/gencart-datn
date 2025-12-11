@@ -24,7 +24,16 @@ import {
   CreditCardOutlined,
   CheckCircleOutlined,
   ShoppingOutlined,
-  LockOutlined
+  LockOutlined,
+  ArrowRightOutlined,
+  BankOutlined,
+  MobileOutlined,
+  WalletOutlined,
+  FileTextOutlined,
+  EnvironmentOutlined,
+  PhoneOutlined,
+  MailOutlined,
+  SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { useCart } from '../context/CartContext';
 import { triggerInventoryRefresh } from '../utils/inventoryEvents';
@@ -50,17 +59,17 @@ const CheckoutPage = () => {
   const [orderId, setOrderId] = useState(null);
 
   const sectionCardStyle = {
-    borderRadius: 20,
-    border: '1px solid rgba(148, 163, 184, 0.14)',
-    boxShadow: '0 28px 60px -32px rgba(15, 23, 42, 0.4)',
-    background: 'rgba(255, 255, 255, 0.98)',
-    backdropFilter: 'blur(8px)'
+    borderRadius: '24px',
+    border: '1px solid #f1f5f9',
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    background: 'white',
+    overflow: 'hidden'
   };
 
   const innerCardStyle = {
-    borderRadius: 16,
-    border: '1px solid rgba(148, 163, 184, 0.16)',
-    background: 'rgba(248, 250, 252, 0.8)'
+    borderRadius: '16px',
+    border: '1px solid #f1f5f9',
+    background: '#f8fafc'
   };
   
   const mainCardStyle = {
@@ -73,7 +82,7 @@ const CheckoutPage = () => {
   // Redirect to cart if cart is empty
   useEffect(() => {
     if (cartItems.length === 0 && !orderComplete) {
-      message.info('Your cart is empty. Please add items before checkout.');
+      message.info('Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.');
       navigate('/cart');
     }
   }, [cartItems, navigate, orderComplete]);
@@ -99,14 +108,14 @@ const CheckoutPage = () => {
       const token = localStorage.getItem('access_token');
 
       if (!token) {
-        message.error('Please login to place an order');
+        message.error('Vui lòng đăng nhập để đặt hàng');
         navigate('/login');
         return;
       }
 
       // Check if cart is empty
       if (cartItems.length === 0) {
-        message.error('Your cart is empty. Please add items to your cart before placing an order.');
+        message.error('Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ trước khi đặt hàng.');
         setLoading(false);
         return;
       }
@@ -231,11 +240,11 @@ const CheckoutPage = () => {
       setOrderComplete(true);
       setCurrentStep(3);
 
-      message.success('Order placed successfully!');
+      message.success('Đặt hàng thành công!');
       console.log('CheckoutPage: Triggering inventory refresh after successful order');
       triggerInventoryRefresh(); // Trigger inventory refresh after successful order
     } catch (error) {
-      message.error(error.message || 'Failed to place order. Please try again.');
+      message.error(error.message || 'Đặt hàng không thành công. Vui lòng thử lại.');
       console.error('Order placement error:', error);
     } finally {
       setLoading(false);
@@ -250,17 +259,17 @@ const CheckoutPage = () => {
   // Order summary columns for the table
   const orderSummaryColumns = [
     {
-      title: 'Product',
+      title: 'Sản phẩm',
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: 'Quantity',
+      title: 'Số lượng',
       dataIndex: 'quantity',
       key: 'quantity',
     },
     {
-      title: 'Price',
+      title: 'Giá',
       key: 'price',
       render: (_, record) => {
         const price = record.discount_price || record.price;
@@ -268,7 +277,7 @@ const CheckoutPage = () => {
       },
     },
     {
-      title: 'Total',
+      title: 'Tổng',
       key: 'total',
       render: (_, record) => {
         const price = record.discount_price || record.price;
@@ -280,131 +289,194 @@ const CheckoutPage = () => {
   // Render shipping form
   const renderShippingForm = () => (
     <Card
-      title="Shipping Information"
       bordered={false}
-  style={sectionCardStyle}
-      bodyStyle={{ padding: '32px' }}
-      headStyle={{ fontSize: '20px', fontWeight: 600 }}
+      style={sectionCardStyle}
+      bodyStyle={{ padding: '40px' }}
     >
+      <div style={{ marginBottom: '40px', textAlign: 'center' }}>
+        <div style={{ 
+          width: '64px', 
+          height: '64px', 
+          background: 'linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%)', 
+          borderRadius: '50%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          margin: '0 auto 20px',
+          boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.15)'
+        }}>
+          <HomeOutlined style={{ fontSize: '28px', color: '#4f46e5' }} />
+        </div>
+        <Title level={2} style={{ margin: '0 0 12px', color: '#1e293b', fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px' }}>
+          Thông tin giao hàng
+        </Title>
+        <Text style={{ fontSize: '18px', color: '#64748b', maxWidth: '400px', margin: '0 auto', display: 'block', lineHeight: 1.6 }}>
+          Địa chỉ nhận hàng của bạn
+        </Text>
+      </div>
+
       <Form
         form={shippingForm}
         layout="vertical"
         initialValues={shippingData || {}}
         onFinish={handleShippingSubmit}
+        size="large"
+        requiredMark={false}
       >
-        <Row gutter={16}>
+        <Row gutter={24}>
           <Col xs={24} md={12}>
             <Form.Item
               name="fullName"
-              label="Full Name"
-              rules={[{ required: true, message: 'Please enter your full name' }]}
+              label={<span style={{ fontWeight: 600, color: '#475569' }}>Họ và tên</span>}
+              rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
             >
-              <Input prefix={<UserOutlined />} style={{ padding: '0 11px' }} placeholder="John Doe" />
+              <Input 
+                prefix={<UserOutlined style={{ color: '#94a3b8' }} />} 
+                placeholder="Nguyễn Văn A" 
+                style={{ borderRadius: '12px' }}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
             <Form.Item
               name="email"
-              label="Email"
+              label={<span style={{ fontWeight: 600, color: '#475569' }}>Email</span>}
               rules={[
-                { required: true, message: 'Please enter your email' },
-                { type: 'email', message: 'Please enter a valid email' }
+                { required: true, message: 'Vui lòng nhập email' },
+                { type: 'email', message: 'Email không hợp lệ' }
               ]}
             >
-              <Input placeholder="example@email.com" />
+              <Input 
+                prefix={<span style={{ color: '#94a3b8' }}>@</span>} 
+                placeholder="example@email.com" 
+                style={{ borderRadius: '12px' }}
+              />
             </Form.Item>
           </Col>
         </Row>
 
-        <Row gutter={16}>
+        <Row gutter={24}>
           <Col xs={24} md={12}>
             <Form.Item
               name="phone"
-              label="Phone Number"
-              rules={[{ required: true, message: 'Please enter your phone number' }]}
+              label={<span style={{ fontWeight: 600, color: '#475569' }}>Số điện thoại</span>}
+              rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}
             >
-              <Input placeholder="+91 9876543210" />
+              <Input 
+                prefix={<span style={{ color: '#94a3b8' }}>#</span>} 
+                placeholder="+84 987 654 321" 
+                style={{ borderRadius: '12px' }}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
             <Form.Item
               name="addressLine1"
-              label="Address Line 1"
-              rules={[{ required: true, message: 'Please enter your address' }]}
+              label={<span style={{ fontWeight: 600, color: '#475569' }}>Địa chỉ 1</span>}
+              rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
             >
-              <Input prefix={<HomeOutlined />} placeholder="123 Main St" />
+              <Input 
+                prefix={<HomeOutlined style={{ color: '#94a3b8' }} />} 
+                placeholder="123 Đường Lê Lợi" 
+                style={{ borderRadius: '12px' }}
+              />
             </Form.Item>
           </Col>
         </Row>
 
-        <Row gutter={16}>
+        <Row gutter={24}>
           <Col xs={24} md={12}>
             <Form.Item
               name="addressLine2"
-              label="Address Line 2"
+              label={<span style={{ fontWeight: 600, color: '#475569' }}>Địa chỉ 2 (không bắt buộc)</span>}
             >
-              <Input placeholder="Apartment, suite, etc. (optional)" />
+              <Input 
+                placeholder="Tầng 2, Chung cư ABC" 
+                style={{ borderRadius: '12px' }}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
             <Form.Item
               name="city"
-              label="City"
-              rules={[{ required: true, message: 'Please enter your city' }]}
+              label={<span style={{ fontWeight: 600, color: '#475569' }}>Thành phố</span>}
+              rules={[{ required: true, message: 'Vui lòng nhập thành phố' }]}
             >
-              <Input placeholder="Ho Chi Minh City" />
+              <Input 
+                placeholder="Thành phố Hồ Chí Minh" 
+                style={{ borderRadius: '12px' }}
+              />
             </Form.Item>
           </Col>
         </Row>
 
-        <Row gutter={16}>
+        <Row gutter={24}>
           <Col xs={24} md={8}>
             <Form.Item
               name="state"
-              label="State"
-              rules={[{ required: true, message: 'Please select your state' }]}
+              label={<span style={{ fontWeight: 600, color: '#475569' }}>Tỉnh/Thành phố</span>}
+              rules={[{ required: true, message: 'Vui lòng chọn tỉnh/thành phố' }]}
             >
               <Select
-                placeholder="Select state"
-                className="checkout-select"
+                placeholder="Chọn tỉnh/thành phố"
+                style={{ borderRadius: '12px' }}
               >
-                <Option value="hochiminh">Ho Chi Minh</Option>
-                <Option value="hanoi">Ha Noi</Option>
-                <Option value="danang">Da Nang</Option>
-                <Option value="hue">Hue</Option>
-                <Option value="other">Other</Option>
+                <Option value="hochiminh">Hồ Chí Minh</Option>
+                <Option value="hanoi">Hà Nội</Option>
+                <Option value="danang">Đà Nẵng</Option>
+                <Option value="hue">Huế</Option>
+                <Option value="other">Khác</Option>
               </Select>
             </Form.Item>
           </Col>
           <Col xs={24} md={8}>
             <Form.Item
               name="pincode"
-              label="PIN Code"
-              rules={[{ required: true, message: 'Please enter your PIN code' }]}
+              label={<span style={{ fontWeight: 600, color: '#475569' }}>Mã bưu chính</span>}
+              rules={[{ required: true, message: 'Vui lòng nhập mã bưu chính' }]}
             >
-              <Input placeholder="700000" />
+              <Input 
+                placeholder="700000" 
+                style={{ borderRadius: '12px' }}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} md={8}>
             <Form.Item
               name="country"
-              label="Country"
+              label={<span style={{ fontWeight: 600, color: '#475569' }}>Quốc gia</span>}
               initialValue="vietnam"
-              rules={[{ required: true, message: 'Please select your country' }]}
+              rules={[{ required: true, message: 'Vui lòng chọn quốc gia' }]}
             >
               <Select
-                placeholder="Select country"
-                className="checkout-select"
+                placeholder="Chọn quốc gia"
+                style={{ borderRadius: '12px' }}
               >
-                <Option value="vietnam">Viet Nam</Option>
+                <Option value="vietnam">Việt Nam</Option>
               </Select>
             </Form.Item>
           </Col>
         </Row>
 
-        <Form.Item>
-          <Button type="primary" htmlType="submit" size="large">
-            Continue to Payment
+        <Form.Item style={{ marginTop: '16px', marginBottom: 0 }}>
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            size="large" 
+            block
+            style={{ 
+              height: '56px', 
+              borderRadius: '16px',
+              fontSize: '18px',
+              fontWeight: 600,
+              background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+              border: 'none',
+              boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.3)'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 20px 25px -5px rgba(79, 70, 229, 0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(79, 70, 229, 0.3)"; }}
+          >
+            Tiếp tục thanh toán <ArrowRightOutlined />
           </Button>
         </Form.Item>
       </Form>
@@ -414,36 +486,201 @@ const CheckoutPage = () => {
   // Render payment form
   const renderPaymentForm = () => (
     <Card
-      title="Payment Information"
       bordered={false}
-  style={sectionCardStyle}
-      bodyStyle={{ padding: '32px' }}
-      headStyle={{ fontSize: '20px', fontWeight: 600 }}
+      style={sectionCardStyle}
+      bodyStyle={{ padding: '40px' }}
     >
+      <div style={{ marginBottom: '40px', textAlign: 'center' }}>
+        <div style={{ 
+          width: '64px', 
+          height: '64px', 
+          background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)', 
+          borderRadius: '50%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          margin: '0 auto 20px',
+          boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.15)'
+        }}>
+          <CreditCardOutlined style={{ fontSize: '28px', color: '#10b981' }} />
+        </div>
+        <Title level={2} style={{ margin: '0 0 12px', color: '#1e293b', fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px' }}>
+          Phương thức thanh toán
+        </Title>
+        <Text style={{ fontSize: '18px', color: '#64748b', maxWidth: '400px', margin: '0 auto', display: 'block', lineHeight: 1.6 }}>
+          Chọn phương thức thanh toán
+        </Text>
+      </div>
+
       <Form
         form={paymentForm}
         layout="vertical"
         initialValues={paymentData || {}}
         onFinish={handlePaymentSubmit}
+        requiredMark={false}
+        size="large"
       >
         <Form.Item
           name="paymentMethod"
-          label="Payment Method"
-          rules={[{ required: true, message: 'Please select a payment method' }]}
+          rules={[{ required: true, message: 'Vui lòng chọn phương thức thanh toán' }]}
         >
-          <Radio.Group>
-            <Space direction="vertical">
-              <Radio value="creditCard">
-                <Space>
-                  <CreditCardOutlined /> Credit/Debit Card
-                </Space>
-              </Radio>
-              <Radio value="upi">UPI</Radio>
-              <Radio value="netBanking">Net Banking</Radio>
-              <Radio value="cod">Cash on Delivery</Radio>
-            </Space>
+          <Radio.Group style={{ width: '100%' }}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={12}>
+                <Radio.Button 
+                  value="creditCard" 
+                  style={{ 
+                    height: 'auto', 
+                    padding: '20px', 
+                    width: '100%', 
+                    borderRadius: '16px', 
+                    border: '2px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}
+                  className="payment-radio"
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#f1f5f9', 
+                    borderRadius: '12px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <CreditCardOutlined style={{ fontSize: '24px', color: '#64748b' }} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <Text strong style={{ display: 'block', fontSize: '16px', color: '#334155' }}>Thẻ tín dụng/Ghi nợ</Text>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>Visa, Mastercard, JCB</Text>
+                  </div>
+                </Radio.Button>
+              </Col>
+              <Col xs={24} md={12}>
+                <Radio.Button 
+                  value="upi" 
+                  style={{ 
+                    height: 'auto', 
+                    padding: '20px', 
+                    width: '100%', 
+                    borderRadius: '16px', 
+                    border: '2px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}
+                  className="payment-radio"
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#f1f5f9', 
+                    borderRadius: '12px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <MobileOutlined style={{ fontSize: '24px', color: '#64748b' }} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <Text strong style={{ display: 'block', fontSize: '16px', color: '#334155' }}>Ví điện tử/QR Code</Text>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>Google Pay, Momo, ZaloPay</Text>
+                  </div>
+                </Radio.Button>
+              </Col>
+              <Col xs={24} md={12}>
+                <Radio.Button 
+                  value="netBanking" 
+                  style={{ 
+                    height: 'auto', 
+                    padding: '20px', 
+                    width: '100%', 
+                    borderRadius: '16px', 
+                    border: '2px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}
+                  className="payment-radio"
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#f1f5f9', 
+                    borderRadius: '12px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <BankOutlined style={{ fontSize: '24px', color: '#64748b' }} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <Text strong style={{ display: 'block', fontSize: '16px', color: '#334155' }}>Ngân hàng trực tuyến</Text>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>Hỗ trợ tất cả ngân hàng lớn</Text>
+                  </div>
+                </Radio.Button>
+              </Col>
+              <Col xs={24} md={12}>
+                <Radio.Button 
+                  value="cod" 
+                  style={{ 
+                    height: 'auto', 
+                    padding: '20px', 
+                    width: '100%', 
+                    borderRadius: '16px', 
+                    border: '2px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}
+                  className="payment-radio"
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#f1f5f9', 
+                    borderRadius: '12px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <WalletOutlined style={{ fontSize: '24px', color: '#64748b' }} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <Text strong style={{ display: 'block', fontSize: '16px', color: '#334155' }}>Thanh toán khi nhận hàng</Text>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>Thanh toán khi nhận hàng</Text>
+                  </div>
+                </Radio.Button>
+              </Col>
+            </Row>
           </Radio.Group>
         </Form.Item>
+        <style>{`
+            .payment-radio.ant-radio-button-wrapper {
+              border-inline-start-width: 2px !important;
+            }
+            .payment-radio.ant-radio-button-wrapper:not(:first-child)::before {
+              display: none;
+            }
+            .payment-radio.ant-radio-button-wrapper-checked {
+              border-color: #10b981 !important;
+              background: #ecfdf5 !important;
+            }
+            .payment-radio.ant-radio-button-wrapper-checked .anticon {
+              color: #10b981 !important;
+            }
+            .payment-radio.ant-radio-button-wrapper-checked div:first-child {
+              background: #d1fae5 !important;
+            }
+          `}</style>
+
+        <Divider style={{ margin: '32px 0' }} />
 
         <Form.Item
           noStyle
@@ -459,8 +696,8 @@ const CheckoutPage = () => {
                     <Col span={24}>
                       <Form.Item
                         name="cardNumber"
-                        label="Card Number"
-                        rules={[{ required: true, message: 'Please enter your card number' }]}
+                        label="Số thẻ"
+                        rules={[{ required: true, message: 'Vui lòng nhập số thẻ' }]}
                       >
                         <Input
                           prefix={<CreditCardOutlined />}
@@ -474,8 +711,8 @@ const CheckoutPage = () => {
                     <Col xs={24} md={12}>
                       <Form.Item
                         name="expiryDate"
-                        label="Expiry Date (MM/YY)"
-                        rules={[{ required: true, message: 'Please enter expiry date' }]}
+                        label="Ngày hết hạn (MM/YY)"
+                        rules={[{ required: true, message: 'Vui lòng nhập ngày hết hạn' }]}
                       >
                         <Input placeholder="MM/YY" maxLength={5} />
                       </Form.Item>
@@ -484,7 +721,7 @@ const CheckoutPage = () => {
                       <Form.Item
                         name="cvv"
                         label="CVV"
-                        rules={[{ required: true, message: 'Please enter CVV' }]}
+                        rules={[{ required: true, message: 'Vui lòng nhập CVV' }]}
                       >
                         <Input
                           prefix={<LockOutlined />}
@@ -499,10 +736,10 @@ const CheckoutPage = () => {
                     <Col span={24}>
                       <Form.Item
                         name="nameOnCard"
-                        label="Name on Card"
-                        rules={[{ required: true, message: 'Please enter name on card' }]}
+                        label="Tên chủ thẻ"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên chủ thẻ' }]}
                       >
-                        <Input placeholder="John Doe" />
+                        <Input placeholder="Nguyễn Văn A" />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -514,8 +751,8 @@ const CheckoutPage = () => {
               return (
                 <Form.Item
                   name="upiId"
-                  label="UPI ID"
-                  rules={[{ required: true, message: 'Please enter your UPI ID' }]}
+                  label="Ví điện tử/QR Code"
+                  rules={[{ required: true, message: 'Vui lòng nhập thông tin ví điện tử/QR Code' }]}
                 >
                   <Input placeholder="name@upi" />
                 </Form.Item>
@@ -526,15 +763,15 @@ const CheckoutPage = () => {
               return (
                 <Form.Item
                   name="bank"
-                  label="Select Bank"
-                  rules={[{ required: true, message: 'Please select your bank' }]}
+                  label="Chọn ngân hàng"
+                  rules={[{ required: true, message: 'Vui lòng chọn ngân hàng' }]}
                 >
-                  <Select placeholder="Select bank">
-                    <Option value="sbi">State Bank of India</Option>
+                  <Select placeholder="Chọn ngân hàng">
+                    <Option value="sbi">Ngân hàng Nhà nước Ấn Độ</Option>
                     <Option value="hdfc">HDFC Bank</Option>
                     <Option value="icici">ICICI Bank</Option>
                     <Option value="axis">Axis Bank</Option>
-                    <Option value="other">Other</Option>
+                    <Option value="other">Khác</Option>
                   </Select>
                 </Form.Item>
               );
@@ -545,16 +782,16 @@ const CheckoutPage = () => {
         </Form.Item>
 
         <Form.Item name="savePaymentInfo" valuePropName="checked">
-          <Checkbox>Save payment information for future purchases</Checkbox>
+          <Checkbox>Lưu thông tin thanh toán cho lần mua sau</Checkbox>
         </Form.Item>
 
         <Form.Item>
           <Space>
             <Button onClick={handlePrevStep}>
-              Back to Shipping
+              Quay lại thông tin giao hàng
             </Button>
             <Button type="primary" htmlType="submit" size="large">
-              Review Order
+              Xem lại đơn hàng
             </Button>
           </Space>
         </Form.Item>
@@ -565,88 +802,242 @@ const CheckoutPage = () => {
   // Render order review
   const renderOrderReview = () => (
     <Card
-      title="Order Review"
       bordered={false}
-  style={sectionCardStyle}
-      bodyStyle={{ padding: '32px' }}
-      headStyle={{ fontSize: '20px', fontWeight: 600 }}
+      style={sectionCardStyle}
+      bodyStyle={{ padding: '40px' }}
     >
-      <Row gutter={[24, 24]}>
-        <Col xs={24} md={16}>
-          <Card type="inner" title="Shipping Information" style={innerCardStyle} bodyStyle={{ padding: '24px' }}>
-            <p><strong>Name:</strong> {shippingData.fullName}</p>
-            <p><strong>Email:</strong> {shippingData.email}</p>
-            <p><strong>Phone:</strong> {shippingData.phone}</p>
-            <p>
-              <strong>Address:</strong> {shippingData.addressLine1}
-              {shippingData.addressLine2 && `, ${shippingData.addressLine2}`},
-              {shippingData.city}, {shippingData.state}, {shippingData.pincode}, {shippingData.country}
-            </p>
-          </Card>
+      <div style={{ marginBottom: '40px', textAlign: 'center' }}>
+        <div style={{ 
+          width: '64px', 
+          height: '64px', 
+          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', 
+          borderRadius: '50%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          margin: '0 auto 20px',
+          boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.15)'
+        }}>
+          <FileTextOutlined style={{ fontSize: '28px', color: '#d97706' }} />
+        </div>
+        <Title level={2} style={{ margin: '0 0 12px', color: '#1e293b', fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px' }}>
+          Xem lại đơn hàng
+        </Title>
+        <Text style={{ fontSize: '18px', color: '#64748b', maxWidth: '400px', margin: '0 auto', display: 'block', lineHeight: 1.6 }}>
+          Vui lòng kiểm tra lại thông tin trước khi đặt hàng
+        </Text>
+      </div>
 
-          <Divider />
+      <Row gutter={[32, 32]}>
+        <Col xs={24} lg={16}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Shipping Info Card */}
+            <div style={{ 
+              background: '#f8fafc', 
+              borderRadius: '20px', 
+              padding: '24px', 
+              border: '1px solid #e2e8f0' 
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <Title level={4} style={{ margin: 0, color: '#334155', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <EnvironmentOutlined style={{ color: '#4f46e5' }} /> Thông tin giao hàng
+                </Title>
+                <Button type="link" onClick={() => setCurrentStep(0)} style={{ color: '#4f46e5', fontWeight: 600 }}>Chỉnh sửa</Button>
+              </div>
+              <Row gutter={[24, 24]}>
+                <Col xs={24} md={12}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <UserOutlined style={{ color: '#94a3b8', marginTop: '4px' }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Họ và tên</Text>
+                        <Text strong style={{ color: '#1e293b' }}>{shippingData.fullName}</Text>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <MailOutlined style={{ color: '#94a3b8', marginTop: '4px' }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Email</Text>
+                        <Text strong style={{ color: '#1e293b' }}>{shippingData.email}</Text>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <PhoneOutlined style={{ color: '#94a3b8', marginTop: '4px' }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Số điện thoại</Text>
+                        <Text strong style={{ color: '#1e293b' }}>{shippingData.phone}</Text>
+                      </div>
+                    </div>
+                  </div>
+                </Col>
+                <Col xs={24} md={12}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <HomeOutlined style={{ color: '#94a3b8', marginTop: '4px' }} />
+                    <div>
+                      <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Địa chỉ nhận hàng</Text>
+                      <Text strong style={{ color: '#1e293b', lineHeight: 1.6, display: 'block' }}>
+                        {shippingData.addressLine1}
+                        {shippingData.addressLine2 && <><br />{shippingData.addressLine2}</>}
+                        <br />
+                        {shippingData.city}, {shippingData.state}
+                        <br />
+                        {shippingData.country} - {shippingData.pincode}
+                      </Text>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            </div>
 
-          <Card type="inner" title="Payment Method" style={innerCardStyle} bodyStyle={{ padding: '24px' }}>
-            <p>
-              <strong>Payment Method:</strong> {
-                paymentData.paymentMethod === 'creditCard' ? 'Credit/Debit Card' :
-                paymentData.paymentMethod === 'upi' ? 'UPI' :
-                paymentData.paymentMethod === 'netBanking' ? 'Net Banking' : 'Cash on Delivery'
-              }
-            </p>
-            {paymentData.paymentMethod === 'creditCard' && (
-              <p><strong>Card Number:</strong> **** **** **** {paymentData.cardNumber.slice(-4)}</p>
-            )}
-            {paymentData.paymentMethod === 'upi' && (
-              <p><strong>UPI ID:</strong> {paymentData.upiId}</p>
-            )}
-            {paymentData.paymentMethod === 'netBanking' && (
-              <p><strong>Bank:</strong> {
-                paymentData.bank === 'sbi' ? 'State Bank of India' :
-                paymentData.bank === 'hdfc' ? 'HDFC Bank' :
-                paymentData.bank === 'icici' ? 'ICICI Bank' :
-                paymentData.bank === 'axis' ? 'Axis Bank' : 'Other'
-              }</p>
-            )}
-          </Card>
+            {/* Payment Info Card */}
+            <div style={{ 
+              background: '#f8fafc', 
+              borderRadius: '20px', 
+              padding: '24px', 
+              border: '1px solid #e2e8f0' 
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <Title level={4} style={{ margin: 0, color: '#334155', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <CreditCardOutlined style={{ color: '#10b981' }} /> Phương thức thanh toán
+                </Title>
+                <Button type="link" onClick={() => setCurrentStep(1)} style={{ color: '#4f46e5', fontWeight: 600 }}>Chỉnh sửa</Button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  background: 'white', 
+                  borderRadius: '12px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  border: '1px solid #e2e8f0',
+                  color: '#10b981',
+                  fontSize: '24px'
+                }}>
+                  {paymentData.paymentMethod === 'creditCard' && <CreditCardOutlined />}
+                  {paymentData.paymentMethod === 'upi' && <MobileOutlined />}
+                  {paymentData.paymentMethod === 'netBanking' && <BankOutlined />}
+                  {paymentData.paymentMethod === 'cod' && <WalletOutlined />}
+                </div>
+                <div>
+                  <Text strong style={{ fontSize: '16px', color: '#1e293b', display: 'block' }}>
+                    {paymentData.paymentMethod === 'creditCard' ? 'Thẻ tín dụng/Ghi nợ' :
+                     paymentData.paymentMethod === 'upi' ? 'Ví điện tử/QR Code' :
+                     paymentData.paymentMethod === 'netBanking' ? 'Ngân hàng trực tuyến' : 'Thanh toán khi nhận hàng'}
+                  </Text>
+                  <Text type="secondary">
+                    {paymentData.paymentMethod === 'creditCard' && `**** **** **** ${paymentData.cardNumber.slice(-4)}`}
+                    {paymentData.paymentMethod === 'upi' && paymentData.upiId}
+                    {paymentData.paymentMethod === 'netBanking' && (
+                      paymentData.bank === 'sbi' ? 'Ngân hàng Nhà nước Ấn Độ' :
+                      paymentData.bank === 'hdfc' ? 'HDFC Bank' :
+                      paymentData.bank === 'icici' ? 'ICICI Bank' :
+                      paymentData.bank === 'axis' ? 'Axis Bank' : 'Khác'
+                    )}
+                    {paymentData.paymentMethod === 'cod' && 'Thanh toán khi nhận hàng'}
+                  </Text>
+                </div>
+              </div>
+            </div>
 
-          <Divider />
-
-          <Card type="inner" title="Order Items" style={innerCardStyle} bodyStyle={{ padding: '24px' }}>
-            <Table
-              dataSource={cartItems}
-              columns={orderSummaryColumns}
-              pagination={false}
-              rowKey="id"
-            />
-          </Card>
+            {/* Order Items */}
+            <div style={{ 
+              background: 'white', 
+              borderRadius: '20px', 
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden'
+            }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+                <Title level={4} style={{ margin: 0, color: '#334155', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShoppingOutlined style={{ color: '#f59e0b' }} /> Sản phẩm ({cartItems.length})
+                </Title>
+              </div>
+              <Table
+                dataSource={cartItems}
+                columns={orderSummaryColumns}
+                pagination={false}
+                rowKey="id"
+                className="custom-table"
+              />
+            </div>
+          </div>
         </Col>
 
-        <Col xs={24} md={8}>
-          <Card title="Order Summary" style={innerCardStyle} bodyStyle={{ padding: '24px' }}>
-            <p><strong>Subtotal:</strong> ₫{cartTotal.toFixed(2)}</p>
-            <p><strong>Shipping:</strong> Free</p>
-            <p><strong>Tax:</strong> ₫{(cartTotal * 0.18).toFixed(2)}</p>
-            <Divider />
-            <p><strong>Total:</strong> ₫{(cartTotal + cartTotal * 0.18).toFixed(2)}</p>
+        <Col xs={24} lg={8}>
+          <div style={{ position: 'sticky', top: '24px' }}>
+            <div style={{ 
+              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', 
+              borderRadius: '24px', 
+              padding: '32px', 
+              color: 'white',
+              boxShadow: '0 20px 25px -5px rgba(15, 23, 42, 0.15)'
+            }}>
+              <Title level={3} style={{ color: 'white', margin: '0 0 24px' }}>Tóm tắt đơn hàng</Title>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+                  <Text style={{ color: '#94a3b8' }}>Tạm tính</Text>
+                  <Text style={{ color: 'white' }}>₫{cartTotal.toLocaleString()}</Text>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+                  <Text style={{ color: '#94a3b8' }}>Phí vận chuyển</Text>
+                  <Text style={{ color: '#4ade80' }}>Miễn phí</Text>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+                  <Text style={{ color: '#94a3b8' }}>Thuế (18%)</Text>
+                  <Text style={{ color: 'white' }}>₫{(cartTotal * 0.18).toLocaleString()}</Text>
+                </div>
+              </div>
 
-            <Button
-              type="primary"
-              size="large"
-              block
-              onClick={handlePlaceOrder}
-              loading={loading}
-            >
-              Place Order
-            </Button>
-            <Button
-              onClick={handlePrevStep}
-              style={{ marginTop: '10px' }}
-              block
-            >
-              Back to Payment
-            </Button>
-          </Card>
+              <Divider style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '24px 0' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+                <Text style={{ fontSize: '16px', color: '#cbd5e1' }}>Tổng cộng</Text>
+                <div style={{ textAlign: 'right' }}>
+                  <Text style={{ fontSize: '32px', fontWeight: '800', color: 'white', lineHeight: 1 }}>
+                    ₫{(cartTotal + cartTotal * 0.18).toLocaleString()}
+                  </Text>
+                </div>
+              </div>
+
+              <Button
+                type="primary"
+                size="large"
+                block
+                onClick={handlePlaceOrder}
+                loading={loading}
+                style={{
+                  height: '60px',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+                  border: 'none',
+                  borderRadius: '16px',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+                  marginBottom: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+              >
+                Đặt hàng <ArrowRightOutlined />
+              </Button>
+              
+              <Button
+                type="text"
+                block
+                onClick={handlePrevStep}
+                style={{ color: '#94a3b8' }}
+              >
+                Quay lại thanh toán
+              </Button>
+            </div>
+            
+            <div style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'center', color: '#64748b' }}>
+              <SafetyCertificateOutlined style={{ fontSize: '20px' }} />
+              <Text type="secondary">Bảo mật SSL an toàn</Text>
+            </div>
+          </div>
         </Col>
       </Row>
     </Card>
@@ -661,23 +1052,23 @@ const CheckoutPage = () => {
     >
       <div style={{ textAlign: 'center', padding: '20px 0' }}>
         <CheckCircleOutlined style={{ fontSize: '72px', color: '#52c41a' }} />
-        <Title level={2}>Order Placed Successfully!</Title>
+        <Title level={2}>Đặt hàng thành công!</Title>
         <Paragraph>
-          Thank you for your order. Your order has been placed successfully.
+          Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn đã được đặt thành công.
         </Paragraph>
         <Paragraph>
-          <strong>Order ID:</strong> {orderId}
+          <strong>Mã đơn hàng:</strong> {orderId}
         </Paragraph>
         <Paragraph>
-          An email confirmation has been sent to {shippingData.email}.
+          Xác nhận đơn hàng đã được gửi tới {shippingData.email}.
         </Paragraph>
         <Divider />
         <Space size="large">
           <Button type="primary" size="large" onClick={() => navigate('/')}>
-            Continue Shopping
+            Tiếp tục mua sắm
           </Button>
           <Button size="large" onClick={() => navigate('/orders')}>
-            View My Orders
+            Xem đơn hàng của tôi
           </Button>
         </Space>
       </div>
@@ -703,94 +1094,107 @@ const CheckoutPage = () => {
   return (
     <div
       style={{
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-        minHeight: '100vh'
+        background: "#f8fafc",
+        minHeight: "100vh",
+        paddingBottom: "60px"
       }}
     >
+      {/* Modern Header Section */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          padding: '48px 24px 96px',
-          position: 'relative',
-          overflow: 'hidden'
+          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+          padding: "60px 24px 80px",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              "url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'#ffffff\' fill-opacity=\'0.05\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'4\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"
-          }}
-        />
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            position: 'relative',
-            zIndex: 1
-          }}
-        >
-          <div style={{ textAlign: 'center' }}>
-            <Title
-              level={2}
-              style={{
-                marginBottom: 12,
-                color: '#fff',
-                fontSize: 'clamp(2rem, 3.5vw, 2.6rem)',
-                fontWeight: 800,
-                textShadow: '0 18px 45px rgba(15, 23, 42, 0.4)'
-              }}
-            >
-              Checkout
-            </Title>
-            <Paragraph
-              style={{
-                color: 'rgba(255,255,255,0.92)',
-                fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                marginBottom: 0
-              }}
-            >
-              Review your shipping details, choose a payment method, and place your order securely.
-            </Paragraph>
-          </div>
+        {/* Decorative Background Elements */}
+        <div style={{ position: 'absolute', top: '-50%', left: '-10%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-30%', right: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+        
+        <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <Row justify="space-between" align="middle" gutter={[24, 24]}>
+            <Col xs={24} md={10}>
+              <Title
+                level={1}
+                style={{
+                  color: "white",
+                  fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
+                  fontWeight: 800,
+                  margin: 0,
+                  lineHeight: 1.2
+                }}
+              >
+                Thanh toán <span style={{ color: "#818cf8" }}>an toàn</span>
+              </Title>
+              <Text style={{ color: "#94a3b8", fontSize: "18px", marginTop: "12px", display: "block" }}>
+                Hoàn tất đơn hàng của bạn chỉ với vài bước đơn giản.
+              </Text>
+            </Col>
+            <Col xs={24} md={14}>
+              <div style={{ 
+                background: "rgba(255, 255, 255, 0.1)", 
+                padding: "32px", 
+                borderRadius: "24px", 
+                backdropFilter: "blur(12px)", 
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)"
+              }}>
+                <Steps
+                  current={currentStep}
+                  items={[
+                    { title: <span style={{ color: 'white', fontWeight: 600 }}>Giao hàng</span>, icon: <HomeOutlined style={{ fontSize: '20px' }} /> },
+                    { title: <span style={{ color: 'white', fontWeight: 600 }}>Thanh toán</span>, icon: <CreditCardOutlined style={{ fontSize: '20px' }} /> },
+                    { title: <span style={{ color: 'white', fontWeight: 600 }}>Xem lại</span>, icon: <ShoppingOutlined style={{ fontSize: '20px' }} /> },
+                    { title: <span style={{ color: 'white', fontWeight: 600 }}>Hoàn tất</span>, icon: <CheckCircleOutlined style={{ fontSize: '20px' }} /> },
+                  ]}
+                  className="checkout-steps"
+                />
+                <style>{`
+                  .checkout-steps .ant-steps-item-process .ant-steps-item-icon {
+                    background: transparent !important;
+                    border-color: #818cf8 !important;
+                  }
+                  .checkout-steps .ant-steps-item-process .ant-steps-item-icon > .ant-steps-icon {
+                    color: #818cf8 !important;
+                  }
+                  .checkout-steps .ant-steps-item-finish .ant-steps-item-icon {
+                    background: transparent !important;
+                    border-color: #818cf8 !important;
+                  }
+                  .checkout-steps .ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon {
+                    color: #818cf8 !important;
+                  }
+                  .checkout-steps .ant-steps-item-wait .ant-steps-item-icon {
+                    background: transparent !important;
+                    border-color: rgba(255,255,255,0.3) !important;
+                  }
+                  .checkout-steps .ant-steps-item-wait .ant-steps-item-icon > .ant-steps-icon {
+                    color: rgba(255,255,255,0.5) !important;
+                  }
+                  .checkout-steps .ant-steps-item-tail::after {
+                    background-color: rgba(255,255,255,0.2) !important;
+                  }
+                  .checkout-steps .ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-tail::after {
+                    background-color: #818cf8 !important;
+                  }
+                `}</style>
+              </div>
+            </Col>
+          </Row>
         </div>
       </div>
 
       <div
         style={{
-          maxWidth: '1200px',
-          margin: '-72px auto 0',
-          padding: '0 20px 56px'
+          maxWidth: '1000px',
+          margin: '-40px auto 0',
+          padding: '0 24px',
+          position: 'relative',
+          zIndex: 2
         }}
       >
-        <Card
-          bordered={false}
-          style={mainCardStyle}
-          bodyStyle={{ padding: '32px 24px' }}
-        >
-          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <Steps
-              current={currentStep}
-              responsive
-              style={{
-                marginBottom: '24px',
-                padding: '0 12px'
-              }}
-            >
-              <Step title="Shipping" icon={<HomeOutlined />} />
-              <Step title="Payment" icon={<CreditCardOutlined />} />
-              <Step title="Review" icon={<ShoppingOutlined />} />
-              <Step title="Confirmation" icon={<CheckCircleOutlined />} />
-            </Steps>
-
-            <Divider style={{ margin: '0 0 24px' }} />
-
-            <div>
-              {renderStepContent()}
-            </div>
-          </div>
-        </Card>
+        {renderStepContent()}
       </div>
     </div>
   );

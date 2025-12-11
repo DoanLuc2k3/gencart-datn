@@ -76,7 +76,7 @@ const ProfilePage = () => {
 
         if (!token) {
           // Redirect to login if not authenticated
-          message.error('Please login to view your profile');
+          message.error('Vui lòng đăng nhập để xem hồ sơ của bạn');
           navigate('/login');
           return;
         }
@@ -89,7 +89,7 @@ const ProfilePage = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch user data');
+          throw new Error('Không thể tải dữ liệu hồ sơ');
         }
 
         const userData = await response.json();
@@ -139,7 +139,7 @@ const ProfilePage = () => {
         });
       } catch (error) {
         console.error('Error fetching user data:', error);
-        message.error('Failed to load profile data');
+        message.error('Không thể tải dữ liệu hồ sơ');
       } finally {
         setLoading(false);
       }
@@ -157,7 +157,7 @@ const ProfilePage = () => {
       const token = localStorage.getItem('access_token');
 
       if (!token) {
-        message.error('Authentication error. Please login again.');
+        message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
         navigate('/login');
         return;
       }
@@ -188,7 +188,7 @@ const ProfilePage = () => {
       });
 
       if (!userResponse.ok) {
-        throw new Error('Failed to update profile');
+        throw new Error('Không thể cập nhật hồ sơ');
       }
 
       // Check if user has an address
@@ -204,7 +204,7 @@ const ProfilePage = () => {
       });
 
       if (!userDataResponse.ok) {
-        throw new Error('Failed to fetch user data');
+        throw new Error('Không thể tải dữ liệu người dùng');
       }
 
       const currentUserData = await userDataResponse.json();
@@ -236,7 +236,7 @@ const ProfilePage = () => {
       });
 
       if (!addressResponse.ok) {
-        throw new Error('Failed to update address');
+        throw new Error('Không thể cập nhật địa chỉ');
       }
 
       // Refresh user data
@@ -247,7 +247,7 @@ const ProfilePage = () => {
       });
 
       if (!updatedUserResponse.ok) {
-        throw new Error('Failed to fetch updated user data');
+        throw new Error('Không thể tải dữ liệu người dùng');
       }
 
       const updatedUserData = await updatedUserResponse.json();
@@ -285,10 +285,10 @@ const ProfilePage = () => {
 
       setUserData(formattedUserData);
       setEditMode(false);
-      message.success('Profile updated successfully!');
+      message.success('Cập nhật hồ sơ thành công!');
     } catch (error) {
       console.error('Error updating profile:', error);
-      message.error('Failed to update profile. Please try again.');
+      message.error('Không thể cập nhật hồ sơ. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -303,7 +303,7 @@ const ProfilePage = () => {
       const token = localStorage.getItem('access_token');
 
       if (!token) {
-        message.error('Authentication error. Please login again.');
+        message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
         navigate('/login');
         return;
       }
@@ -324,27 +324,27 @@ const ProfilePage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to change password');
+        throw new Error(errorData.detail || 'Không thể đổi mật khẩu');
       }
 
       passwordForm.resetFields();
-      message.success('Password changed successfully!');
+      message.success('Đổi mật khẩu thành công!');
 
       // Optionally, you can log the user out and redirect to login page
       // This is a good practice after password change
       const logoutAfterPasswordChange = window.confirm(
-        'Your password has been changed successfully. For security reasons, would you like to log out and log in again with your new password?'
+        'Mật khẩu của bạn đã được đổi thành công. Để đảm bảo an toàn, bạn có muốn đăng xuất và đăng nhập lại bằng mật khẩu mới không?'
       );
 
       if (logoutAfterPasswordChange) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        message.info('Please log in with your new password');
+        message.info('Vui lòng đăng nhập bằng mật khẩu mới của bạn');
         navigate('/login');
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      message.error(error.message || 'Failed to change password. Please try again.');
+      message.error(error.message || 'Không thể đổi mật khẩu. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -363,7 +363,7 @@ const ProfilePage = () => {
         const token = localStorage.getItem('access_token');
 
         if (!token) {
-          message.error('Authentication error. Please login again.');
+          message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
           navigate('/login');
           return;
         }
@@ -382,7 +382,7 @@ const ProfilePage = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to upload avatar');
+          throw new Error('Không thể tải ảnh đại diện lên');
         }
 
         const data = await response.json();
@@ -393,10 +393,10 @@ const ProfilePage = () => {
           avatar_url: data.avatar_url
         });
 
-        message.success('Avatar uploaded successfully!');
+        message.success('Tải ảnh đại diện lên thành công!');
       } catch (error) {
         console.error('Error uploading avatar:', error);
-        message.error('Failed to upload avatar. Please try again.');
+        message.error('Không thể tải ảnh đại diện lên. Vui lòng thử lại.');
       } finally {
         setUploadLoading(false);
       }
@@ -447,11 +447,11 @@ const ProfilePage = () => {
                 beforeUpload={(file) => {
                   const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
                   if (!isJpgOrPng) {
-                    message.error('You can only upload JPG/PNG files!');
+                    message.error('Chỉ chấp nhận file JPG/PNG!');
                   }
                   const isLt2M = file.size / 1024 / 1024 < 2;
                   if (!isLt2M) {
-                    message.error('Image must be smaller than 2MB!');
+                    message.error('Ảnh phải nhỏ hơn 2MB!');
                   }
                   return isJpgOrPng && isLt2M;
                 }}
@@ -508,7 +508,7 @@ const ProfilePage = () => {
                       <>
                         <CameraOutlined style={{ fontSize: '24px', color: '#1677ff', marginBottom: '8px' }} />
                         <Text style={{ color: '#1677ff', fontSize: '12px' }}>
-                          Upload Photo
+                          Tải ảnh lên
                         </Text>
                       </>
                     )}
@@ -519,7 +519,7 @@ const ProfilePage = () => {
               {/* Profile Completion */}
               <div style={{ marginTop: '16px' }}>
                 <Text style={{ fontSize: '12px', color: '#8c8c8c', display: 'block', marginBottom: '8px' }}>
-                  Profile Completion
+                  Hoàn thiện hồ sơ
                 </Text>
                 <Progress
                   percent={calculateProfileCompletion()}
@@ -537,10 +537,10 @@ const ProfilePage = () => {
           <Col xs={24} md={16}>
             <div>
               <Title level={2} style={{ marginBottom: '8px', color: '#262626' }}>
-                {userData.name || 'Welcome!'}
+                {userData.name || 'Chào mừng!'}
               </Title>
               <Text style={{ color: '#8c8c8c', fontSize: '16px', display: 'block', marginBottom: '24px' }}>
-                Manage your account and personal information
+                Quản lý thông tin cá nhân của bạn
               </Text>
 
               <Row gutter={[16, 16]}>
@@ -571,9 +571,9 @@ const ProfilePage = () => {
                     <Space>
                       <PhoneOutlined style={{ color: '#1677ff' }} />
                       <div>
-                        <Text style={{ fontSize: '12px', color: '#8c8c8c', display: 'block' }}>Phone</Text>
+                        <Text style={{ fontSize: '12px', color: '#8c8c8c', display: 'block' }}>Số điện thoại</Text>
                         <Text style={{ fontSize: '14px', fontWeight: '500' }}>
-                          {userData.phone || 'Add phone number'}
+                          {userData.phone || 'Chưa cập nhật số điện thoại'}
                         </Text>
                       </div>
                     </Space>
@@ -593,7 +593,7 @@ const ProfilePage = () => {
                     fontWeight: '600'
                   }}
                 >
-                  Edit Profile
+                  Chỉnh sửa hồ sơ
                 </Button>
               </div>
             </div>
@@ -606,7 +606,7 @@ const ProfilePage = () => {
         title={
           <Space>
             <HomeOutlined style={{ color: '#1677ff' }} />
-            <span>Address Information</span>
+            <span>Địa chỉ</span>
           </Space>
         }
         style={{
@@ -650,7 +650,7 @@ const ProfilePage = () => {
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
             <EnvironmentOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
             <Paragraph style={{ color: '#8c8c8c', fontSize: '14px' }}>
-              No address information available. Click "Edit Profile" to add your address.
+              Chưa có thông tin địa chỉ. Nhấn "Chỉnh sửa hồ sơ" để thêm địa chỉ.
             </Paragraph>
           </div>
         )}
@@ -679,7 +679,7 @@ const ProfilePage = () => {
       >
         {/* Personal Information */}
         <Card 
-          title="Personal Information"
+          title="Thông tin cá nhân"
           style={{ 
             marginBottom: '24px', 
             borderRadius: '16px',
@@ -696,12 +696,12 @@ const ProfilePage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="name"
-                label="Full Name"
-                rules={[{ required: true, message: 'Please enter your name' }]}
+                label="Họ và tên"
+                rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
               >
                 <Input 
                   prefix={<UserOutlined style={{ color: '#1677ff' }} />} 
-                  placeholder="John Doe"
+                  placeholder="Nguyễn Văn A"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -710,15 +710,15 @@ const ProfilePage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="email"
-                label="Email Address"
+                label="Email"
                 rules={[
-                  { required: true, message: 'Please enter your email' },
-                  { type: 'email', message: 'Please enter a valid email' }
+                  { required: true, message: 'Vui lòng nhập email' },
+                  { type: 'email', message: 'Email không hợp lệ' }
                 ]}
               >
                 <Input 
                   prefix={<MailOutlined style={{ color: '#1677ff' }} />} 
-                  placeholder="john.doe@example.com"
+                  placeholder="nguyenvana@example.com"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -727,8 +727,8 @@ const ProfilePage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="phone"
-                label="Phone Number"
-                rules={[{ required: true, message: 'Please enter your phone number' }]}
+                label="Số điện thoại"
+                rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}
               >
                 <Input 
                   prefix={<PhoneOutlined style={{ color: '#1677ff' }} />} 
@@ -743,7 +743,7 @@ const ProfilePage = () => {
 
         {/* Address Information */}
         <Card 
-          title="Address Information"
+          title="Địa chỉ"
           style={{ 
             marginBottom: '24px', 
             borderRadius: '16px',
@@ -760,12 +760,12 @@ const ProfilePage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="addressLine1"
-                label="Address Line 1"
-                rules={[{ required: true, message: 'Please enter your address' }]}
+                label="Địa chỉ 1"
+                rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
               >
                 <Input 
                   prefix={<HomeOutlined style={{ color: '#1677ff' }} />} 
-                  placeholder="123 Main Street"
+                  placeholder="123 Đường Chính"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -774,10 +774,10 @@ const ProfilePage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="addressLine2"
-                label="Address Line 2 (Optional)"
+                label="Địa chỉ 2 (không bắt buộc)"
               >
                 <Input 
-                  placeholder="Apartment, suite, etc."
+                  placeholder="Tầng, căn hộ, v.v."
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -786,11 +786,11 @@ const ProfilePage = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="city"
-                label="City"
-                rules={[{ required: true, message: 'Please enter your city' }]}
+                label="Thành phố"
+                rules={[{ required: true, message: 'Vui lòng nhập thành phố' }]}
               >
                 <Input 
-                  placeholder="Ho Chi Minh City"
+                  placeholder="Thành phố Hồ Chí Minh"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -799,11 +799,11 @@ const ProfilePage = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="state"
-                label="State/Province"
-                rules={[{ required: true, message: 'Please enter your state' }]}
+                label="Tỉnh/Bang"
+                rules={[{ required: true, message: 'Vui lòng nhập tỉnh/bang' }]}
               >
                 <Input 
-                  placeholder="Ho Chi Minh"
+                  placeholder="Hà Nội"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -812,8 +812,8 @@ const ProfilePage = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="pincode"
-                label="Postal Code"
-                rules={[{ required: true, message: 'Please enter your postal code' }]}
+                label="Mã bưu chính"
+                rules={[{ required: true, message: 'Vui lòng nhập mã bưu chính' }]}
               >
                 <Input 
                   placeholder="700000"
@@ -825,12 +825,12 @@ const ProfilePage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="country"
-                label="Country"
-                rules={[{ required: true, message: 'Please enter your country' }]}
+                label="Quốc gia"
+                rules={[{ required: true, message: 'Vui lòng nhập quốc gia' }]}
               >
                 <Input 
                   prefix={<GlobalOutlined style={{ color: '#1677ff' }} />}
-                  placeholder="Vietnam"
+                  placeholder="Việt Nam"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -855,7 +855,7 @@ const ProfilePage = () => {
                 fontWeight: '600'
               }}
             >
-              Save Changes
+              Lưu thay đổi
             </Button>
             <Button
               onClick={() => setEditMode(false)}
@@ -866,7 +866,7 @@ const ProfilePage = () => {
                 padding: '0 32px'
               }}
             >
-              Cancel
+              Hủy
             </Button>
           </Space>
         </div>
@@ -881,7 +881,7 @@ const ProfilePage = () => {
         title={
           <Space>
             <SafetyOutlined style={{ color: '#1677ff' }} />
-            <span>Change Password</span>
+            <span>Đổi mật khẩu</span>
           </Space>
         }
         style={{
@@ -911,9 +911,9 @@ const ProfilePage = () => {
             <Space>
               <LockOutlined style={{ color: '#d48806' }} />
               <div>
-                <Text strong style={{ color: '#d48806', fontSize: '14px' }}>Security Notice</Text>
+                <Text strong style={{ color: '#d48806', fontSize: '14px' }}>Thông báo bảo mật</Text>
                 <Text style={{ display: 'block', color: '#d48806', fontSize: '12px' }}>
-                  For your security, please enter your current password and choose a strong new password.
+                  Để đảm bảo an toàn, vui lòng nhập mật khẩu hiện tại và chọn mật khẩu mới mạnh.
                 </Text>
               </div>
             </Space>
@@ -923,12 +923,12 @@ const ProfilePage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="currentPassword"
-                label="Current Password"
-                rules={[{ required: true, message: 'Please enter your current password' }]}
+                label="Mật khẩu hiện tại"
+                rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
               >
                 <Input.Password
                   prefix={<LockOutlined style={{ color: '#1677ff' }} />}
-                  placeholder="Enter current password"
+                  placeholder="Nhập mật khẩu hiện tại"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -940,15 +940,15 @@ const ProfilePage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="newPassword"
-                label="New Password"
+                label="Mật khẩu mới"
                 rules={[
-                  { required: true, message: 'Please enter your new password' },
-                  { min: 8, message: 'Password must be at least 8 characters' }
+                  { required: true, message: 'Vui lòng nhập mật khẩu mới' },
+                  { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' }
                 ]}
               >
                 <Input.Password
                   prefix={<LockOutlined style={{ color: '#1677ff' }} />}
-                  placeholder="Enter new password"
+                  placeholder="Nhập mật khẩu mới"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -957,23 +957,23 @@ const ProfilePage = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="confirmPassword"
-                label="Confirm New Password"
+                label="Xác nhận mật khẩu mới"
                 dependencies={['newPassword']}
                 rules={[
-                  { required: true, message: 'Please confirm your new password' },
+                  { required: true, message: 'Vui lòng xác nhận mật khẩu mới' },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || getFieldValue('newPassword') === value) {
                         return Promise.resolve();
                       }
-                      return Promise.reject(new Error('The two passwords do not match'));
+                      return Promise.reject(new Error('Hai mật khẩu không khớp'));
                     },
                   }),
                 ]}
               >
                 <Input.Password
                   prefix={<LockOutlined style={{ color: '#1677ff' }} />}
-                  placeholder="Confirm new password"
+                  placeholder="Xác nhận mật khẩu mới"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -990,13 +990,13 @@ const ProfilePage = () => {
             marginBottom: '24px'
           }}>
             <Text strong style={{ color: '#52c41a', fontSize: '14px', display: 'block', marginBottom: '8px' }}>
-              Password Requirements:
+              Yêu cầu mật khẩu:
             </Text>
             <ul style={{ color: '#52c41a', margin: '0', paddingLeft: '20px' }}>
-              <li style={{ fontSize: '12px', marginBottom: '4px' }}>At least 8 characters long</li>
-              <li style={{ fontSize: '12px', marginBottom: '4px' }}>Mix of uppercase and lowercase letters</li>
-              <li style={{ fontSize: '12px', marginBottom: '4px' }}>At least one number</li>
-              <li style={{ fontSize: '12px' }}>At least one special character</li>
+              <li style={{ fontSize: '12px', marginBottom: '4px' }}>Ít nhất 8 ký tự</li>
+              <li style={{ fontSize: '12px', marginBottom: '4px' }}>Kết hợp chữ hoa và chữ thường</li>
+              <li style={{ fontSize: '12px', marginBottom: '4px' }}>Ít nhất một số</li>
+              <li style={{ fontSize: '12px' }}>Ít nhất một ký tự đặc biệt</li>
             </ul>
           </div>
 
@@ -1016,7 +1016,7 @@ const ProfilePage = () => {
                   fontWeight: '600'
                 }}
               >
-                Update Password
+                Cập nhật mật khẩu
               </Button>
               <Button
                 onClick={() => passwordForm.resetFields()}
@@ -1027,7 +1027,7 @@ const ProfilePage = () => {
                   padding: '0 32px'
                 }}
               >
-                Reset Form
+                Đặt lại
               </Button>
             </Space>
           </div>
@@ -1065,22 +1065,51 @@ const ProfilePage = () => {
           }}
         />
         <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          <div style={{ textAlign: 'center', marginBottom: '0' }}>
+          <div style={{ 
+            textAlign: 'center', 
+            marginBottom: '0',
+            background: 'rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(12px)',
+            padding: '40px 20px',
+            borderRadius: '24px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
+            maxWidth: '700px',
+            margin: '0 auto',
+            transform: 'translateY(10px)'
+          }}>
+            <Avatar 
+              size={80} 
+              icon={<UserOutlined />} 
+              style={{ 
+                backgroundColor: 'white', 
+                color: '#667eea',
+                marginBottom: '16px',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
+              }} 
+            />
             <Title
               level={1}
               style={{
                 color: 'white',
                 marginBottom: 8,
-                fontSize: 'clamp(2.1rem, 4.2vw, 3.05rem)',
+                fontSize: 'clamp(2.2rem, 4.5vw, 3.2rem)',
                 fontWeight: 800,
-                textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                letterSpacing: '-0.02em',
+                textShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                letterSpacing: '-0.5px',
               }}
             >
-              My Profile
+              Hồ sơ cá nhân
             </Title>
-            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 'clamp(1rem, 2vw, 1.2rem)' }}>
-              Manage your account settings and personal information
+            <Text style={{ 
+              color: 'rgba(255,255,255,0.95)', 
+              fontSize: 'clamp(1.1rem, 2.2vw, 1.3rem)',
+              fontWeight: 500,
+              display: 'block',
+              maxWidth: '500px',
+              margin: '0 auto'
+            }}>
+              Quản lý thông tin cá nhân và cài đặt tài khoản của bạn
             </Text>
           </div>
         </div>
@@ -1098,7 +1127,7 @@ const ProfilePage = () => {
           }}>
             <Spin size="large" />
             <Title level={3} style={{ marginTop: '24px', color: '#8c8c8c' }}>
-              Loading Profile...
+              Đang tải hồ sơ...
             </Title>
           </div>
         ) : (
@@ -1122,7 +1151,7 @@ const ProfilePage = () => {
                 tab={
                   <Space>
                     <UserOutlined />
-                    Profile Information
+                    Thông tin cá nhân
                   </Space>
                 } 
                 key="profile"
@@ -1133,7 +1162,7 @@ const ProfilePage = () => {
                 tab={
                   <Space>
                     <SafetyOutlined />
-                    Security
+                    Bảo mật
                   </Space>
                 } 
                 key="security"

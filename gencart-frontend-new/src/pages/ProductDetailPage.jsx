@@ -105,7 +105,7 @@ const ProductDetailPage = () => {
         checkCanReview();
       } catch (error) {
         console.error('Error fetching product:', error);
-        message.error('Failed to load product details');
+        message.error('Không thể tải chi tiết sản phẩm');
       } finally {
         setLoading(false);
       }
@@ -187,7 +187,7 @@ const ProductDetailPage = () => {
   const addToCart = () => {
     if (product) {
       addToCartContext(product, quantity);
-      message.success(`${quantity} ${product.name}(s) added to cart!`);
+      message.success(`${quantity} ${product.name}(s) đã thêm vào giỏ hàng!`);
     }
   };
 
@@ -200,7 +200,7 @@ const ProductDetailPage = () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
-        message.error('Please login to add a review');
+        message.error('Vui lòng đăng nhập để đánh giá');
         navigate('/login');
         return;
       }
@@ -225,7 +225,7 @@ const ProductDetailPage = () => {
         setCanReview(false);
         setHasReviewed(true);
         reviewForm.resetFields();
-        message.success('Review added successfully!');
+        message.success('Đánh giá thành công!');
         
         // Refresh product data to get updated average rating
         const productResponse = await fetch(`http://localhost:8000/api/products/${id}/`);
@@ -235,11 +235,11 @@ const ProductDetailPage = () => {
         }
       } else {
         const errorData = await response.json();
-        message.error(errorData.error || 'Failed to add review');
+        message.error(errorData.error || 'Không thể thêm đánh giá');
       }
     } catch (error) {
       console.error('Error adding review:', error);
-      message.error('Failed to add review. Please try again.');
+      message.error('Không thể thêm đánh giá. Vui lòng thử lại.');
     } finally {
       setSubmittingReview(false);
     }
@@ -261,7 +261,7 @@ const ProductDetailPage = () => {
         <Empty 
           description={
             <Text style={{ fontSize: 16, color: '#94a3b8' }}>
-              No reviews yet. Be the first to share your experience!
+              Chưa có đánh giá nào. Hãy là người đầu tiên chia sẻ trải nghiệm!
             </Text>
           }
           image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -377,9 +377,9 @@ const ProductDetailPage = () => {
   if (!product) {
     return (
       <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Title level={3}>Product not found</Title>
+        <Title level={3}>Không tìm thấy sản phẩm</Title>
         <Button type="primary" onClick={() => navigate('/products')}>
-          Back to Products
+          Quay lại danh sách sản phẩm
         </Button>
       </div>
     );
@@ -402,12 +402,12 @@ const ProductDetailPage = () => {
         <Breadcrumb style={{ marginBottom: '24px' }}>
           <Breadcrumb.Item>
             <Link to="/" style={{ color: '#667eea' }}>
-              <HomeOutlined /> Home
+              <HomeOutlined /> Trang chủ
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
             <Link to="/products" style={{ color: '#667eea' }}>
-              Products
+              Sản phẩm
             </Link>
           </Breadcrumb.Item>
           {product.category && (
@@ -493,7 +493,7 @@ const ProductDetailPage = () => {
                       zIndex: 10,
                     }}
                   >
-                    {discountPercentage}% OFF
+                    {discountPercentage}% GIẢM
                   </div>
                 )}
 
@@ -513,7 +513,7 @@ const ProductDetailPage = () => {
                     padding: 40,
                   }}
                   preview={{
-                    mask: <div style={{ color: 'white' }}>View Full Size</div>
+                    mask: <div style={{ color: 'white' }}>Xem kích thước đầy đủ</div>
                   }}
                 />
               </div>
@@ -556,7 +556,7 @@ const ProductDetailPage = () => {
                         alignItems: 'center',
                       }}
                     >
-                      {product.inventory} IN STOCK
+                      {product.inventory} CÒN HÀNG
                     </div>
                   ) : (
                     <div
@@ -572,7 +572,7 @@ const ProductDetailPage = () => {
                         alignItems: 'center',
                       }}
                     >
-                      OUT OF STOCK
+                      HẾT HÀNG
                     </div>
                   )}
                 </div>
@@ -617,7 +617,7 @@ const ProductDetailPage = () => {
                     {product.average_rating > 0 ? product.average_rating.toFixed(1) : "0.0"}
                   </Text>
                   <Text style={{ fontSize: 14, color: "#9ca3af" }}>
-                    ({product.total_reviews || 0} reviews)
+                    ({product.total_reviews || 0} đánh giá)
                   </Text>
                 </div>
 
@@ -637,7 +637,7 @@ const ProductDetailPage = () => {
                         ₫{parseFloat(product.discount_price || 0).toLocaleString()}
                       </Text>
                       <Text style={{ marginLeft: 16, color: '#10b981', fontSize: 18, fontWeight: 600 }}>
-                        Save ₫{(parseFloat(product.price) - parseFloat(product.discount_price)).toLocaleString()}
+                        Tiết kiệm ₫{(parseFloat(product.price) - parseFloat(product.discount_price)).toLocaleString()}
                       </Text>
                     </>
                   ) : (
@@ -662,7 +662,7 @@ const ProductDetailPage = () => {
                 {/* Quantity and Add to Cart */}
                 <div style={{ margin: '24px 0' }}>
                   <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 12 }}>
-                    Quantity
+                    Số lượng
                   </Text>
                   <Space size="large">
                     <InputNumber
@@ -692,7 +692,7 @@ const ProductDetailPage = () => {
                         boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
                       }}
                     >
-                      Add to Cart
+                      Thêm vào giỏ hàng
                     </Button>
                   </Space>
                 </div>
@@ -710,7 +710,7 @@ const ProductDetailPage = () => {
                         fontWeight: 600,
                       }}
                     >
-                      Write a Review
+                      Viết đánh giá
                     </Button>
                   </div>
                 )}
@@ -724,7 +724,7 @@ const ProductDetailPage = () => {
                     border: '1px solid #86efac',
                   }}>
                     <Text style={{ color: '#16a34a', fontWeight: 600 }}>
-                      <CheckCircleOutlined /> You have already reviewed this product
+                      <CheckCircleOutlined /> Bạn đã đánh giá sản phẩm này
                     </Text>
                   </div>
                 )}
@@ -738,7 +738,7 @@ const ProductDetailPage = () => {
                     border: '1px solid #e2e8f0',
                   }}>
                     <Text type="secondary">
-                      You can only review products you have purchased and received
+                      Bạn chỉ có thể đánh giá sản phẩm đã mua và nhận hàng
                     </Text>
                   </div>
                 )}
@@ -766,7 +766,7 @@ const ProductDetailPage = () => {
               }
             }}
           >
-            <Tabs.TabPane tab="Description" key="description">
+            <Tabs.TabPane tab="Mô tả" key="description">
               <div style={{ padding: '20px 0' }}>
                 <Paragraph style={{ 
                   whiteSpace: 'pre-line',
@@ -774,16 +774,16 @@ const ProductDetailPage = () => {
                   lineHeight: 1.8,
                   color: '#475569',
                 }}>
-                  {product.description || 'No description available.'}
+                  {product.description || 'Chưa có mô tả.'}
                 </Paragraph>
               </div>
             </Tabs.TabPane>
-            <Tabs.TabPane tab="Specifications" key="specifications">
+            <Tabs.TabPane tab="Thông số kỹ thuật" key="specifications">
               <div style={{ padding: '20px 0' }}>
                 <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                   <Row>
                     <Col span={8}>
-                      <Text strong style={{ fontSize: 16 }}>Category:</Text>
+                      <Text strong style={{ fontSize: 16 }}>Danh mục:</Text>
                     </Col>
                     <Col span={16}>
                       <Text style={{ fontSize: 16, color: '#475569' }}>{categoryName}</Text>
@@ -791,24 +791,24 @@ const ProductDetailPage = () => {
                   </Row>
                   <Row>
                     <Col span={8}>
-                      <Text strong style={{ fontSize: 16 }}>Availability:</Text>
+                      <Text strong style={{ fontSize: 16 }}>Tình trạng:</Text>
                     </Col>
                     <Col span={16}>
                       <Text style={{ fontSize: 16, color: product.inventory > 0 ? '#10b981' : '#ef4444' }}>
-                        {product.inventory > 0 ? `${product.inventory} units in stock` : 'Out of stock'}
+                        {product.inventory > 0 ? `${product.inventory} sản phẩm còn hàng` : 'Hết hàng'}
                       </Text>
                     </Col>
                   </Row>
                   {product.average_rating > 0 && (
                     <Row>
                       <Col span={8}>
-                        <Text strong style={{ fontSize: 16 }}>Rating:</Text>
+                        <Text strong style={{ fontSize: 16 }}>Đánh giá:</Text>
                       </Col>
                       <Col span={16}>
                         <Space>
                           <Rate disabled value={product.average_rating} style={{ fontSize: 16 }} />
                           <Text style={{ fontSize: 16, color: '#475569' }}>
-                            ({product.total_reviews} reviews)
+                            ({product.total_reviews} đánh giá)
                           </Text>
                         </Space>
                       </Col>
@@ -817,7 +817,7 @@ const ProductDetailPage = () => {
                 </Space>
               </div>
             </Tabs.TabPane>
-            <Tabs.TabPane tab={`Reviews (${reviews.length})`} key="reviews">
+            <Tabs.TabPane tab={`Đánh giá (${reviews.length})`} key="reviews">
               <div style={{ padding: '20px 0' }}>
                 {canReview && (
                   <Button
@@ -835,7 +835,7 @@ const ProductDetailPage = () => {
                       boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
                     }}
                   >
-                    Write a Review
+                    Viết đánh giá
                   </Button>
                 )}
                 {renderReviews()}
@@ -859,7 +859,7 @@ const ProductDetailPage = () => {
                 backgroundClip: 'text',
               }}
             >
-              Related Products
+              Sản phẩm liên quan
             </Title>
             <Row gutter={[24, 24]}>
               {relatedProducts.map(relatedProduct => {
@@ -1089,7 +1089,7 @@ const ProductDetailPage = () => {
                               e.currentTarget.style.boxShadow = '0 2px 12px rgba(102, 126, 234, 0.3)';
                             }}
                           >
-                            View Details
+                            Xem chi tiết
                           </Button>
                         </Link>
                       </div>
@@ -1105,7 +1105,7 @@ const ProductDetailPage = () => {
         <Modal
           title={
             <Text strong style={{ fontSize: 20 }}>
-              Write a Review
+              Viết đánh giá
             </Text>
           }
           open={reviewModalVisible}
@@ -1123,22 +1123,22 @@ const ProductDetailPage = () => {
           >
             <Form.Item
               name="rating"
-              label={<Text strong>Rating</Text>}
-              rules={[{ required: true, message: 'Please provide a rating!' }]}
+              label={<Text strong>Đánh giá</Text>}
+              rules={[{ required: true, message: 'Vui lòng chọn số sao!' }]}
             >
               <Rate style={{ fontSize: 32 }} />
             </Form.Item>
 
             <Form.Item
               name="title"
-              label={<Text strong>Review Title</Text>}
+              label={<Text strong>Tiêu đề đánh giá</Text>}
               rules={[
-                { required: true, message: 'Please provide a review title!' },
-                { max: 200, message: 'Title must be less than 200 characters!' }
+                { required: true, message: 'Vui lòng nhập tiêu đề!' },
+                { max: 200, message: 'Tiêu đề không quá 200 ký tự!' }
               ]}
             >
               <Input 
-                placeholder="Summarize your experience"
+                placeholder="Tóm tắt trải nghiệm của bạn"
                 size="large"
                 style={{ borderRadius: 12 }}
               />
@@ -1146,12 +1146,12 @@ const ProductDetailPage = () => {
 
             <Form.Item
               name="comment"
-              label={<Text strong>Review</Text>}
-              rules={[{ required: true, message: 'Please write your review!' }]}
+              label={<Text strong>Đánh giá chi tiết</Text>}
+              rules={[{ required: true, message: 'Vui lòng nhập nội dung đánh giá!' }]}
             >
               <TextArea
                 rows={6}
-                placeholder="Tell us about your experience with this product"
+                placeholder="Hãy chia sẻ trải nghiệm của bạn với sản phẩm này"
                 style={{ borderRadius: 12 }}
               />
             </Form.Item>
@@ -1173,7 +1173,7 @@ const ProductDetailPage = () => {
                     boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
                   }}
                 >
-                  Submit Review
+                  Gửi đánh giá
                 </Button>
                 <Button 
                   onClick={() => setReviewModalVisible(false)}
@@ -1183,7 +1183,7 @@ const ProductDetailPage = () => {
                     height: 44,
                   }}
                 >
-                  Cancel
+                  Hủy
                 </Button>
               </Space>
             </Form.Item>

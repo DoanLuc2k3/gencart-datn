@@ -30,9 +30,9 @@ const Footer = () => {
                 GenCart
               </Title>
               <Text className="brand-description">
-                Your premium destination for quality products. We bring you the
-                finest selection with unmatched customer service and competitive
-                prices.
+                Điểm đến hàng đầu cho những sản phẩm chất lượng. Chúng tôi
+                mang đến lựa chọn tinh tuyển, dịch vụ tận tâm và giá cả cạnh
+                tranh.
               </Text>
               <div className="social-links">
                 <Text
@@ -43,7 +43,7 @@ const Footer = () => {
                     color: "#64748b",
                   }}
                 >
-                  Follow Us
+                  Theo dõi chúng tôi
                 </Text>
                 <Space size="middle">
                   <Button
@@ -89,37 +89,37 @@ const Footer = () => {
           <Col xs={24} sm={12} md={8} lg={8}>
             <div className="footer-section">
               <Title level={4} className="section-title">
-                Quick Links
+                Liên kết nhanh
               </Title>
               <ul className="footer-links">
                 <li>
-                  <Link to="/" className="footer-link">
-                    🏠 Home
+                    <Link to="/" className="footer-link">
+                    🏠 Trang chủ
                   </Link>
                 </li>
                 <li>
                   <Link to="/products" className="footer-link">
-                    🛍️ Products
+                    🛍️ Sản phẩm
                   </Link>
                 </li>
                 <li>
                   <Link to="/cart" className="footer-link">
-                    🛒 Shopping Cart
+                    🛒 Giỏ hàng
                   </Link>
                 </li>
                 <li>
                   <Link to="/orders" className="footer-link">
-                    📦 My Orders
+                    📦 Đơn hàng của tôi
                   </Link>
                 </li>
                 <li>
                   <Link to="/profile" className="footer-link">
-                    👤 My Profile
+                    👤 Tài khoản của tôi
                   </Link>
                 </li>
                 <li>
                   <Link to="/about" className="footer-link">
-                    ℹ️ About Us
+                    ℹ️ Về chúng tôi
                   </Link>
                 </li>
               </ul>
@@ -129,13 +129,13 @@ const Footer = () => {
           <Col xs={24} sm={12} md={8} lg={8}>
             <div className="footer-section">
               <Title level={4} className="section-title">
-                Contact Information
+                Thông tin liên hệ
               </Title>
               <div className="contact-info">
                 <div className="contact-item">
                   <HomeOutlined className="contact-icon" />
                   <div>
-                    <Text strong>Address</Text>
+                    <Text strong>Địa chỉ</Text>
                     <Text className="contact-text">
                       Ngũ Hành Sơn,
                     </Text>
@@ -145,7 +145,7 @@ const Footer = () => {
                 <div className="contact-item">
                   <PhoneOutlined className="contact-icon" />
                   <div>
-                    <Text strong>Phone</Text>
+                    <Text strong>Điện thoại</Text>
                     <Text className="contact-text">+84 012387499201</Text>
                   </div>
                 </div>
@@ -166,19 +166,19 @@ const Footer = () => {
         <Row className="footer-bottom">
           <Col xs={24} md={12}>
             <Text className="copyright">
-              &copy; {new Date().getFullYear()} GenCart. All rights reserved.
+              &copy; {new Date().getFullYear()} GenCart. Bảo lưu mọi quyền.
             </Text>
           </Col>
           <Col xs={24} md={12} className="footer-bottom-right">
             <Space split={<span style={{ color: "#64748b" }}>•</span>}>
               <Link to="/privacy" className="footer-bottom-link">
-                Privacy Policy
+                Chính sách bảo mật
               </Link>
               <Link to="/terms" className="footer-bottom-link">
-                Terms of Service
+                Điều khoản dịch vụ
               </Link>
               <Link to="/support" className="footer-bottom-link">
-                Support
+                Hỗ trợ
               </Link>
             </Space>
           </Col>
@@ -186,9 +186,9 @@ const Footer = () => {
 
         <div className="footer-heart">
           <Text style={{ color: "#64748b", fontSize: "14px" }}>
-            Made with{" "}
-            <HeartOutlined style={{ color: "#ff6b6b", margin: "0 4px" }} /> by
-            GenCart Team
+            Được tạo bởi
+            <HeartOutlined style={{ color: "#ff6b6b", margin: "0 6px" }} />
+            Đội ngũ GenCart
           </Text>
         </div>
       </div>

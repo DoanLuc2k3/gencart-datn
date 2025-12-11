@@ -119,7 +119,7 @@ const OrdersPage = () => {
 
       if (!token) {
         // If not logged in, redirect to login
-        message.info('Please login to view your orders');
+        message.info('Vui lòng đăng nhập để xem đơn hàng của bạn');
         navigate('/login');
         return;
       }
@@ -133,7 +133,7 @@ const OrdersPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch orders');
+        throw new Error('Không thể tải đơn hàng');
       }
 
       const data = await response.json();
@@ -189,7 +189,7 @@ const OrdersPage = () => {
       checkReviewableProducts(formattedOrders.filter(order => order.status === 'delivered'));
     } catch (error) {
       console.error('Error fetching orders:', error);
-      message.error('Failed to load orders. Please try again.');
+      message.error('Không thể tải đơn hàng. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -260,7 +260,7 @@ const OrdersPage = () => {
       const token = localStorage.getItem('access_token');
 
       if (!token) {
-        message.error('Authentication error. Please login again.');
+        message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
         navigate('/login');
         return;
       }
@@ -276,17 +276,17 @@ const OrdersPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to cancel order');
+        throw new Error(errorData.detail || 'Không thể hủy đơn hàng');
       }
 
-      message.success('Order cancelled successfully');
+      message.success('Hủy đơn hàng thành công');
       setModalVisible(false);
 
       // Refresh orders list
       fetchOrders(pagination.current, pagination.pageSize);
     } catch (error) {
       console.error('Error cancelling order:', error);
-      message.error(error.message || 'Failed to cancel order. Please try again.');
+      message.error(error.message || 'Không thể hủy đơn hàng. Vui lòng thử lại.');
     } finally {
       setCancelLoading(false);
     }
@@ -327,7 +327,11 @@ const OrdersPage = () => {
     
     return (
       <Tag color={config.color} icon={config.icon}>
-        {config.text}
+        {config.text === 'Pending' ? 'Chờ xác nhận' :
+         config.text === 'Processing' ? 'Đang xử lý' :
+         config.text === 'Shipped' ? 'Đã gửi hàng' :
+         config.text === 'Delivered' ? 'Đã giao' :
+         config.text === 'Cancelled' ? 'Đã hủy' : config.text}
       </Tag>
     );
   };
@@ -392,13 +396,13 @@ const OrdersPage = () => {
           }>
             <Space size={12} wrap>
               <Text style={{ fontSize: '20px', fontWeight: 600, color: '#0f172a' }}>
-                Order #{order.id}
+                Đơn hàng #{order.id}
               </Text>
               <Tag
                 color="geekblue"
                 style={{ margin: 0, borderRadius: 12, padding: '2px 12px' }}
               >
-                {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                {order.items.length} sản phẩm
               </Tag>
             </Space>
 
@@ -409,7 +413,7 @@ const OrdersPage = () => {
               </Space>
               <Space size={8}>
                 <ClockCircleOutlined style={{ color: '#6366f1' }} />
-                <Text type="secondary">Placed {formattedOrderTime}</Text>
+                <Text type="secondary">Đặt lúc {formattedOrderTime}</Text>
               </Space>
             </Space>
           </div>
@@ -433,29 +437,29 @@ const OrdersPage = () => {
           <div style={summaryPillStyle}>
             <BoxPlotOutlined style={{ fontSize: '20px', color: '#6366f1' }} />
             <div>
-              <Text type="secondary" style={{ fontSize: '12px', letterSpacing: 0.2 }}>Items</Text>
+              <Text type="secondary" style={{ fontSize: '12px', letterSpacing: 0.2 }}>Sản phẩm</Text>
               <div style={{ fontWeight: 600, fontSize: '16px', color: '#0f172a' }}>{order.items.length}</div>
             </div>
           </div>
           <div style={summaryPillStyle}>
             <TruckOutlined style={{ fontSize: '20px', color: '#10b981' }} />
             <div>
-              <Text type="secondary" style={{ fontSize: '12px', letterSpacing: 0.2 }}>Expected Delivery</Text>
+              <Text type="secondary" style={{ fontSize: '12px', letterSpacing: 0.2 }}>Dự kiến giao</Text>
               <div style={{ fontWeight: 600, fontSize: '16px', color: '#0f172a' }}>{formattedDeliveryDate}</div>
             </div>
           </div>
           <div style={summaryPillStyle}>
             <DollarOutlined style={{ fontSize: '20px', color: '#f97316' }} />
             <div>
-              <Text type="secondary" style={{ fontSize: '12px', letterSpacing: 0.2 }}>Payment Status</Text>
-              <div style={{ fontWeight: 600, fontSize: '16px', color: '#0f172a' }}>{order.payment.status ? 'Paid' : 'Pending'}</div>
+              <Text type="secondary" style={{ fontSize: '12px', letterSpacing: 0.2 }}>Trạng thái thanh toán</Text>
+              <div style={{ fontWeight: 600, fontSize: '16px', color: '#0f172a' }}>{order.payment.status ? 'Đã thanh toán' : 'Chưa thanh toán'}</div>
             </div>
           </div>
         </div>
 
         <div style={{ marginBottom: '20px' }}>
           <Text strong style={{ display: 'block', fontSize: '15px', color: '#0f172a' }}>
-            Products in this order
+            Sản phẩm trong đơn hàng
           </Text>
           <Row gutter={[16, 16]} style={{ marginTop: 10 }}>
             {order.items.map(item => {
@@ -501,7 +505,7 @@ const OrdersPage = () => {
                     </Tooltip>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <Text style={{ fontSize: '12px', color: '#475569' }}>Qty: {item.quantity}</Text>
+                      <Text style={{ fontSize: '12px', color: '#475569' }}>Số lượng: {item.quantity}</Text>
                       <Text style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>₫{item.price}</Text>
                     </div>
 
@@ -509,7 +513,7 @@ const OrdersPage = () => {
                       <div style={{ textAlign: 'center' }}>
                         {hasReviewedProduct ? (
                           <Tag color="green" style={{ fontSize: '11px', borderRadius: 10 }}>
-                            <CheckCircleOutlined /> Reviewed
+                            <CheckCircleOutlined /> Đã đánh giá
                           </Tag>
                         ) : canReviewProduct ? (
                           <Button
@@ -522,10 +526,10 @@ const OrdersPage = () => {
                             }}
                             style={{ fontSize: '11px', padding: 0 }}
                           >
-                            Review now
+                            Đánh giá ngay
                           </Button>
                         ) : (
-                          <Tag style={{ fontSize: '11px', borderRadius: 10 }}>Not eligible</Tag>
+                          <Tag style={{ fontSize: '11px', borderRadius: 10 }}>Không đủ điều kiện</Tag>
                         )}
                       </div>
                     )}
@@ -553,7 +557,7 @@ const OrdersPage = () => {
               icon={<EyeOutlined />}
               onClick={() => navigate(`/orders/${order.id}`)}
             >
-              View Details
+              Xem chi tiết
             </Button>
 
             {(order.status === 'pending' || order.status === 'processing') && (
@@ -562,19 +566,19 @@ const OrdersPage = () => {
                 icon={<DeleteOutlined />}
                 onClick={() => showCancelConfirm(order.id)}
               >
-                Cancel Order
+                Hủy đơn hàng
               </Button>
             )}
 
             {order.status === 'delivered' && hasReviewableProducts(order.id) && (
               <Button icon={<StarOutlined />} onClick={() => navigate(`/orders/${order.id}`)}>
-                Review Products
+                Đánh giá sản phẩm
               </Button>
             )}
           </Space>
 
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            Need help? Contact support@gencart.com
+            Cần hỗ trợ? Liên hệ support@gencart.com
           </Text>
         </div>
       </Card>
@@ -609,10 +613,10 @@ const OrdersPage = () => {
               textShadow: '0 20px 45px rgba(15, 23, 42, 0.35)'
             }}
           >
-            <ShoppingOutlined style={{ marginRight: 12 }} /> My Orders
+            <ShoppingOutlined style={{ marginRight: 12 }} /> Đơn hàng của tôi
           </Title>
           <Paragraph style={{ color: 'rgba(255,255,255,0.9)', marginBottom: 0, fontSize: 'clamp(1rem, 2vw, 1.1rem)' }}>
-            Track packages, manage returns, and review products you love.
+            Theo dõi đơn hàng, quản lý đổi trả và đánh giá sản phẩm bạn yêu thích.
           </Paragraph>
 
         </div>
@@ -627,7 +631,7 @@ const OrdersPage = () => {
           >
             <Spin size="large" />
             <div style={{ marginTop: 18 }}>
-              <Text type="secondary">Loading your orders…</Text>
+              <Text type="secondary">Đang tải đơn hàng của bạn…</Text>
             </div>
           </Card>
         ) : totalOrders > 0 ? (
@@ -642,56 +646,56 @@ const OrdersPage = () => {
               items={[
                 {
                   key: 'all',
-                  label: `All Orders (${totalOrders})`,
+                  label: `Tất cả (${totalOrders})`,
                   children: <div>{getFilteredOrders('all').map(order => renderOrderCard(order))}</div>
                 },
                 {
                   key: 'pending',
-                  label: `Pending (${pendingCount})`,
+                  label: `Chờ xác nhận (${pendingCount})`,
                   children: (
                     <div>
                       {getFilteredOrders('pending').map(order => renderOrderCard(order))}
-                      {pendingCount === 0 && <Empty description="No pending orders" />}
+                      {pendingCount === 0 && <Empty description="Không có đơn chờ xác nhận" />}
                     </div>
                   )
                 },
                 {
                   key: 'processing',
-                  label: `Processing (${processingCount})`,
+                  label: `Đang xử lý (${processingCount})`,
                   children: (
                     <div>
                       {getFilteredOrders('processing').map(order => renderOrderCard(order))}
-                      {processingCount === 0 && <Empty description="No processing orders" />}
+                      {processingCount === 0 && <Empty description="Không có đơn đang xử lý" />}
                     </div>
                   )
                 },
                 {
                   key: 'shipped',
-                  label: `Shipped (${shippedCount})`,
+                  label: `Đã gửi hàng (${shippedCount})`,
                   children: (
                     <div>
                       {getFilteredOrders('shipped').map(order => renderOrderCard(order))}
-                      {shippedCount === 0 && <Empty description="No shipped orders" />}
+                      {shippedCount === 0 && <Empty description="Không có đơn đã gửi hàng" />}
                     </div>
                   )
                 },
                 {
                   key: 'delivered',
-                  label: `Delivered (${deliveredCount})`,
+                  label: `Đã giao (${deliveredCount})`,
                   children: (
                     <div>
                       {getFilteredOrders('delivered').map(order => renderOrderCard(order))}
-                      {deliveredCount === 0 && <Empty description="No delivered orders" />}
+                      {deliveredCount === 0 && <Empty description="Không có đơn đã giao" />}
                     </div>
                   )
                 },
                 {
                   key: 'cancelled',
-                  label: `Cancelled (${cancelledCount})`,
+                  label: `Đã hủy (${cancelledCount})`,
                   children: (
                     <div>
                       {getFilteredOrders('cancelled').map(order => renderOrderCard(order))}
-                      {cancelledCount === 0 && <Empty description="No cancelled orders" />}
+                      {cancelledCount === 0 && <Empty description="Không có đơn đã hủy" />}
                     </div>
                   )
                 }
@@ -707,7 +711,7 @@ const OrdersPage = () => {
                   total={pagination.total}
                   onChange={handlePageChange}
                   showSizeChanger
-                  showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} orders`}
+                  showTotal={(total, range) => `${range[0]}-${range[1]} trong ${total} đơn hàng`}
                   pageSizeOptions={['5', '10', '20', '50']}
                 />
               </div>
@@ -719,9 +723,9 @@ const OrdersPage = () => {
             style={mainCardStyle}
             bodyStyle={{ padding: '60px 40px', textAlign: 'center' }}
           >
-            <Empty description="You haven't placed any orders yet">
+            <Empty description="Bạn chưa đặt đơn hàng nào">
               <Button type="primary" size="large" onClick={() => navigate('/products')}>
-                Start Shopping
+                Mua sắm ngay
               </Button>
             </Empty>
           </Card>
@@ -729,17 +733,17 @@ const OrdersPage = () => {
       </div>
 
       <Modal
-        title="Cancel Order"
+        title="Hủy đơn hàng"
         open={modalVisible}
         onOk={handleCancelOrder}
         confirmLoading={cancelLoading}
         onCancel={() => setModalVisible(false)}
-        okText="Yes, Cancel Order"
-        cancelText="Keep Order"
+        okText="Đồng ý hủy đơn"
+        cancelText="Giữ lại đơn"
         okButtonProps={{ danger: true }}
       >
-        <p>Are you sure you want to cancel this order?</p>
-        <p>This action cannot be undone.</p>
+        <p>Bạn có chắc chắn muốn hủy đơn hàng này?</p>
+        <p>Hành động này không thể hoàn tác.</p>
       </Modal>
     </div>
   );

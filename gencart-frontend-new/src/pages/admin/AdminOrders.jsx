@@ -54,6 +54,26 @@ const AdminOrders = () => {
     pageSizeOptions: ["10", "20", "50", "100"],
   });
 
+  // Small helper for currency formatting to match product page
+  const currencyFormat = (v) =>
+    `₫${parseFloat(v).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  const orderMetrics = useMemo(() => {
+    const total = orders.length;
+    const processing = orders.filter((o) => o.status === "processing").length;
+    const shipped = orders.filter((o) => o.status === "shipped").length;
+    const delivered = orders.filter((o) => o.status === "delivered").length;
+    const cancelled = orders.filter((o) => o.status === "cancelled").length;
+    const totalRevenue = orders.reduce(
+      (sum, o) => sum + (parseFloat(o.total_amount) || 0),
+      0
+    );
+    return { total, processing, shipped, delivered, cancelled, totalRevenue };
+  }, [orders]);
+
   // Fetch orders - optimized with backend pagination
   const fetchOrders = async (page = 1, pageSize = 10) => {
     setLoading(true);
@@ -148,7 +168,7 @@ const AdminOrders = () => {
   };
 
   // Handle table pagination change
-  const handleTableChange = (pag, filters, sorter) => {
+  const handleTableChange = (pag) => {
     // If searching, pagination is handled by Ant Design (client-side)
     if (searchText.trim()) {
       // Just update the pageSize in state for consistency
@@ -203,7 +223,11 @@ const AdminOrders = () => {
     if (status === "delivered") color = "green";
     if (status === "cancelled") color = "red";
 
-    return <Tag color={color}>{status.toUpperCase()}</Tag>;
+    return (
+      <Tag color={color} style={{ fontWeight: 700, textTransform: "capitalize" }}>
+        {String(status || "").toUpperCase()}
+      </Tag>
+    );
   };
 
   // Table columns
@@ -274,7 +298,7 @@ const AdminOrders = () => {
       title: "Total",
       dataIndex: "total_amount",
       key: "total_amount",
-      render: (text) => `₫${parseFloat(text).toFixed(2)}`,
+      render: (text) => currencyFormat(text),
       sorter: (a, b) => parseFloat(a.total_amount) - parseFloat(b.total_amount),
     },
     {
@@ -289,10 +313,14 @@ const AdminOrders = () => {
       render: (_, record) => (
         <Space size="small">
           <Button
-            type="primary"
             icon={<EyeOutlined />}
             onClick={() => showOrderDetails(record)}
             size="small"
+            style={{
+              background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
+              border: "none",
+              color: "#fff",
+            }}
           />
           <Button
             type="default"
@@ -308,7 +336,7 @@ const AdminOrders = () => {
   return (
     <div
       style={{
-        padding: isMobile ? 12 : 24,
+        padding: isMobile ? "2px 12px 12px" : "3px 24px 24px",
         background: "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
         borderRadius: isMobile ? 12 : 24,
         minHeight: "100%",
@@ -317,7 +345,7 @@ const AdminOrders = () => {
       <Card
         style={{
           borderRadius: isMobile ? 12 : 24,
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
           color: "#fff",
           boxShadow: "0 28px 60px rgba(15, 23, 42, 0.45)",
           marginBottom: isMobile ? 16 : 24,
@@ -326,20 +354,46 @@ const AdminOrders = () => {
         bodyStyle={{ padding: isMobile ? 16 : 28 }}
       >
         <Row gutter={[16, 16]} align="middle" justify="space-between">
-          <Col xs={24} md={16}>
-            <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0 }}>
-              Orders
-            </Title>
-            <Text style={{ color: "rgba(255,255,255,0.72)" }}>
-              Track revenue and fulfillment progress at a glance.
-            </Text>
+          <Col xs={24} md={16} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0, fontWeight: 650 }}>
+                Order Management
+              </Title>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <Tag color="geekblue" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Total: {orderMetrics.total}
+              </Tag>
+              <Tag color="gold" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Processing: {orderMetrics.processing}
+              </Tag>
+              <Tag color="cyan" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Shipped: {orderMetrics.shipped}
+              </Tag>
+              <Tag color="green" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Delivered: {orderMetrics.delivered}
+              </Tag>
+              <Tag color="red" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Cancelled: {orderMetrics.cancelled}
+              </Tag>
+              <Tag color="purple" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Revenue: {currencyFormat(orderMetrics.totalRevenue)}
+              </Tag>
+            </div>
           </Col>
           <Col xs={24} md={8} style={{ textAlign: isMobile ? "left" : "right" }}>
             <Space wrap>
-              <Button 
+              <Button
                 onClick={() => fetchOrders(pagination.current, pagination.pageSize)}
                 loading={loading}
                 size={isMobile ? "middle" : "default"}
+                type="primary"
+                style={{
+                  background: "rgba(255,255,255,0.14)",
+                  border: "none",
+                  color: "#fff",
+                  boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                }}
               >
                 Refresh
               </Button>
@@ -458,6 +512,11 @@ const AdminOrders = () => {
               setDrawerVisible(false);
               showEditModal(selectedOrder);
             }}
+            style={{
+              background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
+              border: "none",
+              color: "#fff",
+            }}
           >
             Update Status
           </Button>
@@ -476,10 +535,14 @@ const AdminOrders = () => {
                 {getStatusTag(selectedOrder.status)}
               </Descriptions.Item>
               <Descriptions.Item label="Total Amount">
-                ₫{parseFloat(selectedOrder.total_amount).toFixed(2)}
+                {currencyFormat(selectedOrder.total_amount)}
               </Descriptions.Item>
               <Descriptions.Item label="Payment Status">
-                {selectedOrder.payment_status ? "Paid" : "Pending"}
+                {selectedOrder.payment_status ? (
+                  <Tag color="green">Paid</Tag>
+                ) : (
+                  <Tag color="orange">Pending</Tag>
+                )}
               </Descriptions.Item>
             </Descriptions>
 

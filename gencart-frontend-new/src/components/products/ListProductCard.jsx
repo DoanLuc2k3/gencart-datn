@@ -72,7 +72,7 @@ const ListProductCard = ({
             style={{
               height: "100%",
               minHeight: 200,
-              background: getCategoryGradient(categoryName),
+              background: "#f8fafc",
               position: "relative",
               display: "flex",
               alignItems: "center",
@@ -80,32 +80,6 @@ const ListProductCard = ({
               overflow: "hidden",
             }}
           >
-            {/* Background pattern */}
-            <div
-              style={{
-                position: "absolute",
-                top: -20,
-                right: -20,
-                width: 80,
-                height: 80,
-                background: "rgba(255, 255, 255, 0.1)",
-                borderRadius: "50%",
-                zIndex: 1,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                bottom: -30,
-                left: -30,
-                width: 100,
-                height: 100,
-                background: "rgba(255, 255, 255, 0.05)",
-                borderRadius: "50%",
-                zIndex: 1,
-              }}
-            />
-
             {/* Product Image - Background */}
             <img
               src={
@@ -123,6 +97,7 @@ const ListProductCard = ({
                 objectFit: 'contain',
                 zIndex: 0,
                 padding: 20,
+                mixBlendMode: "multiply"
               }}
             />
 
