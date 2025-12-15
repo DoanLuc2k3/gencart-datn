@@ -220,7 +220,7 @@ const CheckoutPage = () => {
 
       // Tính toán số tiền (giả định: 1 ETH = 2000 USD)
       const amountInCrypto = (cartTotal / 2000).toFixed(6);
-      const amountInWei = (parseFloat(amountInCrypto) * 1e18).toString();
+      const amountInWei = BigInt(Math.floor(parseFloat(amountInCrypto) * 1e18)).toString(16);
 
       // Địa chỉ nhận hàng (thay bằng địa chỉ thực tế của bạn)
       const receiverAddress = '0x742d35Cc6634C0532925a3b844Bc6e7595f26f46';
@@ -228,9 +228,8 @@ const CheckoutPage = () => {
       const transactionData = {
         to: receiverAddress,
         from: walletAddress,
-        value: amountInWei,
-        gasLimit: '21000',
-        gasPrice: (50 * 1e9).toString(),
+        value: '0x' + amountInWei,
+        gas: '0x5208', // 21000 in hex
       };
 
       const txHash = await window.ethereum.request({
@@ -250,7 +249,12 @@ const CheckoutPage = () => {
     } catch (error) {
       console.error('Blockchain payment error:', error);
       setTxStatus('error');
-      message.error('Lỗi khi thực hiện thanh toán blockchain');
+      
+      if (error.code === 4001) {
+        message.error('Bạn đã từ chối giao dịch');
+      } else {
+        message.error('Lỗi khi thực hiện thanh toán blockchain');
+      }
       
       setTimeout(() => {
         setBlockchainPaymentModalVisible(false);
