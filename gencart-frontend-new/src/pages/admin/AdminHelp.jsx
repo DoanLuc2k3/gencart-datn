@@ -7,7 +7,8 @@ import {
   ReloadOutlined, PlusOutlined, ClockCircleOutlined, SolutionOutlined,
   AlertOutlined, EditOutlined, BookOutlined, SettingOutlined,
   DeleteOutlined, LineChartOutlined, EyeOutlined, LikeOutlined, 
-  SearchOutlined, MessageOutlined, AppstoreOutlined, BarsOutlined, PushpinOutlined
+  SearchOutlined, MessageOutlined, AppstoreOutlined, BarsOutlined, PushpinOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 
 const { Content } = Layout;
@@ -333,6 +334,7 @@ const getStatusTag = (status) => {
     'Mới': <Tag color="blue">Mới</Tag>,
     'Đang Xử lý': <Tag color="gold">Đang Xử lý</Tag>,
     'Chờ Phản hồi': <Tag color="processing">Chờ Phản hồi</Tag>,
+    'Khẩn cấp': <Tag color="red" icon={<AlertOutlined />}>Khẩn cấp</Tag>,
     'Đã Đóng': <Tag color="green">Đã Đóng</Tag>
   };
   return statusMap[status] || <Tag>{status}</Tag>;
@@ -349,23 +351,68 @@ const getPriorityTag = (priority) => {
 
 // Tab 1: Ticket Management
 const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
-  const [tickets, setTickets] = useState(mockTickets);
+  const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [createTicketForm] = Form.useForm();
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [detailActionLoading, setDetailActionLoading] = useState(false);
   const width = useWindowWidth();
   const isMobile = width < 768;
+
+  const loadTickets = () => {
+    let stored = JSON.parse(localStorage.getItem('tickets') || '[]');
+    if (stored.length === 0) {
+      stored = mockTickets;
+      localStorage.setItem('tickets', JSON.stringify(stored));
+    }
+    return stored;
+  };
 
   const fetchTickets = useCallback(() => {
     setLoading(true);
     setTimeout(() => {
-      setTickets(mockTickets);
-      if (onTicketsLoaded) onTicketsLoaded(mockTickets);
+      const loadedTickets = loadTickets();
+      setTickets(loadedTickets);
+      if (onTicketsLoaded) onTicketsLoaded(loadedTickets);
       setLoading(false);
-      message.success(`Đã tải ${mockTickets.length} Tickets`);
+      message.success(`Đã tải ${loadedTickets.length} Tickets`);
     }, 500);
   }, [onTicketsLoaded]);
+
+  const handleOpenDetail = (ticket) => {
+    setSelectedTicket(ticket);
+    setDetailModalVisible(true);
+  };
+
+  const handleUpdateTicket = (ticketKey, changes) => {
+    const updated = tickets.map(t => t.key === ticketKey ? { ...t, ...changes } : t);
+    setTickets(updated);
+    localStorage.setItem('tickets', JSON.stringify(updated));
+    if (onTicketsLoaded) onTicketsLoaded(updated);
+    message.success('Cập nhật ticket thành công');
+  };
+
+  const handleQuickSet = (type) => {
+    if (!selectedTicket) return;
+    setDetailActionLoading(true);
+    setTimeout(() => {
+      if (type === 'Khẩn cấp') {
+        handleUpdateTicket(selectedTicket.key, { status: 'Khẩn cấp', priority: 'CAO', updated: Date.now() });
+      } else {
+        handleUpdateTicket(selectedTicket.key, { status: type, updated: Date.now(), priority: type === 'Mới' ? 'TRUNG BÌNH' : undefined });
+      }
+      setDetailActionLoading(false);
+      setDetailModalVisible(false);
+      setSelectedTicket(null);
+    }, 400);
+  };
+
+  const handleCloseTicket = (ticketKey) => {
+    handleUpdateTicket(ticketKey, { status: 'Đã Đóng', updated: Date.now() });
+  };
 
   useEffect(() => {
     fetchTickets();
@@ -386,12 +433,14 @@ const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
         status: 'Mới',
         priority: values.priority,
         customer: values.customer,
-        assigned: values.assigned || 'Chưa gán',
+
         updated: Date.now(),
         source: values.source,
         SLA_due: Date.now() + 6 * 3600000,
       };
-      setTickets([newTicket, ...tickets]);
+      const updatedTickets = [newTicket, ...tickets];
+      setTickets(updatedTickets);
+      localStorage.setItem('tickets', JSON.stringify(updatedTickets));
       message.success(`Đã tạo ticket ${newTicket.id}`);
       setIsCreateModalVisible(false);
       createTicketForm.resetFields();
@@ -409,17 +458,17 @@ const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
     { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: getStatusTag },
     { title: 'Ưu tiên', dataIndex: 'priority', key: 'priority', render: getPriorityTag },
     { title: 'Khách hàng', dataIndex: 'customer', key: 'customer' },
-    { title: 'Phân công', dataIndex: 'assigned', key: 'assigned' },
     {
       title: 'Hành động',
       key: 'action',
-      render: () => (
+      render: (_, record) => (
         <Space>
-          <Button size="small" type="link">Chi tiết</Button>
-          <Button size="small" type="link" danger>Đóng</Button>
+          <Button size="small" type="link" onClick={() => handleOpenDetail(record)}>Chi tiết</Button>
+          <Button size="small" type="link" danger onClick={() => handleCloseTicket(record.key)}>Đóng</Button>
         </Space>
       ),
     },
+
   ];
 
   const newTicketsCount = tickets.filter(t => t.status === 'Mới').length;
@@ -518,6 +567,50 @@ const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
       />
 
       <Modal
+        title={selectedTicket ? `Chi tiết ${selectedTicket.id}` : 'Chi tiết Ticket'}
+        open={detailModalVisible}
+        onCancel={() => { setDetailModalVisible(false); setSelectedTicket(null); }}
+        footer={null}
+      >
+        {selectedTicket && (
+          <div>
+            <Row gutter={12} style={{ marginBottom: 12 }}>
+              <Col span={24}>
+                <Text strong>{selectedTicket.title}</Text>
+                <div style={{ marginTop: 8 }}>
+                  <Text type="secondary">Khách hàng: </Text>
+                  <Text>{selectedTicket.customer}</Text>
+                </div>
+                {selectedTicket.email && (
+                  <div>
+                    <Text type="secondary">Email: </Text>
+                    <Text>{selectedTicket.email}</Text>
+                  </div>
+                )}
+                {selectedTicket.phone && (
+                  <div>
+                    <Text type="secondary">Số điện thoại: </Text>
+                    <Text>{selectedTicket.phone}</Text>
+                  </div>
+                )}
+                <div style={{ marginTop: 8 }}>
+                  <Text type="secondary">Nội dung: </Text>
+                  <div style={{ padding: 8, background: '#fafafa', borderRadius: 6 }}>{selectedTicket.message}</div>
+                </div>
+              </Col>
+            </Row>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              <Button type={selectedTicket.status === 'Mới' ? 'primary' : 'default'} onClick={() => handleQuickSet('Mới')} loading={detailActionLoading}>Mới</Button>
+              <Button type={selectedTicket.status === 'Đang Xử lý' ? 'primary' : 'default'} onClick={() => handleQuickSet('Đang Xử lý')} loading={detailActionLoading}>Đang Xử lý</Button>
+              <Button type={selectedTicket.status === 'Chờ Phản hồi' ? 'primary' : 'default'} onClick={() => handleQuickSet('Chờ Phản hồi')} loading={detailActionLoading}>Chờ Phản hồi</Button>
+              <Button type={selectedTicket.priority === 'CAO' || selectedTicket.status === 'Khẩn cấp' ? 'primary' : 'default'} danger onClick={() => handleQuickSet('Khẩn cấp')} loading={detailActionLoading}>Khẩn cấp</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
         title="Tạo Ticket Mới"
         open={isCreateModalVisible}
         onOk={handleCreateTicket}
@@ -554,14 +647,7 @@ const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item name="assigned" label="Phân công">
-                <Select placeholder="Tự động" allowClear>
-                  <Select.Option value="Trần B">Trần B</Select.Option>
-                  <Select.Option value="Nguyễn K">Nguyễn K</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
+  
           </Row>
         </Form>
       </Modal>
@@ -1095,27 +1181,210 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
 };
 
 // Tab 3: Reports
-const ReportsTab = () => {
+import { Line } from '@ant-design/plots';
+
+const ReportsTab = ({ blogPosts = [] }) => {
+  const [ticketsData, setTicketsData] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [rangeDays, setRangeDays] = useState(14);
+  const [statusFilter, setStatusFilter] = useState(null);
+  // Blog metrics
+  const totalPosts = (blogPosts || []).length;
+  const publishedCount = (blogPosts || []).filter(p => p.status === 'published').length;
+  const draftCount = totalPosts - publishedCount;
+  const pinnedCount = (blogPosts || []).filter(p => p.isPinned).length;
+  const totalViews = (blogPosts || []).reduce((s, p) => s + (p.views || 0), 0);
+  const totalLikes = (blogPosts || []).reduce((s, p) => s + (p.likes || 0), 0);
+  const totalComments = (blogPosts || []).reduce((s, p) => s + (p.commentsData?.length || p.comments || 0), 0);
+  const recentPosts = (blogPosts || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+
+  // load tickets from localStorage and listen to storage changes
+  useEffect(() => {
+    let mounted = true;
+    const load = () => {
+      setLoadingReports(true);
+      try {
+        const stored = JSON.parse(localStorage.getItem('tickets') || '[]');
+        if (mounted) setTicketsData(stored || []);
+      } catch (err) {
+        console.error('Failed to load ticket data for reports', err);
+        if (mounted) setTicketsData([]);
+      } finally {
+        if (mounted) setLoadingReports(false);
+      }
+    };
+    load();
+
+    const handler = (e) => {
+      if (e.key === 'tickets') load();
+    };
+    window.addEventListener('storage', handler);
+    return () => { mounted = false; window.removeEventListener('storage', handler); };
+  }, []);
+
+  // utility: filter tickets by date range and status
+  const getFiltered = (tickets, days, status) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - (days - 1));
+
+    return tickets.filter(t => {
+      const d = t.updated ? new Date(t.updated) : null;
+      if (!d) return false;
+      if (d < start || d > end) return false;
+      if (status && t.status !== status) return false;
+      return true;
+    });
+  };
+
+  const filtered = getFiltered(ticketsData, rangeDays, statusFilter);
+
+  // Build time series for line chart
+  const buildTimeSeries = (tickets, days) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - (days - 1));
+
+    const map = new Map();
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      map.set(key, 0);
+    }
+
+    tickets.forEach(t => {
+      const date = t.updated ? new Date(t.updated) : null;
+      if (!date) return;
+      const key = date.toISOString().slice(0, 10);
+      if (map.has(key)) map.set(key, map.get(key) + 1);
+    });
+
+    return Array.from(map.entries()).map(([date, count]) => ({ date, count }));
+  };
+
+  const ticketsSeries = buildTimeSeries(filtered, rangeDays);
+
+  // KPIs
+  const totalTickets = filtered.length;
+  const avgPerDay = rangeDays > 0 ? (totalTickets / rangeDays).toFixed(2) : 0;
+  const busiest = ticketsSeries.reduce((acc, cur) => (cur.count > acc.count ? cur : acc), { date: null, count: 0 });
+  const statusCounts = filtered.reduce((acc, t) => { acc[t.status] = (acc[t.status] || 0) + 1; return acc; }, {});
+
+  // CSV export
+  const exportCSV = () => {
+    const headers = ['id', 'title', 'status', 'priority', 'customer', 'email', 'phone', 'updated'];
+    const rows = filtered.map(t => [t.id, t.title, t.status, t.priority, t.customer, t.email || '', t.phone || '', t.updated ? new Date(t.updated).toISOString() : '']);
+    const csv = [headers.join(','), ...rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tickets_${rangeDays}d${statusFilter?`_${statusFilter}`:''}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const lineConfig = {
+    data: ticketsSeries,
+    xField: 'date',
+    yField: 'count',
+    smooth: true,
+    height: 300,
+    color: '#2563eb',
+    point: { size: 4, style: { fill: '#fff' } },
+    area: { style: { fill: 'l(270) 0:#ffffff 0.3:#eef2ff 1:#eef2ff' } },
+    xAxis: { tickCount: Math.min(rangeDays, 10) },
+    meta: { date: { alias: 'Ngày' }, count: { alias: 'Số ticket' } },
+  };
+
+
+
   return (
-    <Space direction="vertical" style={{ width: '100%' }} size="large">
-      <Alert message="Báo cáo và thống kê sẽ được hiển thị ở đây" type="info" />
-      <Row gutter={16}>
-        <Col span={12}>
-          <Card title="Tickets theo thời gian" hoverable>
-            <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              Biểu đồ sẽ hiển thị tại đây
-            </div>
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card title="Hiệu suất nhân viên" hoverable>
-            <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              Bảng thống kê sẽ hiển thị tại đây
-            </div>
-          </Card>
-        </Col>
+    <div style={{ width: '100%' }}>
+      <Row gutter={16} style={{ marginBottom: 12 }}>
+        <Col xs={24} sm={6}><Card className="help-summary-card-mini" bordered={false}><Text type="secondary">Tổng trong {rangeDays} ngày</Text><div style={{ fontSize: 20, fontWeight: 700 }}>{totalTickets}</div></Card></Col>
+        <Col xs={24} sm={6}><Card className="help-summary-card-mini" bordered={false}><Text type="secondary">Trung bình /ngày</Text><div style={{ fontSize: 20, fontWeight: 700 }}>{avgPerDay}</div></Card></Col>
+        <Col xs={24} sm={6}><Card className="help-summary-card-mini" bordered={false}><Text type="secondary">Ngày đông nhất</Text><div style={{ fontSize: 20, fontWeight: 700 }}>{busiest.date || '-' } ({busiest.count})</div></Card></Col>
+        <Col xs={24} sm={6}><Card className="help-summary-card-mini" bordered={false}><Text type="secondary">Mở</Text><div style={{ fontSize: 20, fontWeight: 700 }}>{(statusCounts['Mới']||0)+(statusCounts['Đang Xử lý']||0)+(statusCounts['Chờ Phản hồi']||0)}</div></Card></Col>
       </Row>
-    </Space>
+
+      <Card style={{ marginBottom: 12 }} bodyStyle={{ padding: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Title level={4} style={{ margin: 0 }}>Báo cáo Tickets</Title>
+            <Text type="secondary">Thống kê số lượng ticket theo thời gian</Text>
+          </div>
+
+          <Space>
+            <Button size="small" type={rangeDays === 7 ? 'primary' : 'default'} onClick={() => setRangeDays(7)}>7 ngày</Button>
+            <Button size="small" type={rangeDays === 14 ? 'primary' : 'default'} onClick={() => setRangeDays(14)}>14 ngày</Button>
+            <Button size="small" type={rangeDays === 30 ? 'primary' : 'default'} onClick={() => setRangeDays(30)}>30 ngày</Button>
+            <Select style={{ width: 160 }} placeholder="Lọc trạng thái" allowClear onChange={setStatusFilter} value={statusFilter}>
+              <Select.Option value="Mới">Mới</Select.Option>
+              <Select.Option value="Đang Xử lý">Đang Xử lý</Select.Option>
+              <Select.Option value="Chờ Phản hồi">Chờ Phản hồi</Select.Option>
+              <Select.Option value="Khẩn cấp">Khẩn cấp</Select.Option>
+              <Select.Option value="Đã Đóng">Đã Đóng</Select.Option>
+            </Select>
+            <Button icon={<DownloadOutlined />} onClick={exportCSV}>Export CSV</Button>
+            <Button onClick={() => setTicketsData(JSON.parse(localStorage.getItem('tickets')||'[]'))}>Refresh</Button>
+          </Space>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          {loadingReports ? (
+            <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Text>Loading...</Text></div>
+          ) : (
+            <Line {...lineConfig} />
+          )}
+        </div>
+      </Card>
+
+      {/* Blog reports */}
+      <Card style={{ marginBottom: 12 }} bodyStyle={{ padding: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Title level={4} style={{ margin: 0 }}>Báo cáo Blog</Title>
+            <Text type="secondary">Thống kê bài viết và tương tác</Text>
+          </div>
+          <Space>
+            <Button onClick={() => { /* no-op refresh - parent updates via Blog tab */ }} size="small">Refresh</Button>
+          </Space>
+        </div>
+
+        <Row gutter={16} style={{ marginTop: 12 }}>
+          <Col xs={24} sm={6}><Card className="help-summary-card-mini" bordered={false}><Text type="secondary">Tổng bài</Text><div style={{ fontSize: 20, fontWeight: 700 }}>{totalPosts}</div></Card></Col>
+          <Col xs={24} sm={6}><Card className="help-summary-card-mini" bordered={false}><Text type="secondary">Xuất bản</Text><div style={{ fontSize: 20, fontWeight: 700 }}>{publishedCount}</div></Card></Col>
+          <Col xs={24} sm={6}><Card className="help-summary-card-mini" bordered={false}><Text type="secondary">Bản nháp</Text><div style={{ fontSize: 20, fontWeight: 700 }}>{draftCount}</div></Card></Col>
+          <Col xs={24} sm={6}><Card className="help-summary-card-mini" bordered={false}><Text type="secondary">Đã ghim</Text><div style={{ fontSize: 20, fontWeight: 700 }}>{pinnedCount}</div></Card></Col>
+        </Row>
+
+        <div style={{ marginTop: 12 }}>
+          <Row gutter={16}>
+            <Col xs={24} md={8}><Card bordered={false}><Text type="secondary">Lượt xem tổng</Text><div style={{ fontSize: 18, fontWeight: 700 }}>{totalViews}</div></Card></Col>
+            <Col xs={24} md={8}><Card bordered={false}><Text type="secondary">Lượt thích tổng</Text><div style={{ fontSize: 18, fontWeight: 700 }}>{totalLikes}</div></Card></Col>
+            <Col xs={24} md={8}><Card bordered={false}><Text type="secondary">Bình luận tổng</Text><div style={{ fontSize: 18, fontWeight: 700 }}>{totalComments}</div></Card></Col>
+          </Row>
+
+          <div style={{ marginTop: 12 }}>
+            <Title level={5} style={{ marginBottom: 8 }}>Bài viết gần đây</Title>
+            <Table
+              columns={[
+                { title: 'Bài viết', dataIndex: 'title', key: 'title', render: (t, r) => (<Space><Avatar src={r.avatar} /><Text strong ellipsis={{ tooltip: t }}>{t}</Text></Space>) },
+                { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 120, render: s => <Tag color={s === 'published' ? 'green' : 'gold'}>{s === 'published' ? 'Xuất bản' : 'Nháp'}</Tag> },
+                { title: 'Views', dataIndex: 'views', key: 'views', width: 90 },
+                { title: 'Likes', dataIndex: 'likes', key: 'likes', width: 90 },
+                { title: 'Comments', dataIndex: 'commentsCount', key: 'commentsCount', width: 110 },
+              ]}
+              dataSource={recentPosts.map(p => ({ ...p, commentsCount: p.commentsData?.length || p.comments || 0 }))}
+              pagination={{ pageSize: 5 }}
+              rowKey="id"
+            />
+          </div>
+        </div>
+      </Card>
+    </div>
   );
 };
 
@@ -1217,6 +1486,7 @@ const AutomationTab = () => {
 const SupportPage = () => {
   const [allTickets, setAllTickets] = useState([]);
   const [blogCount, setBlogCount] = useState(0);
+  const [blogPosts, setBlogPosts] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState('1');
   const width = useWindowWidth();
@@ -1241,7 +1511,7 @@ const SupportPage = () => {
           Quản lý Blog
         </Space>
       ),
-      children: <BlogManagementTab onPostsLoaded={(posts) => setBlogCount(posts?.length || 0)} refreshKey={refreshKey} />
+      children: <BlogManagementTab onPostsLoaded={(posts) => { setBlogPosts(posts || []); setBlogCount(posts?.length || 0); }} refreshKey={refreshKey} />
     },
     {
       key: '3',
@@ -1251,7 +1521,7 @@ const SupportPage = () => {
           Báo cáo
         </Space>
       ),
-      children: <ReportsTab />
+      children: <ReportsTab blogPosts={blogPosts} />
     },
     {
       key: '4',

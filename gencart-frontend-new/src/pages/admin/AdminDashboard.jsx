@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   Space,
@@ -623,6 +624,7 @@ function TopCustomersRanking({ customers }) {
 }
 
 function RecentOrdersTable({ orders }) {
+  const navigate = useNavigate();
   const headerColumns = [
     "Product",
     "Quantity",
@@ -649,7 +651,7 @@ function RecentOrdersTable({ orders }) {
                 </div>
                 <span style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>Recent Orders</span>
             </Space>
-            <Button type="link" size="small" style={{ fontWeight: 600 }}>View All</Button>
+            <Button type="link" size="small" style={{ fontWeight: 600 }} onClick={() => navigate('/admin/orders')}>View All</Button>
         </Flex>
       }
       bordered={false}
@@ -723,8 +725,9 @@ function RecentOrdersTable({ orders }) {
                         height: 28,
                         padding: '0 8px'
                     }}
+                  onClick={() => navigate(`/admin/orders?openId=${order.orderId || order.id}`)}
                 >
-                    Details
+                  Details
                 </Button>
               </div>
             </div>

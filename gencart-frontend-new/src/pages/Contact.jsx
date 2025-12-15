@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import "../user-css/Contact.css"; // Đảm bảo đã import file CSS
 import {
   Typography,
@@ -8,6 +8,7 @@ import {
   Input,
   Button,
   message,
+  Alert,
 } from "antd";
 
 import {
@@ -29,34 +30,36 @@ const { Title, Text } = Typography;
 const Contact = () => {
   // Using plain Vietnamese strings (i18n removed)
 
+  const [form] = Form.useForm();
+  const [sent, setSent] = useState(false);
+  const [lastTicketId, setLastTicketId] = useState(null);
+
   // Extracted submit handler to preserve original functionality
   const handleSubmit = async (values) => {
     try {
       // Build ticket payload
-      // Use the user's message as the ticket title (trimmed) so admin sees the content at-a-glance.
-      const rawMsg = (values.message || '').trim();
-      const firstLine = rawMsg.split(/\r?\n/)[0] || '';
-      const MAX_TITLE = 80;
-      const titleForTicket = firstLine.length > MAX_TITLE ? firstLine.slice(0, MAX_TITLE - 3) + '...' : firstLine || `Liên hệ từ ${values.name}`;
-
-      const payload = {
-        // title is the message content (first line, trimmed)
-        title: titleForTicket,
-        customer: values.name,
-        email: values.email,
-        message: values.message,
-        description: `Email: ${values.email}\n\n${values.message}`,
-        source: 'Contact Form',
+      const existingTickets = JSON.parse(localStorage.getItem('tickets') || '[]');
+      const newTicket = {
+        key: Date.now().toString(),
+        id: `#${1000 + existingTickets.length + 1}`,
+        title: values.subject || values.message.split('\n')[0] || `Liên hệ từ ${values.name}`,
+        status: 'Mới',
         priority: 'TRUNG BÌNH',
+        customer: values.name,
+        assigned: 'Chưa gán',
+        updated: Date.now(),
+        source: 'Contact Form',
+        SLA_due: Date.now() + 24 * 60 * 60 * 1000, // 1 day
+        email: values.email,
+        phone: values.phone,
+        message: values.message
       };
-      // No external API call here — just log the payload and show success message.
-      // (This component was copied from another project; API integration removed.)
-      // You can replace this with a real API call later if needed.
-      // Example: await api.sendContact(payload)
-      // For now, just log and show success.
-      // eslint-disable-next-line no-console
-      console.log('Contact payload (not sent):', payload);
+      existingTickets.push(newTicket);
+      localStorage.setItem('tickets', JSON.stringify(existingTickets));
       message.success('Gửi thông điệp thành công. Cảm ơn bạn!');
+      form.resetFields();
+      setLastTicketId(newTicket.id);
+      setSent(true);
     } catch (e) {
       console.error('Contact form submit failed', e);
       message.error('Đã có lỗi xảy ra khi gửi. Vui lòng thử lại sau.');
@@ -116,7 +119,18 @@ const Contact = () => {
               <Title level={3}>Gửi tin nhắn</Title>
               <Text type="secondary">Gửi thắc mắc hoặc góp ý cho chúng tôi — chúng tôi sẽ phản hồi sớm nhất có thể.</Text>
             </div>
-            <Form layout="vertical" className="contact-form" onFinish={handleSubmit} requiredMark={false}>
+            {sent && (
+              <Alert
+                type="success"
+                showIcon
+                message="Đã gửi thành công"
+                description={`Ticket ID: ${lastTicketId}. Cảm ơn bạn!`}
+                closable
+                onClose={() => setSent(false)}
+                style={{ marginBottom: 16 }}
+              />
+            )}
+            <Form form={form} layout="vertical" className="contact-form" onFinish={handleSubmit} requiredMark={false}>
               <Row gutter={24}>
                 <Col xs={24} sm={12}>
                   <Form.Item name="name" label={`Họ và tên`} rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}>

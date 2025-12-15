@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Table,
   Button,
@@ -38,13 +39,15 @@ const { Option } = Select;
 
 const AdminOrders = () => {
   const { isMobile } = useResponsive();
-  const [orders, setOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]); // Lưu TẤT CẢ orders cho metrics
+  const [orders, setOrders] = useState([]); // Orders để hiển thị (có pagination)
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState("");
+  
   // Pagination state
   const [pagination, setPagination] = useState({
     current: 1,
@@ -54,6 +57,9 @@ const AdminOrders = () => {
     pageSizeOptions: ["10", "20", "50", "100"],
   });
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
   // Small helper for currency formatting to match product page
   const currencyFormat = (v) =>
     `₫${parseFloat(v).toLocaleString(undefined, {
@@ -61,26 +67,61 @@ const AdminOrders = () => {
       maximumFractionDigits: 2,
     })}`;
 
+  // QUAN TRỌNG: Tính metrics từ allOrders (TẤT CẢ orders, không pagination)
   const orderMetrics = useMemo(() => {
-    const total = orders.length;
-    const processing = orders.filter((o) => o.status === "processing").length;
-    const shipped = orders.filter((o) => o.status === "shipped").length;
-    const delivered = orders.filter((o) => o.status === "delivered").length;
-    const cancelled = orders.filter((o) => o.status === "cancelled").length;
-    const totalRevenue = orders.reduce(
+    const total = allOrders.length;
+    const pending = allOrders.filter((o) => o.status === "pending").length;
+    const processing = allOrders.filter((o) => o.status === "processing").length;
+    const shipped = allOrders.filter((o) => o.status === "shipped").length;
+    const delivered = allOrders.filter((o) => o.status === "delivered").length;
+    const cancelled = allOrders.filter((o) => o.status === "cancelled").length;
+    const totalRevenue = allOrders.reduce(
       (sum, o) => sum + (parseFloat(o.total_amount) || 0),
       0
     );
-    return { total, processing, shipped, delivered, cancelled, totalRevenue };
-  }, [orders]);
+    return { total, pending, processing, shipped, delivered, cancelled, totalRevenue };
+  }, [allOrders]); // Chỉ phụ thuộc vào allOrders
 
-  // Fetch orders - optimized with backend pagination
+  // Function to fetch ALL orders for metrics (không pagination)
+  const fetchAllOrders = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      
+      // Fetch với page_size rất lớn để lấy tất cả
+      const response = await fetch(
+        `http://localhost:8000/api/orders/?page_size=1000`,
+        {
+          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch all orders");
+      }
+
+      const data = await response.json();
+      const allOrdersList = data.results || data || [];
+      
+      // Lưu TẤT CẢ orders vào allOrders
+      setAllOrders(allOrdersList);
+      
+      return true;
+    } catch (error) {
+      console.error("Error fetching all orders:", error);
+      return false;
+    }
+  };
+
+  // Fetch orders for display - optimized with backend pagination
   const fetchOrders = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
       const token = localStorage.getItem("access_token");
 
-      // Fetch orders with pagination - backend already includes user data via select_related
+      // Fetch orders với pagination cho display
       const response = await fetch(
         `http://localhost:8000/api/orders/?page=${page}&page_size=${pageSize}`,
         {
@@ -96,30 +137,68 @@ const AdminOrders = () => {
       }
 
       const data = await response.json();
-      const orders = data.results || data || [];
+      const ordersList = data.results || data || [];
 
-      // Update pagination - keep existing settings
+      // Update pagination
       setPagination((prev) => ({
         ...prev,
         current: page,
         pageSize: pageSize,
-        total: data.count || orders.length,
+        total: data.count || ordersList.length,
       }));
 
-      // Backend already includes user data, no need to fetch separately
-      setOrders(orders);
+      setOrders(ordersList);
+      return true;
     } catch (error) {
       console.error("Error fetching orders:", error);
       message.error("Failed to load orders");
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch cả allOrders và orders khi component mount
   useEffect(() => {
-    fetchOrders(pagination.current, pagination.pageSize);
+    (async () => {
+      setLoading(true);
+      try {
+        // Fetch ALL orders cho metrics
+        await fetchAllOrders();
+
+        // Fetch paginated orders cho display
+        await fetchOrders(pagination.current, pagination.pageSize);
+
+        // If the URL contains an order id to open, fetch and open it
+        const params = new URLSearchParams(location.search);
+        const openId = params.get("openId") || params.get("order_id") || params.get("id");
+        if (openId) {
+          try {
+            const token = localStorage.getItem("access_token");
+            const r = await fetch(`http://localhost:8000/api/orders/${openId}/`, {
+              credentials: "include",
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (r.ok) {
+              const data = await r.json();
+              setSelectedOrder(data);
+              setDrawerVisible(true);
+              // ensure lists include this order
+              await fetchAllOrders();
+              await fetchOrders(pagination.current, pagination.pageSize);
+            }
+          } catch (err) {
+            console.error("Failed to fetch order from query param:", err);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading orders:", error);
+      } finally {
+        setLoading(false);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.search]);
 
   // Handle search - optimized with useMemo
   const handleSearch = (value) => {
@@ -171,7 +250,6 @@ const AdminOrders = () => {
   const handleTableChange = (pag) => {
     // If searching, pagination is handled by Ant Design (client-side)
     if (searchText.trim()) {
-      // Just update the pageSize in state for consistency
       setPagination((prev) => ({
         ...prev,
         pageSize: pag.pageSize,
@@ -203,21 +281,35 @@ const AdminOrders = () => {
       }
       message.success("Order status updated successfully");
       setModalVisible(false);
-      const updatedOrders = orders.map((order) =>
-        order.id === selectedOrder.id
-          ? { ...order, status: values.status }
-          : order
-      );
-      setOrders(updatedOrders);
+      
+      // Refresh both allOrders and display orders
+      await fetchAllOrders();
+      await fetchOrders(pagination.current, pagination.pageSize);
     } catch (error) {
       console.error("Error updating order status:", error);
       message.error("Failed to update order status");
     }
   };
 
+  // Handle refresh button
+  const handleRefresh = async () => {
+    const hide = message.loading("Refreshing orders...", 0);
+    try {
+      await fetchAllOrders();
+      await fetchOrders(pagination.current, pagination.pageSize);
+      hide();
+      message.success("Refreshed successfully!");
+    } catch (error) {
+      hide();
+      console.error("Error refreshing orders:", error);
+      message.error("Failed to refresh orders");
+    }
+  };
+
   // Get status tag
   const getStatusTag = (status) => {
     let color = "default";
+    if (status === "pending") color = "orange";
     if (status === "processing") color = "blue";
     if (status === "shipped") color = "cyan";
     if (status === "delivered") color = "green";
@@ -287,6 +379,7 @@ const AdminOrders = () => {
       key: "status",
       render: (status) => getStatusTag(status),
       filters: [
+        { text: "Pending", value: "pending" },
         { text: "Processing", value: "processing" },
         { text: "Shipped", value: "shipped" },
         { text: "Delivered", value: "delivered" },
@@ -364,6 +457,9 @@ const AdminOrders = () => {
               <Tag color="geekblue" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
                 Total: {orderMetrics.total}
               </Tag>
+              <Tag color="orange" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
+                Pending: {orderMetrics.pending}
+              </Tag>
               <Tag color="gold" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
                 Processing: {orderMetrics.processing}
               </Tag>
@@ -384,7 +480,7 @@ const AdminOrders = () => {
           <Col xs={24} md={8} style={{ textAlign: isMobile ? "left" : "right" }}>
             <Space wrap>
               <Button
-                onClick={() => fetchOrders(pagination.current, pagination.pageSize)}
+                onClick={handleRefresh}
                 loading={loading}
                 size={isMobile ? "middle" : "default"}
                 type="primary"
@@ -475,6 +571,7 @@ const AdminOrders = () => {
             rules={[{ required: true, message: "Please select a status" }]}
           >
             <Select placeholder="Select status">
+              <Option value="pending">Pending</Option>
               <Option value="processing">Processing</Option>
               <Option value="shipped">Shipped</Option>
               <Option value="delivered">Delivered</Option>
@@ -503,7 +600,11 @@ const AdminOrders = () => {
         title={`Order #${selectedOrder?.id || ""} Details`}
         placement="right"
         width={600}
-        onClose={() => setDrawerVisible(false)}
+        onClose={() => {
+          setDrawerVisible(false);
+          // remove any openId param from URL
+          try { navigate('/admin/orders', { replace: true }); } catch (err) { console.error('Failed to update URL after closing drawer', err); }
+        }}
         open={drawerVisible}
         extra={
           <Button
