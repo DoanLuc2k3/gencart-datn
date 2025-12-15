@@ -82,6 +82,27 @@ const CheckoutPage = () => {
     overflow: 'hidden'
   };
 
+  // Get blockchain explorer URL based on network
+  const getBlockchainExplorerUrl = (network, txHash) => {
+    const explorers = {
+      ethereum: `https://sepolia.etherscan.io/tx/${txHash}`,
+      bsc: `https://bscscan.com/tx/${txHash}`,
+      polygon: `https://polygonscan.com/tx/${txHash}`
+    };
+    return explorers[network] || explorers.ethereum;
+  };
+
+  // Get explorer name
+  const getExplorerName = (network) => {
+
+    const names = {
+      ethereum: 'Sepolia Etherscan',
+      bsc: 'BscScan',
+      polygon: 'PolygonScan'
+    };
+    return names[network] || 'Blockchain Explorer';
+  };
+
   // Blockchain utility functions
   const connectWallet = async () => {
     try {
@@ -170,9 +191,10 @@ const CheckoutPage = () => {
               chainId: '0x1',
               chainName: 'Ethereum Mainnet',
               nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-              rpcUrls: ['https://eth-mainnet.alchemyapi.io/v2/demo'],
-              blockExplorerUrls: ['https://etherscan.io'],
+              rpcUrls: ['https://rpc.sepolia.org'],
+              blockExplorerUrls: ['https://sepolia.etherscan.io'],
             },
+           
             bsc: {
               chainId: '0x38',
               chainName: 'Binance Smart Chain',
@@ -207,7 +229,7 @@ const CheckoutPage = () => {
     }
   };
 
-  const handleBlockchainPayment = async () => {
+   const handleBlockchainPayment = async () => {
     try {
       if (!web3Connected) {
         message.error('Vui lòng kết nối ví trước');
@@ -263,7 +285,6 @@ const CheckoutPage = () => {
       setBlockchainLoading(false);
     }
   };
-
   // Redirect to cart if cart is empty
   useEffect(() => {
     if (cartItems.length === 0 && !orderComplete) {
@@ -1345,7 +1366,6 @@ const CheckoutPage = () => {
                 type="primary"
                 size="large"
                 block
-                onClick={handlePlaceOrder}
                 loading={loading}
                 style={{
                   height: '60px',
@@ -1356,6 +1376,19 @@ const CheckoutPage = () => {
                   borderRadius: '16px',
                   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
                   marginBottom: '16px'
+                }}
+                onClick={() => {
+                  if (paymentData?.paymentMethod === 'blockchain') {
+                    // Đã thanh toán blockchain, chỉ gọi khi có transactionHash
+                    if (transactionHash) {
+                      handlePlaceOrder(transactionHash);
+                    } else {
+                      message.warning('Vui lòng hoàn tất thanh toán blockchain trước khi đặt hàng.');
+                    }
+                  } else {
+                    // Các phương thức khác
+                    handlePlaceOrder();
+                  }
                 }}
               >
                 Đặt hàng <ArrowRightOutlined />
@@ -1401,9 +1434,74 @@ const CheckoutPage = () => {
           Xác nhận đơn hàng đã được gửi tới {shippingData.email}.
         </Paragraph>
         {transactionHash && (
-          <Paragraph>
-            <strong>Hash giao dịch:</strong> {transactionHash}
-          </Paragraph>
+          <div style={{ 
+            background: '#f0f9ff', 
+            border: '2px solid #0ea5e9',
+            borderRadius: '16px',
+            padding: '24px',
+            margin: '24px auto',
+            maxWidth: '600px',
+            textAlign: 'left'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <GatewayOutlined style={{ fontSize: '24px', color: '#0ea5e9' }} />
+              <Title level={4} style={{ margin: 0, color: '#0c4a6e' }}>
+                Thông tin giao dịch Blockchain
+              </Title>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <Text strong style={{ color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  Mạng:
+                </Text>
+                <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                  {selectedNetwork === 'ethereum' ? 'Ethereum Mainnet' :
+                   selectedNetwork === 'bsc' ? 'Binance Smart Chain' :
+                   selectedNetwork === 'polygon' ? 'Polygon (Matic)' : selectedNetwork}
+                </Tag>
+              </div>
+              
+              <div>
+                <Text strong style={{ color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  Transaction Hash:
+                </Text>
+                <Text 
+                  copyable={{ text: transactionHash }}
+                  style={{ 
+                    fontFamily: 'monospace', 
+                    fontSize: '13px',
+                    background: 'white',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    display: 'inline-block',
+                    wordBreak: 'break-all'
+                  }}
+                >
+                  {transactionHash}
+                </Text>
+              </div>
+              
+              <div style={{ marginTop: '8px' }}>
+                <Button 
+                  type="primary"
+                  icon={<LinkOutlined />}
+                  href={getBlockchainExplorerUrl(selectedNetwork, transactionHash)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    height: '40px',
+                    borderRadius: '10px',
+                    fontWeight: 600,
+                    background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
+                  }}
+                >
+                  Xem trên {getExplorerName(selectedNetwork)}
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
         <Divider />
         <Space size="large">

@@ -39,8 +39,21 @@ class CartViewSet(viewsets.ModelViewSet):
         Add an item to the cart with inventory validation
         """
         cart = self.get_object()
+        # Log incoming payload for debugging
+        try:
+            print('add_item payload:', request.data)
+        except Exception:
+            pass
+
         product_id = request.data.get('product_id')
-        quantity = int(request.data.get('quantity', 1))
+        # Safely parse quantity and return informative error on bad input
+        try:
+            quantity = int(request.data.get('quantity', 1))
+        except (ValueError, TypeError):
+            return Response(
+                {"detail": "Invalid quantity value. Quantity must be an integer."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not product_id:
             return Response(
