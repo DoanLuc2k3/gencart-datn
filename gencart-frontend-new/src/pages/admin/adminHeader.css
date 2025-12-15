@@ -85,6 +85,16 @@
 .sentiment-card--positive::before { background: linear-gradient(180deg,#34d399,#059669); }
 .sentiment-card--neutral::before { background: linear-gradient(180deg,#fbbf24,#f97316); }
 .sentiment-card--negative::before { background: linear-gradient(180deg,#fb7185,#ef4444); }
+/* Popover for admin reviews: make fixed and scrollable inside */
+.admin-review-popover .ant-popover {
+  position: fixed !important;
+}
+.admin-review-popover .ant-popover-inner-content {
+  padding: 8px !important;
+}
+.admin-review-popover .ant-popover-arrow {
+  display: none;
+}
 
 .progress-marker {
   width: 10px;

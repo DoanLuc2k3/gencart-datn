@@ -12,6 +12,8 @@ import {
   Input,
   Badge,
   Dropdown,
+  Popover,
+  List,
 } from "antd";
 import {
   DashboardOutlined,
@@ -54,6 +56,13 @@ const AdminLayout = () => {
   const location = useLocation();
   const fileInputRef = React.useRef(null);
 
+  // Notifications (reviews) state
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const reviewsRef = React.useRef([]);
+  const pollRef = React.useRef(null);
+  const LAST_SEEN_KEY = "admin_last_seen_reviews";
   // Apply dark mode to document
   useEffect(() => {
     if (darkMode) {
@@ -157,6 +166,41 @@ const AdminLayout = () => {
 
     checkAuth();
   }, [navigate]);
+
+  // Fetch latest reviews for admin notifications and poll periodically
+  const fetchReviews = async () => {
+    setReviewsLoading(true);
+    try {
+      const res = await api.get('/reviews/?ordering=-created_at&page_size=6');
+      const data = res.data.results ? res.data.results : res.data;
+      setReviews(data);
+      reviewsRef.current = data;
+
+      const lastSeen = localStorage.getItem(LAST_SEEN_KEY);
+      if (!lastSeen) {
+        setUnreadCount(data.length || 0);
+      } else {
+        const last = new Date(lastSeen);
+        const newCount = (data || []).filter((r) => new Date(r.created_at) > last).length;
+        setUnreadCount(newCount);
+      }
+    } catch (err) {
+      console.error('Failed to fetch reviews for notifications', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Start polling once initial auth/loading resolved
+    if (!loading) {
+      fetchReviews();
+      pollRef.current = setInterval(fetchReviews, 10000); // poll every 10s
+      return () => {
+        if (pollRef.current) clearInterval(pollRef.current);
+      };
+    }
+  }, [loading]);
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -564,8 +608,59 @@ const AdminLayout = () => {
                 />
                 {/* Small integrated icons inside the search box */}
                 <div className="admin-search-icons" style={{display: mobileView ? 'none' : 'flex', gap: 8}}>
-                  <Tooltip title="Notifications">
-                    <Badge count={0} showZero={false} offset={[-2, 0]}>
+                  <Popover
+                    placement="bottomRight"
+                    trigger="click"
+                    getPopupContainer={tooltipContainer}
+                    overlayClassName="admin-review-popover"
+                    overlayStyle={{ maxWidth: 420, zIndex: 2000 }}
+                    content={
+                      <div style={{ width: 360, maxHeight: 360, overflow: 'hidden' }}>
+                        <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                          <List
+                            loading={reviewsLoading}
+                            dataSource={reviews}
+                            locale={{ emptyText: 'No recent reviews' }}
+                            renderItem={(item) => (
+                              <List.Item key={item.id} style={{ padding: 8 }}>
+                                <List.Item.Meta
+                                  avatar={
+                                    <Avatar
+                                      size={40}
+                                      src={item.user_avatar || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.user_name || item.user}`}
+                                    />
+                                  }
+                                  title={
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                                      <div>
+                                        <div style={{ fontWeight: 600 }}>{item.user_name || item.user}</div>
+                                        <div style={{ fontSize: 12, color: '#6b7280' }}>{item.title || ''}</div>
+                                      </div>
+                                      <div style={{ textAlign: 'right', minWidth: 90 }}>
+                                        <div style={{ fontSize: 12, color: '#9ca3af' }}>{new Date(item.created_at).toLocaleString()}</div>
+                                        <div style={{ color: darkMode ? '#fbbf24' : '#f59e0b' }}>{item.rating}★</div>
+                                      </div>
+                                    </div>
+                                  }
+                                  description={<div style={{ whiteSpace: 'normal' }}>{item.comment}</div>}
+                                />
+                              </List.Item>
+                            )}
+                          />
+                        </div>
+                        <div style={{ textAlign: 'center', marginTop: 8 }}>
+                          <Button type="link" onClick={() => navigate('/admin/reviews')}>View all</Button>
+                        </div>
+                      </div>
+                    }
+                    onVisibleChange={(visible) => {
+                      if (visible) {
+                        localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString());
+                        setUnreadCount(0);
+                      }
+                    }}
+                  >
+                    <Badge count={unreadCount} showZero={false} offset={[-2, 0]}>
                       <div
                         className="admin-search-icon-btn"
                         style={{
@@ -577,7 +672,7 @@ const AdminLayout = () => {
                         <BellOutlined style={{ fontSize: 16, color: darkMode ? '#e2e8f0' : '#68729e'}} />
                       </div>
                     </Badge>
-                  </Tooltip>
+                  </Popover>
 
                   <Tooltip title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
                     <div

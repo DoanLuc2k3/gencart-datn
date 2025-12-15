@@ -10,7 +10,7 @@ import UserAvatar from "../user/UserAvatar";
 import UserMenu from "../user/UserMenu";
 import WalletButton from "../blockchain/WalletButton";
 import "./UserMenu.css";
-
+ 
 const { Header: AntHeader } = Layout;
 const { Search } = Input;
 
