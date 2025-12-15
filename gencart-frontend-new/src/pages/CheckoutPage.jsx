@@ -16,7 +16,11 @@ import {
   Space,
   Table,
   InputNumber,
-  Checkbox
+  Checkbox,
+  Modal,
+  Spin,
+  Tag,
+  Alert
 } from 'antd';
 import {
   UserOutlined,
@@ -33,7 +37,10 @@ import {
   EnvironmentOutlined,
   PhoneOutlined,
   MailOutlined,
-  SafetyCertificateOutlined
+  SafetyCertificateOutlined,
+  LinkOutlined,
+  GatewayOutlined,
+  DisconnectOutlined
 } from '@ant-design/icons';
 import { useCart } from '../context/CartContext';
 import { triggerInventoryRefresh } from '../utils/inventoryEvents';
@@ -57,6 +64,15 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  
+  // Blockchain states
+  const [web3Connected, setWeb3Connected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState('');
+  const [blockchainLoading, setBlockchainLoading] = useState(false);
+  const [selectedNetwork, setSelectedNetwork] = useState('ethereum');
+  const [transactionHash, setTransactionHash] = useState('');
+  const [blockchainPaymentModalVisible, setBlockchainPaymentModalVisible] = useState(false);
+  const [txStatus, setTxStatus] = useState('pending'); // pending, success, error
 
   const sectionCardStyle = {
     borderRadius: '24px',
@@ -66,17 +82,182 @@ const CheckoutPage = () => {
     overflow: 'hidden'
   };
 
-  const innerCardStyle = {
-    borderRadius: '16px',
-    border: '1px solid #f1f5f9',
-    background: '#f8fafc'
+  // Blockchain utility functions
+  const connectWallet = async () => {
+    try {
+      setBlockchainLoading(true);
+      
+      if (typeof window.ethereum === 'undefined') {
+        message.error('Vui lòng cài đặt MetaMask hoặc ví Web3 khác');
+        window.open('https://metamask.io/', '_blank');
+        return;
+      }
+
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      });
+
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        setWeb3Connected(true);
+        message.success(`Kết nối ví thành công: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`);
+      }
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      if (error.code === 4001) {
+        message.error('Bạn đã từ chối kết nối ví');
+      } else {
+        message.error('Không thể kết nối ví. Vui lòng thử lại.');
+      }
+    } finally {
+      setBlockchainLoading(false);
+    }
   };
-  
-  const mainCardStyle = {
-    borderRadius: 24,
-    background: 'rgba(255,255,255,0.98)',
-    boxShadow: '0 32px 70px -36px rgba(15, 23, 42, 0.35)',
-    border: '1px solid rgba(148, 163, 184, 0.16)'
+
+  const disconnectWallet = () => {
+    setWalletAddress('');
+    setWeb3Connected(false);
+    message.info('Đã ngắt kết nối ví');
+  };
+
+  const switchNetwork = async (networkName) => {
+    try {
+      setBlockchainLoading(true);
+      
+      const networkConfigs = {
+        ethereum: {
+          chainId: '0x1',
+          chainName: 'Ethereum Mainnet',
+          nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+          rpcUrls: ['https://eth-mainnet.alchemyapi.io/v2/demo'],
+          blockExplorerUrls: ['https://etherscan.io'],
+        },
+        bsc: {
+          chainId: '0x38',
+          chainName: 'Binance Smart Chain',
+          nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+          rpcUrls: ['https://bsc-dataseed1.binance.org:8545'],
+          blockExplorerUrls: ['https://bscscan.com'],
+        },
+        polygon: {
+          chainId: '0x89',
+          chainName: 'Polygon (Matic)',
+          nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+          rpcUrls: ['https://polygon-rpc.com'],
+          blockExplorerUrls: ['https://polygonscan.com'],
+        },
+      };
+
+      const config = networkConfigs[networkName];
+
+      if (!config) {
+        message.error('Network không được hỗ trợ');
+        return;
+      }
+
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: config.chainId }],
+      });
+
+      setSelectedNetwork(networkName);
+      message.success(`Đã chuyển sang mạng ${config.chainName}`);
+    } catch (error) {
+      if (error.code === 4902) {
+        try {
+          const networkConfigs = {
+            ethereum: {
+              chainId: '0x1',
+              chainName: 'Ethereum Mainnet',
+              nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+              rpcUrls: ['https://eth-mainnet.alchemyapi.io/v2/demo'],
+              blockExplorerUrls: ['https://etherscan.io'],
+            },
+            bsc: {
+              chainId: '0x38',
+              chainName: 'Binance Smart Chain',
+              nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+              rpcUrls: ['https://bsc-dataseed1.binance.org:8545'],
+              blockExplorerUrls: ['https://bscscan.com'],
+            },
+            polygon: {
+              chainId: '0x89',
+              chainName: 'Polygon (Matic)',
+              nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+              rpcUrls: ['https://polygon-rpc.com'],
+              blockExplorerUrls: ['https://polygonscan.com'],
+            },
+          };
+
+          const config = networkConfigs[networkName];
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [config],
+          });
+          setSelectedNetwork(networkName);
+          message.success(`Đã thêm và chuyển sang mạng ${config.chainName}`);
+        } catch (addError) {
+          message.error('Không thể thêm mạng. Vui lòng thử lại.');
+        }
+      } else {
+        message.error('Không thể chuyển mạng. Vui lòng thử lại.');
+      }
+    } finally {
+      setBlockchainLoading(false);
+    }
+  };
+
+  const handleBlockchainPayment = async () => {
+    try {
+      if (!web3Connected) {
+        message.error('Vui lòng kết nối ví trước');
+        return;
+      }
+
+      setBlockchainLoading(true);
+      setBlockchainPaymentModalVisible(true);
+      setTxStatus('pending');
+
+      // Tính toán số tiền (giả định: 1 ETH = 2000 USD)
+      const amountInCrypto = (cartTotal / 2000).toFixed(6);
+      const amountInWei = (parseFloat(amountInCrypto) * 1e18).toString();
+
+      // Địa chỉ nhận hàng (thay bằng địa chỉ thực tế của bạn)
+      const receiverAddress = '0x742d35Cc6634C0532925a3b844Bc6e7595f26f46';
+
+      const transactionData = {
+        to: receiverAddress,
+        from: walletAddress,
+        value: amountInWei,
+        gasLimit: '21000',
+        gasPrice: (50 * 1e9).toString(),
+      };
+
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionData],
+      });
+
+      setTransactionHash(txHash);
+      setTxStatus('success');
+      message.success('Giao dịch đã được gửi');
+
+      // Chờ 3 giây trước khi tạo đơn hàng
+      setTimeout(() => {
+        setBlockchainPaymentModalVisible(false);
+        handlePlaceOrder(txHash);
+      }, 3000);
+    } catch (error) {
+      console.error('Blockchain payment error:', error);
+      setTxStatus('error');
+      message.error('Lỗi khi thực hiện thanh toán blockchain');
+      
+      setTimeout(() => {
+        setBlockchainPaymentModalVisible(false);
+      }, 2000);
+    } finally {
+      setBlockchainLoading(false);
+    }
   };
 
   // Redirect to cart if cart is empty
@@ -95,16 +276,25 @@ const CheckoutPage = () => {
 
   // Handle payment form submission
   const handlePaymentSubmit = (values) => {
+    if (values.paymentMethod === 'blockchain' && !web3Connected) {
+      message.error('Vui lòng kết nối ví blockchain trước');
+      return;
+    }
+    
+    if (values.paymentMethod === 'blockchain') {
+      handleBlockchainPayment();
+      return;
+    }
+
     setPaymentData(values);
     setCurrentStep(2);
   };
 
   // Handle order placement
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (blockchainTxHash = null) => {
     setLoading(true);
 
     try {
-      // Get token from localStorage
       const token = localStorage.getItem('access_token');
 
       if (!token) {
@@ -113,18 +303,16 @@ const CheckoutPage = () => {
         return;
       }
 
-      // Check if cart is empty
       if (cartItems.length === 0) {
         message.error('Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ trước khi đặt hàng.');
         setLoading(false);
         return;
       }
 
-      // Sync local cart with backend cart
-      // This ensures that the backend cart has the same items as the frontend cart
+      // Sync cart items
       for (const item of cartItems) {
         try {
-          const response = await fetch('http://localhost:8000/api/cart/add_item/', {
+          await fetch('http://localhost:8000/api/cart/add_item/', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -135,19 +323,13 @@ const CheckoutPage = () => {
               quantity: item.quantity
             }),
           });
-
-          if (!response.ok) {
-            console.error('Failed to sync cart item:', item);
-          }
         } catch (error) {
           console.error('Error syncing cart item:', error);
         }
       }
 
-      // Get default addresses or create new ones
+      // Get addresses
       let shippingAddressId, billingAddressId;
-
-      // First, try to get the user's addresses
       const addressResponse = await fetch('http://localhost:8000/api/addresses/', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -156,10 +338,7 @@ const CheckoutPage = () => {
 
       if (addressResponse.ok) {
         const addresses = await addressResponse.json();
-
-        // Check if user has addresses
         if (addresses.results && addresses.results.length > 0) {
-          // Try to find default shipping and billing addresses
           const defaultShipping = addresses.results.find(addr => addr.address_type === 'shipping' && addr.default);
           const defaultBilling = addresses.results.find(addr => addr.address_type === 'billing' && addr.default);
 
@@ -168,9 +347,8 @@ const CheckoutPage = () => {
         }
       }
 
-      // If no addresses found, create new ones
+      // Create shipping address if needed
       if (!shippingAddressId) {
-        // Create shipping address
         const shippingAddressData = {
           address_type: 'shipping',
           street_address: shippingData.addressLine1,
@@ -199,22 +377,30 @@ const CheckoutPage = () => {
         }
       }
 
-      // Use the same address for billing if not specified
       if (!billingAddressId) {
         billingAddressId = shippingAddressId;
       }
 
-      // Use the create_from_cart endpoint with the correct URL
+      // Create order
+      const orderPayload = {
+        shipping_address_id: shippingAddressId,
+        billing_address_id: billingAddressId,
+      };
+
+      if (blockchainTxHash) {
+        orderPayload.blockchain_transaction_hash = blockchainTxHash;
+        orderPayload.payment_method = 'blockchain';
+        orderPayload.blockchain_network = selectedNetwork;
+        orderPayload.wallet_address = walletAddress;
+      }
+
       const createOrderResponse = await fetch('http://localhost:8000/api/orders/create_from_cart/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          shipping_address_id: shippingAddressId,
-          billing_address_id: billingAddressId,
-        }),
+        body: JSON.stringify(orderPayload),
       });
 
       if (!createOrderResponse.ok) {
@@ -225,7 +411,7 @@ const CheckoutPage = () => {
       const orderData = await createOrderResponse.json();
       setOrderId(orderData.id);
 
-      // Clear the cart
+      // Clear cart
       await fetch('http://localhost:8000/api/cart/clear/', {
         method: 'POST',
         headers: {
@@ -233,16 +419,12 @@ const CheckoutPage = () => {
         },
       });
 
-      // Clear the cart in the frontend
       clearCart();
-
-      // Set order as complete
       setOrderComplete(true);
       setCurrentStep(3);
 
       message.success('Đặt hàng thành công!');
-      console.log('CheckoutPage: Triggering inventory refresh after successful order');
-      triggerInventoryRefresh(); // Trigger inventory refresh after successful order
+      triggerInventoryRefresh();
     } catch (error) {
       message.error(error.message || 'Đặt hàng không thành công. Vui lòng thử lại.');
       console.error('Order placement error:', error);
@@ -256,7 +438,7 @@ const CheckoutPage = () => {
     setCurrentStep(prev => Math.max(0, prev - 1));
   };
 
-  // Order summary columns for the table
+  // Order summary columns
   const orderSummaryColumns = [
     {
       title: 'Sản phẩm',
@@ -417,10 +599,7 @@ const CheckoutPage = () => {
               label={<span style={{ fontWeight: 600, color: '#475569' }}>Tỉnh/Thành phố</span>}
               rules={[{ required: true, message: 'Vui lòng chọn tỉnh/thành phố' }]}
             >
-              <Select
-                placeholder="Chọn tỉnh/thành phố"
-                style={{ borderRadius: '12px' }}
-              >
+              <Select placeholder="Chọn tỉnh/thành phố" style={{ borderRadius: '12px' }}>
                 <Option value="hochiminh">Hồ Chí Minh</Option>
                 <Option value="hanoi">Hà Nội</Option>
                 <Option value="danang">Đà Nẵng</Option>
@@ -435,10 +614,7 @@ const CheckoutPage = () => {
               label={<span style={{ fontWeight: 600, color: '#475569' }}>Mã bưu chính</span>}
               rules={[{ required: true, message: 'Vui lòng nhập mã bưu chính' }]}
             >
-              <Input 
-                placeholder="700000" 
-                style={{ borderRadius: '12px' }}
-              />
+              <Input placeholder="700000" style={{ borderRadius: '12px' }} />
             </Form.Item>
           </Col>
           <Col xs={24} md={8}>
@@ -448,10 +624,7 @@ const CheckoutPage = () => {
               initialValue="vietnam"
               rules={[{ required: true, message: 'Vui lòng chọn quốc gia' }]}
             >
-              <Select
-                placeholder="Chọn quốc gia"
-                style={{ borderRadius: '12px' }}
-              >
+              <Select placeholder="Chọn quốc gia" style={{ borderRadius: '12px' }}>
                 <Option value="vietnam">Việt Nam</Option>
               </Select>
             </Form.Item>
@@ -473,8 +646,6 @@ const CheckoutPage = () => {
               border: 'none',
               boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.3)'
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 20px 25px -5px rgba(79, 70, 229, 0.4)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(79, 70, 229, 0.3)"; }}
           >
             Tiếp tục thanh toán <ArrowRightOutlined />
           </Button>
@@ -658,27 +829,60 @@ const CheckoutPage = () => {
                   </div>
                 </Radio.Button>
               </Col>
+              <Col xs={24} md={12}>
+                <Radio.Button 
+                  value="blockchain" 
+                  style={{ 
+                    height: 'auto', 
+                    padding: '20px', 
+                    width: '100%', 
+                    borderRadius: '16px', 
+                    border: '2px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}
+                  className="payment-radio"
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#f1f5f9', 
+                    borderRadius: '12px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <GatewayOutlined style={{ fontSize: '24px', color: '#64748b' }} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <Text strong style={{ display: 'block', fontSize: '16px', color: '#334155' }}>Blockchain</Text>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>ETH, BNB, MATIC</Text>
+                  </div>
+                </Radio.Button>
+              </Col>
             </Row>
           </Radio.Group>
         </Form.Item>
         <style>{`
-            .payment-radio.ant-radio-button-wrapper {
-              border-inline-start-width: 2px !important;
-            }
-            .payment-radio.ant-radio-button-wrapper:not(:first-child)::before {
-              display: none;
-            }
-            .payment-radio.ant-radio-button-wrapper-checked {
-              border-color: #10b981 !important;
-              background: #ecfdf5 !important;
-            }
-            .payment-radio.ant-radio-button-wrapper-checked .anticon {
-              color: #10b981 !important;
-            }
-            .payment-radio.ant-radio-button-wrapper-checked div:first-child {
-              background: #d1fae5 !important;
-            }
-          `}</style>
+          .payment-radio.ant-radio-button-wrapper {
+            border-inline-start-width: 2px !important;
+          }
+          .payment-radio.ant-radio-button-wrapper:not(:first-child)::before {
+            display: none;
+          }
+          .payment-radio.ant-radio-button-wrapper-checked {
+            border-color: #10b981 !important;
+            background: #ecfdf5 !important;
+          }
+          .payment-radio.ant-radio-button-wrapper-checked .anticon {
+            color: #10b981 !important;
+          }
+          .payment-radio.ant-radio-button-wrapper-checked div:first-child {
+            background: #d1fae5 !important;
+          }
+        `}</style>
 
         <Divider style={{ margin: '32px 0' }} />
 
@@ -688,6 +892,98 @@ const CheckoutPage = () => {
         >
           {({ getFieldValue }) => {
             const paymentMethod = getFieldValue('paymentMethod');
+
+            if (paymentMethod === 'blockchain') {
+              return (
+                <>
+                  {web3Connected ? (
+                    <Alert
+                      message={`Ví đã kết nối: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}
+                      type="success"
+                      showIcon
+                      style={{ marginBottom: '20px' }}
+                      action={
+                        <Button size="small" danger onClick={disconnectWallet}>
+                          Ngắt kết nối
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <Alert
+                      message="Vui lòng kết nối ví Web3 để tiếp tục"
+                      type="warning"
+                      showIcon
+                      style={{ marginBottom: '20px' }}
+                    />
+                  )}
+
+                  {!web3Connected && (
+                    <Form.Item style={{ marginBottom: '20px' }}>
+                      <Button 
+                        type="primary" 
+                        size="large" 
+                        block
+                        loading={blockchainLoading}
+                        onClick={connectWallet}
+                        style={{
+                          height: '50px',
+                          borderRadius: '12px',
+                          fontWeight: 600,
+                          background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)'
+                        }}
+                      >
+                        <LinkOutlined /> Kết nối MetaMask
+                      </Button>
+                    </Form.Item>
+                  )}
+
+                  {web3Connected && (
+                    <>
+                      <Form.Item
+                        label={<span style={{ fontWeight: 600, color: '#475569' }}>Chọn mạng blockchain</span>}
+                        style={{ marginBottom: '20px' }}
+                      >
+                        <Select 
+                          value={selectedNetwork}
+                          onChange={switchNetwork}
+                          style={{ borderRadius: '12px' }}
+                        >
+                          <Option value="ethereum">
+                            <span>Ethereum Mainnet</span>
+                          </Option>
+                          <Option value="bsc">
+                            <span>Binance Smart Chain (BNB)</span>
+                          </Option>
+                          <Option value="polygon">
+                            <span>Polygon (MATIC)</span>
+                          </Option>
+                        </Select>
+                      </Form.Item>
+
+                      <Form.Item
+                        label={<span style={{ fontWeight: 600, color: '#475569' }}>Tổng tiền cần thanh toán</span>}
+                        style={{ marginBottom: '20px' }}
+                      >
+                        <div style={{
+                          padding: '16px',
+                          background: '#f8fafc',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0'
+                        }}>
+                          <Text strong style={{ fontSize: '18px', color: '#1e293b' }}>
+                            ≈ {(cartTotal / 2000).toFixed(6)} {selectedNetwork === 'ethereum' ? 'ETH' : selectedNetwork === 'bsc' ? 'BNB' : 'MATIC'}
+                          </Text>
+                          <br />
+                          <Text type="secondary" style={{ fontSize: '14px' }}>
+                            (₫{cartTotal.toLocaleString()})
+                          </Text>
+                        </div>
+                      </Form.Item>
+                    </>
+                  )}
+                </>
+              );
+            }
 
             if (paymentMethod === 'creditCard') {
               return (
@@ -752,7 +1048,7 @@ const CheckoutPage = () => {
                 <Form.Item
                   name="upiId"
                   label="Ví điện tử/QR Code"
-                  rules={[{ required: true, message: 'Vui lòng nhập thông tin ví điện tử/QR Code' }]}
+                  rules={[{ required: true, message: 'Vui lòng nhập thông tin ví điện tử' }]}
                 >
                   <Input placeholder="name@upi" />
                 </Form.Item>
@@ -796,6 +1092,43 @@ const CheckoutPage = () => {
           </Space>
         </Form.Item>
       </Form>
+
+      {/* Blockchain Payment Modal */}
+      <Modal
+        title="Xác nhận giao dịch Blockchain"
+        visible={blockchainPaymentModalVisible}
+        footer={null}
+        closable={false}
+      >
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          {txStatus === 'pending' && (
+            <>
+              <Spin size="large" style={{ marginBottom: '20px' }} />
+              <Title level={4}>Đang xử lý giao dịch...</Title>
+              <Text type="secondary">Vui lòng xác nhận trong ví của bạn</Text>
+            </>
+          )}
+          
+          {txStatus === 'success' && (
+            <>
+              <CheckCircleOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '20px' }} />
+              <Title level={4}>Giao dịch thành công!</Title>
+              <Text type="secondary" style={{ display: 'block', marginBottom: '15px' }}>
+                Hash: {transactionHash.slice(0, 10)}...{transactionHash.slice(-8)}
+              </Text>
+              <Text type="secondary">Đơn hàng của bạn đang được tạo...</Text>
+            </>
+          )}
+          
+          {txStatus === 'error' && (
+            <>
+              <div style={{ fontSize: '48px', color: '#ff4d4f', marginBottom: '20px' }}>❌</div>
+              <Title level={4}>Giao dịch thất bại</Title>
+              <Text type="secondary">Vui lòng thử lại</Text>
+            </>
+          )}
+        </div>
+      </Modal>
     </Card>
   );
 
@@ -919,12 +1252,14 @@ const CheckoutPage = () => {
                   {paymentData.paymentMethod === 'upi' && <MobileOutlined />}
                   {paymentData.paymentMethod === 'netBanking' && <BankOutlined />}
                   {paymentData.paymentMethod === 'cod' && <WalletOutlined />}
+                  {paymentData.paymentMethod === 'blockchain' && <GatewayOutlined />}
                 </div>
                 <div>
                   <Text strong style={{ fontSize: '16px', color: '#1e293b', display: 'block' }}>
                     {paymentData.paymentMethod === 'creditCard' ? 'Thẻ tín dụng/Ghi nợ' :
                      paymentData.paymentMethod === 'upi' ? 'Ví điện tử/QR Code' :
-                     paymentData.paymentMethod === 'netBanking' ? 'Ngân hàng trực tuyến' : 'Thanh toán khi nhận hàng'}
+                     paymentData.paymentMethod === 'netBanking' ? 'Ngân hàng trực tuyến' :
+                     paymentData.paymentMethod === 'blockchain' ? 'Blockchain' : 'Thanh toán khi nhận hàng'}
                   </Text>
                   <Text type="secondary">
                     {paymentData.paymentMethod === 'creditCard' && `**** **** **** ${paymentData.cardNumber.slice(-4)}`}
@@ -935,6 +1270,7 @@ const CheckoutPage = () => {
                       paymentData.bank === 'icici' ? 'ICICI Bank' :
                       paymentData.bank === 'axis' ? 'Axis Bank' : 'Khác'
                     )}
+                    {paymentData.paymentMethod === 'blockchain' && `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} (${selectedNetwork})`}
                     {paymentData.paymentMethod === 'cod' && 'Thanh toán khi nhận hàng'}
                   </Text>
                 </div>
@@ -1017,8 +1353,6 @@ const CheckoutPage = () => {
                   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
                   marginBottom: '16px'
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
               >
                 Đặt hàng <ArrowRightOutlined />
               </Button>
@@ -1047,10 +1381,10 @@ const CheckoutPage = () => {
   const renderOrderConfirmation = () => (
     <Card
       bordered={false}
-  style={sectionCardStyle}
+      style={sectionCardStyle}
       bodyStyle={{ padding: '48px 32px' }}
     >
-      <div style={{ textAlign: 'center', padding: '20px 0' }}>
+      <div style={{ textAlign: 'center', padding: '20px' }}>
         <CheckCircleOutlined style={{ fontSize: '72px', color: '#52c41a' }} />
         <Title level={2}>Đặt hàng thành công!</Title>
         <Paragraph>
@@ -1062,6 +1396,11 @@ const CheckoutPage = () => {
         <Paragraph>
           Xác nhận đơn hàng đã được gửi tới {shippingData.email}.
         </Paragraph>
+        {transactionHash && (
+          <Paragraph>
+            <strong>Hash giao dịch:</strong> {transactionHash}
+          </Paragraph>
+        )}
         <Divider />
         <Space size="large">
           <Button type="primary" size="large" onClick={() => navigate('/')}>
@@ -1128,7 +1467,7 @@ const CheckoutPage = () => {
                 Thanh toán <span style={{ color: "#818cf8" }}>an toàn</span>
               </Title>
               <Text style={{ color: "#94a3b8", fontSize: "18px", marginTop: "12px", display: "block" }}>
-                Hoàn tất đơn hàng của bạn chỉ với vài bước đơn giản.
+                Hoàn tất đơn hàng của bạn chỉ với vài bước đơn giản. Hỗ trợ Blockchain.
               </Text>
             </Col>
             <Col xs={24} md={14}>
