@@ -112,10 +112,10 @@ class UserViewSet(viewsets.ModelViewSet):
         new_password = request.data.get('new_password')
         confirm_password = request.data.get('confirm_password')
 
-        # Validate input
-        if not old_password or not new_password or not confirm_password:
+        # Validate input (new and confirm are always required)
+        if not new_password or not confirm_password:
             return Response(
-                {"detail": "All password fields are required."},
+                {"detail": "New password and confirm password are required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -125,12 +125,20 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Check if old password is correct
-        if not user.check_password(old_password):
-            return Response(
-                {"detail": "Current password is incorrect."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # If the user is changing their own password, require and verify old_password.
+        if request.user.id == user.id:
+            if not old_password:
+                return Response(
+                    {"detail": "Current password is required to change your password."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not user.check_password(old_password):
+                return Response(
+                    {"detail": "Current password is incorrect."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # If a staff user is changing another user's password, allow change without old_password.
 
         # Set new password
         user.set_password(new_password)

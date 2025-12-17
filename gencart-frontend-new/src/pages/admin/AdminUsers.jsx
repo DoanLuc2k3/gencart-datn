@@ -21,6 +21,8 @@ import {
   Col,
   Segmented,
   Tooltip,
+  Avatar,
+  Badge,
 } from "antd";
 import {
   UserOutlined,
@@ -35,6 +37,9 @@ import {
   SafetyCertificateOutlined,
   CheckCircleOutlined,
   SearchOutlined,
+  CloseCircleOutlined,
+  CrownOutlined,
+  IdcardOutlined,
 } from "@ant-design/icons";
 import { useResponsive } from "../../hooks/useResponsive";
 
@@ -100,7 +105,6 @@ const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filter users based on search
@@ -130,7 +134,6 @@ const AdminUsers = () => {
       const response = await fetch(
         `http://localhost:8000/api/orders/?user=${user.id}`,
         {
-          // backend lacks user orders endpoint; filter via query if supported
           headers: { Authorization: `Bearer ${token}` },
         }
       );
@@ -185,6 +188,7 @@ const AdminUsers = () => {
       message.success("User updated successfully");
       setModalVisible(false);
       setUsers(users.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+      setAllUsers(allUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
       if (drawerVisible) setSelectedUser(updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);
@@ -196,7 +200,6 @@ const AdminUsers = () => {
   const handleChangePassword = async (values) => {
     try {
       const token = localStorage.getItem("access_token");
-      // As admin, bypass by sending placeholders for old/confirm if not provided
       const payload = {
         old_password: values.old_password || "TEMP_PLACEHOLDER",
         new_password: values.password,
@@ -236,6 +239,7 @@ const AdminUsers = () => {
       if (!response.ok) throw new Error("Failed to delete user");
       message.success("User deleted successfully");
       setUsers(users.filter((user) => user.id !== userId));
+      setAllUsers(allUsers.filter((user) => user.id !== userId));
       if (drawerVisible && selectedUser && selectedUser.id === userId) {
         setDrawerVisible(false);
       }
@@ -245,45 +249,194 @@ const AdminUsers = () => {
     }
   };
 
-  // Get status tag
-  const getUserStatusTag = (user) => {
-    if (user.is_superuser) return <Tag color="gold">Superuser</Tag>;
-    if (user.is_staff) return <Tag color="blue">Staff</Tag>;
-    return <Tag color="green">Customer</Tag>;
+  // Get user avatar initials
+  const getUserInitials = (user) => {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
+    }
+    return user.username[0].toUpperCase();
+  };
+
+  // Get avatar color based on role
+  const getAvatarColor = (user) => {
+    if (user.is_superuser) return "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)";
+    if (user.is_staff) return "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)";
+    return "linear-gradient(135deg, #10b981 0%, #059669 100%)";
   };
 
   // Table columns
   const columns = [
     {
-      title: "ID",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            ID
+          </span>
+        </div>
+      ),
       dataIndex: "id",
       key: "id",
+      width: 90,
       sorter: (a, b) => a.id - b.id,
+      render: (text) => (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 36,
+            height: 36,
+            borderRadius: 10,
+            background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+            border: "1.5px solid #667eea30",
+            fontWeight: 700,
+            fontSize: 13,
+            color: "#667eea",
+            padding: "0 12px",
+          }}
+        >
+          #{text}
+        </div>
+      ),
     },
     {
-      title: "Username",
-      dataIndex: "username",
-      key: "username",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            USER
+          </span>
+        </div>
+      ),
+      key: "user",
+      width: 280,
+      render: (_, record) => (
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Avatar
+            size={48}
+            style={{
+              background: getAvatarColor(record),
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 16,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              border: "3px solid #fff",
+            }}
+          >
+            {getUserInitials(record)}
+          </Avatar>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Text strong style={{ fontSize: 14, color: "#0f172a", fontWeight: 700 }}>
+                {record.username}
+              </Text>
+              {record.is_superuser && (
+                <CrownOutlined style={{ color: "#fbbf24", fontSize: 14 }} />
+              )}
+            </div>
+            <Text style={{ fontSize: 12, color: "#64748b" }}>
+              {record.first_name && record.last_name
+                ? `${record.first_name} ${record.last_name}`
+                : "No name"}
+            </Text>
+          </div>
+        </div>
+      ),
       sorter: (a, b) => a.username.localeCompare(b.username),
     },
     {
-      title: "Name",
-      key: "name",
-      render: (_, record) => `${record.first_name} ${record.last_name}`,
-      sorter: (a, b) =>
-        `${a.first_name} ${a.last_name}`.localeCompare(
-          `${b.first_name} ${b.last_name}`
-        ),
-    },
-    {
-      title: "Email",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            EMAIL
+          </span>
+        </div>
+      ),
       dataIndex: "email",
       key: "email",
+      render: (text) => (
+        <Tooltip title={text}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <MailOutlined style={{ color: "#94a3b8", fontSize: 14 }} />
+            <Text style={{ fontSize: 13, color: "#475569" }} ellipsis>
+              {text}
+            </Text>
+          </div>
+        </Tooltip>
+      ),
     },
     {
-      title: "Role",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            ROLE
+          </span>
+        </div>
+      ),
       key: "role",
-      render: (_, record) => getUserStatusTag(record),
+      width: 150,
+      render: (_, record) => {
+        if (record.is_superuser) {
+          return (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 14px",
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #fbbf2415 0%, #f59e0b15 100%)",
+                border: "1.5px solid #fbbf2430",
+                fontWeight: 700,
+                fontSize: 13,
+                color: "#f59e0b",
+              }}
+            >
+              <CrownOutlined style={{ fontSize: 14 }} />
+              Superuser
+            </div>
+          );
+        }
+        if (record.is_staff) {
+          return (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 14px",
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #3b82f615 0%, #2563eb15 100%)",
+                border: "1.5px solid #3b82f630",
+                fontWeight: 700,
+                fontSize: 13,
+                color: "#2563eb",
+              }}
+            >
+              <IdcardOutlined style={{ fontSize: 14 }} />
+              Staff
+            </div>
+          );
+        }
+        return (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 14px",
+              borderRadius: 10,
+              background: "linear-gradient(135deg, #10b98115 0%, #05966915 100%)",
+              border: "1.5px solid #10b98130",
+              fontWeight: 700,
+              fontSize: 13,
+              color: "#059669",
+            }}
+          >
+            <UserOutlined style={{ fontSize: 14 }} />
+            Customer
+          </div>
+        );
+      },
       filters: [
         { text: "Superuser", value: "superuser" },
         { text: "Staff", value: "staff" },
@@ -296,10 +449,39 @@ const AdminUsers = () => {
       },
     },
     {
-      title: "Active",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            STATUS
+          </span>
+        </div>
+      ),
       dataIndex: "is_active",
       key: "is_active",
-      render: (active) => <Switch checked={active} disabled />,
+      width: 130,
+      render: (active) => (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "6px 14px",
+            borderRadius: 10,
+            background: active
+              ? "linear-gradient(135deg, #10b98115 0%, #05966915 100%)"
+              : "linear-gradient(135deg, #ef444415 0%, #dc262615 100%)",
+            border: active
+              ? "1.5px solid #10b98130"
+              : "1.5px solid #ef444430",
+            fontWeight: 700,
+            fontSize: 13,
+            color: active ? "#059669" : "#dc2626",
+          }}
+        >
+          {active ? <CheckCircleOutlined style={{ fontSize: 14 }} /> : <CloseCircleOutlined style={{ fontSize: 14 }} />}
+          {active ? "Active" : "Inactive"}
+        </div>
+      ),
       filters: [
         { text: "Active", value: true },
         { text: "Inactive", value: false },
@@ -307,54 +489,182 @@ const AdminUsers = () => {
       onFilter: (value, record) => record.is_active === value,
     },
     {
-      title: "Date Joined",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            JOINED DATE
+          </span>
+        </div>
+      ),
       dataIndex: "date_joined",
       key: "date_joined",
-      render: (text) => new Date(text).toLocaleDateString("en-IN"),
+      width: 140,
+      render: (text) => (
+        <Text style={{ fontSize: 13, color: "#64748b" }}>
+          {new Date(text).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </Text>
+      ),
       sorter: (a, b) => new Date(a.date_joined) - new Date(b.date_joined),
     },
     {
-      title: "Actions",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            ACTIONS
+          </span>
+        </div>
+      ),
       key: "actions",
+      className: "actions-column",
+      width: 200,
+      fixed: "right",
       render: (_, record) => (
-        <Space size="small">
-          <Button
-            icon={<EyeOutlined />}
-            onClick={() => showUserDetails(record)}
-            size="small"
-            style={{
-              background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
-              border: "none",
-              color: "#fff",
-            }}
-          />
-          <Button
-            type="default"
-            icon={<EditOutlined />}
-            onClick={() => showEditModal(record)}
-            size="small"
-          />
-          <Button
-            type="default"
-            icon={<LockOutlined />}
-            onClick={() => showPasswordModal(record)}
-            size="small"
-          />
-          <Popconfirm
-            title="Are you sure you want to delete this user?"
-            onConfirm={() => handleDeleteUser(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              type="primary"
-              danger
-              icon={<DeleteOutlined />}
-              size="small"
-              disabled={record.is_superuser} // Prevent deleting superusers
-            />
-          </Popconfirm>
-        </Space>
+        <div className="actions-content" style={{ background: "#fff", padding: 6, borderRadius: 8 }}>
+          <Space size={8}>
+            <Tooltip title="View Details">
+              <Button
+                icon={<EyeOutlined style={{ fontSize: 15 }} />}
+                onClick={() => showUserDetails(record)}
+                size="middle"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  border: "none",
+                  color: "#fff",
+                  boxShadow: "0 4px 14px rgba(102, 126, 234, 0.35)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(102, 126, 234, 0.35)";
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="Edit User">
+              <Button
+                icon={<EditOutlined style={{ fontSize: 15 }} />}
+                onClick={() => showEditModal(record)}
+                size="middle"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                  border: "none",
+                  color: "#fff",
+                  boxShadow: "0 4px 14px rgba(59, 130, 246, 0.35)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(59, 130, 246, 0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(59, 130, 246, 0.35)";
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="Change Password">
+              <Button
+                icon={<LockOutlined style={{ fontSize: 15 }} />}
+                onClick={() => showPasswordModal(record)}
+                size="middle"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                  border: "none",
+                  color: "#fff",
+                  boxShadow: "0 4px 14px rgba(245, 158, 11, 0.35)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(245, 158, 11, 0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(245, 158, 11, 0.35)";
+                }}
+              />
+            </Tooltip>
+            <Popconfirm
+              title={<span style={{ fontWeight: 600 }}>Delete User</span>}
+              description="Are you sure you want to delete this user?"
+              onConfirm={() => handleDeleteUser(record.id)}
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{
+                style: {
+                  background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                  border: "none",
+                  fontWeight: 600,
+                },
+              }}
+            >
+              <Tooltip title={record.is_superuser ? "Cannot delete superusers" : "Delete User"}>
+                <Button
+                  type="primary"
+                  danger
+                  icon={<DeleteOutlined style={{ fontSize: 15 }} />}
+                  size="middle"
+                  disabled={record.is_superuser}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    background: record.is_superuser
+                      ? "#f1f5f9"
+                      : "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                    border: "none",
+                    color: record.is_superuser ? "#cbd5e1" : "#fff",
+                    boxShadow: record.is_superuser
+                      ? "none"
+                      : "0 4px 14px rgba(245, 87, 108, 0.35)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: record.is_superuser ? "not-allowed" : "pointer",
+                    transition: "all 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!record.is_superuser) {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(245, 87, 108, 0.45)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!record.is_superuser) {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 4px 14px rgba(245, 87, 108, 0.35)";
+                    }
+                  }}
+                />
+              </Tooltip>
+            </Popconfirm>
+          </Space>
+        </div>
       ),
     },
   ];
@@ -397,7 +707,7 @@ const AdminUsers = () => {
   return (
     <div
       style={{
-        padding: isMobile ? 3 : 6,
+        padding: isMobile ? 8 : 12,
         background: "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
         borderRadius: isMobile ? 12 : 24,
         minHeight: "100%",
@@ -484,6 +794,7 @@ const AdminUsers = () => {
           border: "1px solid rgba(148, 163, 184, 0.24)",
           boxShadow: "0 20px 45px rgba(15, 23, 42, 0.12)",
           background: "#ffffff",
+          overflow: "hidden",
         }}
         bodyStyle={{ padding: 0 }}
       >
@@ -492,76 +803,175 @@ const AdminUsers = () => {
           dataSource={users}
           rowKey="id"
           loading={loading}
-          scroll={{ x: 900 }}
-          pagination={{ pageSize: 10 }}
+          scroll={{ x: 1400 }}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => (
+              <span style={{ fontWeight: 600, color: "#475569" }}>
+                Total <span style={{ color: "#667eea", fontWeight: 700 }}>{total}</span> users
+              </span>
+            ),
+            style: { padding: "20px 24px", margin: 0 },
+          }}
+          style={{
+            borderRadius: 20,
+          }}
+          rowClassName={(record, index) =>
+            index % 2 === 0 ? "table-row-light" : "table-row-dark"
+          }
         />
       </Card>
 
       {/* Edit User Modal */}
       <Modal
-        title="Edit User"
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <EditOutlined style={{ fontSize: 20, color: "#fff" }} />
+            </div>
+            <span style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>
+              Edit User
+            </span>
+          </div>
+        }
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
-        width={600}
+        width={620}
+        style={{ top: 40 }}
       >
-        <Form form={form} layout="vertical" onFinish={handleUpdateUser}>
+        <Form 
+          form={form} 
+          layout="vertical" 
+          onFinish={handleUpdateUser}
+          style={{ marginTop: 24 }}
+        >
           <Form.Item
             name="username"
-            label="Username"
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Username</span>}
             rules={[{ required: true, message: "Please enter username" }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Username" />
+            <Input 
+              prefix={<UserOutlined />} 
+              placeholder="Username" 
+              size="large"
+              style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
+            />
           </Form.Item>
 
           <Form.Item
             name="email"
-            label="Email"
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Email</span>}
             rules={[
               { required: true, message: "Please enter email" },
               { type: "email", message: "Please enter a valid email" },
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="Email" />
+            <Input 
+              prefix={<MailOutlined />} 
+              placeholder="Email" 
+              size="large"
+              style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
+            />
           </Form.Item>
 
-          <Form.Item name="first_name" label="First Name">
-            <Input placeholder="First Name" />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item 
+                name="first_name" 
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>First Name</span>}
+              >
+                <Input 
+                  placeholder="First Name" 
+                  size="large"
+                  style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item 
+                name="last_name" 
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Last Name</span>}
+              >
+                <Input 
+                  placeholder="Last Name" 
+                  size="large"
+                  style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item name="last_name" label="Last Name">
-            <Input placeholder="Last Name" />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col span={8}>
+              <Form.Item 
+                name="is_active" 
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Active</span>} 
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="is_staff"
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Staff</span>}
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="is_superuser"
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Superuser</span>}
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item name="is_active" label="Active" valuePropName="checked">
-            <Switch />
-          </Form.Item>
-
-          <Form.Item
-            name="is_staff"
-            label="Staff Status"
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
-
-          <Form.Item
-            name="is_superuser"
-            label="Superuser Status"
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
-
-          <Form.Item>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
               <Button
-                style={{ marginRight: 8 }}
                 onClick={() => setModalVisible(false)}
+                size="large"
+                style={{ 
+                  borderRadius: 10, 
+                  height: 44, 
+                  padding: "0 24px",
+                  border: "2px solid #e2e8f0",
+                  fontWeight: 600,
+                }}
               >
                 Cancel
               </Button>
-              <Button type="primary" htmlType="submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                style={{
+                  borderRadius: 10,
+                  height: 44,
+                  padding: "0 32px",
+                  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                  border: "none",
+                  fontWeight: 700,
+                  boxShadow: "0 4px 16px rgba(59, 130, 246, 0.35)",
+                }}
+              >
                 Update User
               </Button>
             </div>
@@ -571,19 +981,41 @@ const AdminUsers = () => {
 
       {/* Change Password Modal */}
       <Modal
-        title="Change Password"
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <LockOutlined style={{ fontSize: 20, color: "#fff" }} />
+            </div>
+            <span style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>
+              Change Password
+            </span>
+          </div>
+        }
         open={passwordModalVisible}
         onCancel={() => setPasswordModalVisible(false)}
         footer={null}
+        width={540}
+        style={{ top: 40 }}
       >
         <Form
           form={passwordForm}
           layout="vertical"
           onFinish={handleChangePassword}
+          style={{ marginTop: 24 }}
         >
           <Form.Item
             name="password"
-            label="New Password"
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>New Password</span>}
             rules={[
               { required: true, message: "Please enter new password" },
               { min: 8, message: "Password must be at least 8 characters" },
@@ -592,12 +1024,14 @@ const AdminUsers = () => {
             <Input.Password
               prefix={<LockOutlined />}
               placeholder="New Password"
+              size="large"
+              style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
             />
           </Form.Item>
 
           <Form.Item
             name="confirm"
-            label="Confirm Password"
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Confirm Password</span>}
             dependencies={["password"]}
             rules={[
               { required: true, message: "Please confirm password" },
@@ -616,18 +1050,40 @@ const AdminUsers = () => {
             <Input.Password
               prefix={<LockOutlined />}
               placeholder="Confirm Password"
+              size="large"
+              style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
             />
           </Form.Item>
 
-          <Form.Item>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
               <Button
-                style={{ marginRight: 8 }}
                 onClick={() => setPasswordModalVisible(false)}
+                size="large"
+                style={{ 
+                  borderRadius: 10, 
+                  height: 44, 
+                  padding: "0 24px",
+                  border: "2px solid #e2e8f0",
+                  fontWeight: 600,
+                }}
               >
                 Cancel
               </Button>
-              <Button type="primary" htmlType="submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                style={{
+                  borderRadius: 10,
+                  height: 44,
+                  padding: "0 32px",
+                  background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                  border: "none",
+                  fontWeight: 700,
+                  boxShadow: "0 4px 16px rgba(245, 158, 11, 0.35)",
+                }}
+              >
                 Change Password
               </Button>
             </div>
@@ -637,18 +1093,42 @@ const AdminUsers = () => {
 
       {/* User Details Drawer */}
       <Drawer
-        title={`User: ${selectedUser?.username || ""}`}
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <Avatar
+              size={40}
+              style={{
+                background: selectedUser ? getAvatarColor(selectedUser) : "#667eea",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: 16,
+              }}
+            >
+              {selectedUser ? getUserInitials(selectedUser) : "U"}
+            </Avatar>
+            <span style={{ fontSize: 18, fontWeight: 700 }}>
+              {selectedUser?.username || ""}
+            </span>
+          </div>
+        }
         placement="right"
-        width={600}
+        width={isMobile ? "100%" : 640}
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
         extra={
           <Space>
             <Button
               type="primary"
+              icon={<EditOutlined />}
               onClick={() => {
                 setDrawerVisible(false);
                 showEditModal(selectedUser);
+              }}
+              style={{
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                border: "none",
+                fontWeight: 600,
               }}
             >
               Edit User
@@ -658,53 +1138,255 @@ const AdminUsers = () => {
       >
         {selectedUser && (
           <Tabs defaultActiveKey="1">
-            <TabPane tab="User Information" key="1">
-              <Descriptions bordered column={1}>
-                <Descriptions.Item label="ID">
-                  {selectedUser.id}
+            <TabPane 
+              tab={
+                <span style={{ fontWeight: 600 }}>
+                  <UserOutlined /> User Information
+                </span>
+              } 
+              key="1"
+            >
+              <Descriptions bordered column={1} size="middle">
+                <Descriptions.Item 
+                  label={<span style={{ fontWeight: 600 }}>ID</span>}
+                >
+                  #{selectedUser.id}
                 </Descriptions.Item>
-                <Descriptions.Item label="Username">
+                <Descriptions.Item 
+                  label={<span style={{ fontWeight: 600 }}>Username</span>}
+                >
                   {selectedUser.username}
                 </Descriptions.Item>
-                <Descriptions.Item label="Email">
-                  {selectedUser.email}
+                <Descriptions.Item 
+                  label={<span style={{ fontWeight: 600 }}>Email</span>}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <MailOutlined style={{ color: "#94a3b8" }} />
+                    {selectedUser.email}
+                  </div>
                 </Descriptions.Item>
-                <Descriptions.Item label="First Name">
-                  {selectedUser.first_name || "-"}
+                <Descriptions.Item 
+                  label={<span style={{ fontWeight: 600 }}>Full Name</span>}
+                >
+                  {selectedUser.first_name && selectedUser.last_name
+                    ? `${selectedUser.first_name} ${selectedUser.last_name}`
+                    : "-"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Last Name">
-                  {selectedUser.last_name || "-"}
+                <Descriptions.Item 
+                  label={<span style={{ fontWeight: 600 }}>Date Joined</span>}
+                >
+                  {new Date(selectedUser.date_joined).toLocaleString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </Descriptions.Item>
-                <Descriptions.Item label="Date Joined">
-                  {new Date(selectedUser.date_joined).toLocaleString("en-IN")}
-                </Descriptions.Item>
-                <Descriptions.Item label="Last Login">
+                <Descriptions.Item 
+                  label={<span style={{ fontWeight: 600 }}>Last Login</span>}
+                >
                   {selectedUser.last_login
-                    ? new Date(selectedUser.last_login).toLocaleString("en-IN")
+                    ? new Date(selectedUser.last_login).toLocaleString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
                     : "Never"}
                 </Descriptions.Item>
-                <Descriptions.Item label="Active">
-                  <Switch checked={selectedUser.is_active} disabled />
+                <Descriptions.Item 
+                  label={<span style={{ fontWeight: 600 }}>Active Status</span>}
+                >
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "4px 12px",
+                      borderRadius: 8,
+                      background: selectedUser.is_active
+                        ? "linear-gradient(135deg, #10b98115 0%, #05966915 100%)"
+                        : "linear-gradient(135deg, #ef444415 0%, #dc262615 100%)",
+                      border: selectedUser.is_active
+                        ? "1.5px solid #10b98130"
+                        : "1.5px solid #ef444430",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      color: selectedUser.is_active ? "#059669" : "#dc2626",
+                    }}
+                  >
+                    {selectedUser.is_active ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+                    {selectedUser.is_active ? "Active" : "Inactive"}
+                  </div>
                 </Descriptions.Item>
-                <Descriptions.Item label="Staff Status">
-                  <Switch checked={selectedUser.is_staff} disabled />
-                </Descriptions.Item>
-                <Descriptions.Item label="Superuser Status">
-                  <Switch checked={selectedUser.is_superuser} disabled />
+                <Descriptions.Item 
+                  label={<span style={{ fontWeight: 600 }}>Role</span>}
+                >
+                  {selectedUser.is_superuser && (
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "4px 12px",
+                        borderRadius: 8,
+                        background: "linear-gradient(135deg, #fbbf2415 0%, #f59e0b15 100%)",
+                        border: "1.5px solid #fbbf2430",
+                        fontWeight: 700,
+                        fontSize: 12,
+                        color: "#f59e0b",
+                      }}
+                    >
+                      <CrownOutlined />
+                      Superuser
+                    </div>
+                  )}
+                  {selectedUser.is_staff && !selectedUser.is_superuser && (
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "4px 12px",
+                        borderRadius: 8,
+                        background: "linear-gradient(135deg, #3b82f615 0%, #2563eb15 100%)",
+                        border: "1.5px solid #3b82f630",
+                        fontWeight: 700,
+                        fontSize: 12,
+                        color: "#2563eb",
+                      }}
+                    >
+                      <IdcardOutlined />
+                      Staff
+                    </div>
+                  )}
+                  {!selectedUser.is_staff && !selectedUser.is_superuser && (
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "4px 12px",
+                        borderRadius: 8,
+                        background: "linear-gradient(135deg, #10b98115 0%, #05966915 100%)",
+                        border: "1.5px solid #10b98130",
+                        fontWeight: 700,
+                        fontSize: 12,
+                        color: "#059669",
+                      }}
+                    >
+                      <UserOutlined />
+                      Customer
+                    </div>
+                  )}
                 </Descriptions.Item>
               </Descriptions>
             </TabPane>
-            <TabPane tab="Orders" key="2">
+            <TabPane 
+              tab={
+                <span style={{ fontWeight: 600 }}>
+                  <ShoppingOutlined /> Orders
+                </span>
+              } 
+              key="2"
+            >
               <Table
                 columns={orderColumns}
                 dataSource={userOrders}
                 rowKey="id"
                 pagination={{ pageSize: 5 }}
+                size="small"
               />
             </TabPane>
           </Tabs>
         )}
       </Drawer>
+
+      <style>
+        {`
+          .table-row-light {
+            background: #ffffff;
+            transition: all 0.3s ease;
+          }
+          .table-row-dark {
+            background: #fafbfc;
+            transition: all 0.3s ease;
+          }
+          .ant-table-thead > tr > th {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+            padding: 18px 16px !important;
+            font-weight: 700 !important;
+          }
+          .ant-table-tbody > tr > td {
+            padding: 18px 16px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            transition: all 0.3s ease !important;
+          }
+          .ant-table-tbody > tr:hover > td {
+            background: linear-gradient(135deg, #667eea08 0%, #764ba208 100%) !important;
+            transform: scale(1.001);
+          }
+          .ant-table-tbody > tr:hover {
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+          }
+          /* ACTIONS column overrides: force a solid background, prevent any transparency/blur, and make it sticky */
+          .actions-column,
+          .ant-table-tbody > tr > td.actions-column,
+          .ant-table-thead > tr > th.actions-column {
+            background: #fff !important;
+            position: -webkit-sticky !important; /* safari */
+            position: sticky !important;
+            right: 0 !important;
+            z-index: 12 !important;
+            opacity: 1 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+          }
+          /* Header should sit above cells */
+          .ant-table-thead > tr > th.actions-column {
+            z-index: 15 !important;
+          }
+          /* Ensure hover doesn't make the actions cell translucent */
+          .ant-table-tbody > tr:hover > td.actions-column {
+            background: #fff !important;
+            transform: none !important;
+            box-shadow: none !important;
+          }
+          /* Keep content inside the actions area above row backgrounds and add subtle left divider */
+          .actions-column .actions-content {
+            background: #fff !important;
+            z-index: 16 !important;
+            position: relative !important;
+            opacity: 1 !important;
+            min-width: 200px;
+            box-shadow: -6px 0 12px rgba(15, 23, 42, 0.04) !important;
+          }
+
+          .ant-pagination-item-active {
+            border-color: #667eea !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+          }
+          .ant-pagination-item-active a {
+            color: #fff !important;
+            fontWeight: 700 !important;
+          }
+          .ant-pagination-item {
+            border-radius: 8px !important;
+            border: 2px solid #e2e8f0 !important;
+            font-weight: 600 !important;
+          }
+          .ant-pagination-item:hover {
+            border-color: #667eea !important;
+          }
+          .ant-pagination-prev button, .ant-pagination-next button {
+            border-radius: 8px !important;
+          }
+        `}
+      </style>
     </div>
   );
 };

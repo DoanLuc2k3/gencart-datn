@@ -16,6 +16,8 @@ import {
   Row,
   Col,
   Tag,
+  Badge,
+  Tooltip,
 } from "antd";
 import {
   PlusOutlined,
@@ -23,6 +25,9 @@ import {
   DeleteOutlined,
   UploadOutlined,
   SearchOutlined,
+  AppstoreOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { getValidImageUrl } from "../../utils/imageUtils";
 import { useResponsive } from "../../hooks/useResponsive";
@@ -51,8 +56,7 @@ const AdminCategories = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
 
-  
-  const formatNumber = (n) => new Intl.NumberFormat("vi-VN").format(Number(n)||0);
+  const formatNumber = (n) => new Intl.NumberFormat("vi-VN").format(Number(n) || 0);
 
   const { Title, Text } = Typography;
   const { TextArea } = Input;
@@ -80,7 +84,6 @@ const AdminCategories = () => {
 
   useEffect(() => {
     fetchCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filter categories based on search
@@ -97,7 +100,6 @@ const AdminCategories = () => {
     );
     setCategories(filtered);
   }, [debouncedSearch, allCategories]);
-
 
   // Show add/edit modal
   const showModal = (category = null) => {
@@ -163,7 +165,6 @@ const AdminCategories = () => {
       );
       setModalVisible(false);
 
-      // Refresh category list
       const categoriesResponse = await fetch(
         "http://localhost:8000/api/categories/",
         { headers: { Authorization: `Bearer ${token}` } }
@@ -194,12 +195,16 @@ const AdminCategories = () => {
       message.success("Category deleted successfully");
       const updatedCategories = allCategories.filter((c) => c.id !== id);
       setAllCategories(updatedCategories);
-      setCategories(updatedCategories.filter((c) => {
-        if (!search.trim()) return true;
-        const searchLower = search.toLowerCase();
-        return c.name?.toLowerCase().includes(searchLower) ||
-               c.description?.toLowerCase().includes(searchLower);
-      }));
+      setCategories(
+        updatedCategories.filter((c) => {
+          if (!search.trim()) return true;
+          const searchLower = search.toLowerCase();
+          return (
+            c.name?.toLowerCase().includes(searchLower) ||
+            c.description?.toLowerCase().includes(searchLower)
+          );
+        })
+      );
     } catch (error) {
       console.error("Error deleting category:", error);
       message.error("Failed to delete category");
@@ -222,54 +227,204 @@ const AdminCategories = () => {
   const categoriesMetrics = useMemo(() => {
     const total = categories.length;
     const active = categories.filter((c) => c.is_active).length;
-    const withProducts = categories.filter((c) => c.product_count && c.product_count > 0).length;
+    const withProducts = categories.filter(
+      (c) => c.product_count && c.product_count > 0
+    ).length;
     return { total, active, withProducts };
   }, [categories]);
 
   // Table columns
   const columns = [
     {
-      title: "ID",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            ID
+          </span>
+        </div>
+      ),
       dataIndex: "id",
       key: "id",
+      width: 90,
       sorter: (a, b) => a.id - b.id,
-    },
-    {
-      title: "Image",
-      dataIndex: "image",
-      key: "image",
-      render: (text, record) => (
-        <img
-          src={getValidImageUrl(text, record.name, 50, 50)}
-          alt={record.name}
-          style={{ width: 50, height: 50, objectFit: "cover" }}
-        />
+      render: (text) => (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 36,
+            height: 36,
+            borderRadius: 10,
+            background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+            border: "1.5px solid #667eea30",
+            fontWeight: 700,
+            fontSize: 13,
+            color: "#667eea",
+            padding: "0 12px",
+          }}
+        >
+          #{text}
+        </div>
       ),
     },
     {
-      title: "Name",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            IMAGE
+          </span>
+        </div>
+      ),
+      dataIndex: "image",
+      key: "image",
+      width: 110,
+      render: (text, record) => (
+        <div
+          style={{
+            position: "relative",
+            width: 64,
+            height: 64,
+            borderRadius: 14,
+            overflow: "hidden",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.12), 0 0 0 3px #f8fafc",
+            border: "2px solid #fff",
+            transition: "all 0.3s ease",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.08) translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.18), 0 0 0 3px #667eea20";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1) translateY(0)";
+            e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12), 0 0 0 3px #f8fafc";
+          }}
+        >
+          <img
+            src={getValidImageUrl(text, record.name, 64, 64)}
+            alt={record.name}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      ),
+    },
+    {
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            CATEGORY NAME
+          </span>
+        </div>
+      ),
       dataIndex: "name",
       key: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
+      render: (text) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Text
+            strong
+            style={{ 
+              fontSize: 15, 
+              color: "#0f172a", 
+              fontWeight: 700,
+              lineHeight: 1.4,
+            }}
+          >
+            {text}
+          </Text>
+        </div>
+      ),
     },
     {
-      title: "Description",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            DESCRIPTION
+          </span>
+        </div>
+      ),
       dataIndex: "description",
       key: "description",
       ellipsis: true,
+      render: (text) => (
+        <Tooltip title={text || "No description"}>
+          <Text style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6 }}>
+            {text || <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>No description</span>}
+          </Text>
+        </Tooltip>
+      ),
     },
     {
-      title: "Products",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            PRODUCTS
+          </span>
+        </div>
+      ),
       dataIndex: "product_count",
       key: "product_count",
+      width: 130,
       sorter: (a, b) => a.product_count - b.product_count,
-      render: (count) => (count || count === 0 ? formatNumber(count) : "—"),
+      render: (count) => (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "6px 14px",
+            borderRadius: 10,
+            background: count > 0 
+              ? "linear-gradient(135deg, #3b82f615 0%, #2563eb15 100%)" 
+              : "#f8fafc",
+            border: count > 0 
+              ? "1.5px solid #3b82f630" 
+              : "1.5px solid #e2e8f0",
+            fontWeight: 700,
+            fontSize: 14,
+            color: count > 0 ? "#2563eb" : "#94a3b8",
+          }}
+        >
+          <AppstoreOutlined style={{ fontSize: 14 }} />
+          {count || count === 0 ? formatNumber(count) : "—"}
+        </div>
+      ),
     },
     {
-      title: "Active",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            STATUS
+          </span>
+        </div>
+      ),
       dataIndex: "is_active",
       key: "is_active",
-      render: (active) => <Switch checked={active} disabled />,
+      width: 130,
+      render: (active) => (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "6px 14px",
+            borderRadius: 10,
+            background: active 
+              ? "linear-gradient(135deg, #10b98115 0%, #059669215 100%)" 
+              : "linear-gradient(135deg, #ef444415 0%, #dc262615 100%)",
+            border: active 
+              ? "1.5px solid #10b98130" 
+              : "1.5px solid #ef444430",
+            fontWeight: 700,
+            fontSize: 13,
+            color: active ? "#059669" : "#dc2626",
+          }}
+        >
+          {active ? <CheckCircleOutlined style={{ fontSize: 14 }} /> : <CloseCircleOutlined style={{ fontSize: 14 }} />}
+          {active ? "Active" : "Inactive"}
+        </div>
+      ),
       filters: [
         { text: "Active", value: true },
         { text: "Inactive", value: false },
@@ -277,33 +432,99 @@ const AdminCategories = () => {
       onFilter: (value, record) => record.is_active === value,
     },
     {
-      title: "Actions",
+      title: (
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
+            ACTIONS
+          </span>
+        </div>
+      ),
       key: "actions",
+      width: 150,
+      fixed: "right",
       render: (_, record) => (
-        <Space size="small">
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => showModal(record)}
-            size="small"
-            style={{
-              background: "linear-gradient(90deg, #5b21b6 0%, #2563eb 100%)",
-              border: "none",
-              color: "#fff",
-            }}
-          />
+        <Space size={8}>
+          <Tooltip title="Edit Category">
+            <Button
+              icon={<EditOutlined style={{ fontSize: 15 }} />}
+              onClick={() => showModal(record)}
+              size="middle"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                border: "none",
+                color: "#fff",
+                boxShadow: "0 4px 14px rgba(102, 126, 234, 0.35)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 4px 14px rgba(102, 126, 234, 0.35)";
+              }}
+            />
+          </Tooltip>
           <Popconfirm
-            title="Are you sure you want to delete this category?"
+            title={<span style={{ fontWeight: 600 }}>Delete Category</span>}
+            description="Are you sure you want to delete this category?"
             onConfirm={() => handleDelete(record.id)}
             okText="Yes"
             cancelText="No"
+            okButtonProps={{
+              style: {
+                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                border: "none",
+                fontWeight: 600,
+              },
+            }}
           >
-            <Button
-              type="primary"
-              danger
-              icon={<DeleteOutlined />}
-              size="small"
-              disabled={record.product_count > 0} // Prevent deleting categories with products
-            />
+            <Tooltip title={record.product_count > 0 ? "Cannot delete categories with products" : "Delete Category"}>
+              <Button
+                type="primary"
+                danger
+                icon={<DeleteOutlined style={{ fontSize: 15 }} />}
+                size="middle"
+                disabled={record.product_count > 0}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: record.product_count > 0 
+                    ? "#f1f5f9" 
+                    : "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                  border: "none",
+                  color: record.product_count > 0 ? "#cbd5e1" : "#fff",
+                  boxShadow: record.product_count > 0 
+                    ? "none" 
+                    : "0 4px 14px rgba(245, 87, 108, 0.35)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: record.product_count > 0 ? "not-allowed" : "pointer",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (record.product_count === 0) {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(245, 87, 108, 0.45)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (record.product_count === 0) {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 14px rgba(245, 87, 108, 0.35)";
+                  }
+                }}
+              />
+            </Tooltip>
           </Popconfirm>
         </Space>
       ),
@@ -400,12 +621,14 @@ const AdminCategories = () => {
         />
       </Card>
 
+      {/* Table Card */}
       <Card
         style={{
           borderRadius: 20,
           border: "1px solid rgba(148, 163, 184, 0.24)",
           boxShadow: "0 20px 45px rgba(15, 23, 42, 0.12)",
           background: "#ffffff",
+          overflow: "hidden",
         }}
         bodyStyle={{ padding: 0 }}
       >
@@ -414,55 +637,247 @@ const AdminCategories = () => {
           dataSource={categories}
           rowKey="id"
           loading={loading}
-          scroll={{ x: 900 }}
-          pagination={{ pageSize: 10 }}
+          scroll={{ x: 1200 }}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => (
+              <span style={{ fontWeight: 600, color: "#475569" }}>
+                Total <span style={{ color: "#667eea", fontWeight: 700 }}>{total}</span> categories
+              </span>
+            ),
+            style: { padding: "20px 24px", margin: 0 },
+          }}
+          style={{
+            borderRadius: 20,
+          }}
+          rowClassName={(record, index) =>
+            index % 2 === 0 ? "table-row-light" : "table-row-dark"
+          }
         />
       </Card>
 
+      {/* Modal */}
       <Modal
-        title={modalTitle}
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AppstoreOutlined style={{ fontSize: 20, color: "#fff" }} />
+            </div>
+            <span
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: "#0f172a",
+              }}
+            >
+              {modalTitle}
+            </span>
+          </div>
+        }
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
+        width={620}
+        style={{ top: 40 }}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{ is_active: true }}
+          style={{ marginTop: 24 }}
         >
           <Form.Item
             name="name"
-            label="Category Name"
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Category Name</span>}
             rules={[{ required: true, message: "Please enter category name" }]}
           >
-            <Input placeholder="Enter category name" />
+            <Input
+              placeholder="Enter category name"
+              size="large"
+              style={{ 
+                borderRadius: 10,
+                border: "2px solid #e2e8f0",
+                fontSize: 14,
+              }}
+            />
           </Form.Item>
 
-          <Form.Item name="description" label="Description">
-            <TextArea rows={4} placeholder="Enter category description" />
+          <Form.Item
+            name="description"
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Description</span>}
+          >
+            <TextArea
+              rows={4}
+              placeholder="Enter category description"
+              style={{ 
+                borderRadius: 10,
+                border: "2px solid #e2e8f0",
+                fontSize: 14,
+              }}
+            />
           </Form.Item>
 
-          <Form.Item name="is_active" label="Active" valuePropName="checked">
-            <Switch />
+          <Form.Item
+            name="is_active"
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Active Status</span>}
+            valuePropName="checked"
+          >
+            <Switch 
+              style={{
+                background: form.getFieldValue('is_active') ? '#10b981' : '#cbd5e1',
+              }}
+            />
           </Form.Item>
 
-          <Form.Item label="Category Image">
-            <Upload {...uploadProps} listType="picture">
-              <Button icon={<UploadOutlined />}>Select Image</Button>
+          <Form.Item label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Category Image</span>}>
+            <Upload {...uploadProps} listType="picture" maxCount={1}>
+              <Button 
+                icon={<UploadOutlined />} 
+                size="large" 
+                style={{ 
+                  borderRadius: 10,
+                  border: "2px solid #e2e8f0",
+                  fontWeight: 600,
+                }}
+              >
+                Select Image
+              </Button>
             </Upload>
           </Form.Item>
 
-          <Form.Item>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <Button onClick={() => setModalVisible(false)}>Cancel</Button>
-              <Button type="primary" htmlType="submit" loading={uploading}>
+          <Form.Item style={{ marginBottom: 0, marginTop: 32 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+              <Button
+                onClick={() => setModalVisible(false)}
+                size="large"
+                style={{ 
+                  borderRadius: 10, 
+                  height: 44, 
+                  padding: "0 24px",
+                  border: "2px solid #e2e8f0",
+                  fontWeight: 600,
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={uploading}
+                size="large"
+                style={{
+                  borderRadius: 10,
+                  height: 44,
+                  padding: "0 32px",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  border: "none",
+                  fontWeight: 700,
+                  boxShadow: "0 4px 16px rgba(102, 126, 234, 0.35)",
+                }}
+              >
                 {editingCategory ? "Update" : "Add"} Category
               </Button>
             </div>
           </Form.Item>
         </Form>
       </Modal>
+
+      <style>
+        {`
+          .table-row-light {
+            background: #ffffff;
+            transition: all 0.3s ease;
+          }
+          .table-row-dark {
+            background: #fafbfc;
+            transition: all 0.3s ease;
+          }
+          .ant-table-thead > tr > th {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+            padding: 18px 16px !important;
+            font-weight: 700 !important;
+          }
+          
+          /* FIX: ACTIONS column - solid background, no transparency */
+          .ant-table-thead > tr > th.ant-table-cell-fix-right {
+            background: #ffffff !important;
+            z-index: 3 !important;
+            position: sticky !important;
+            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.06) !important;
+          }
+          
+          .ant-table-tbody > tr > td {
+            padding: 18px 16px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            transition: all 0.3s ease !important;
+          }
+          
+          /* FIX: ACTIONS cells in body - solid background */
+          .ant-table-tbody > tr > td.ant-table-cell-fix-right {
+            background: #ffffff !important;
+            z-index: 2 !important;
+            position: sticky !important;
+            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.06) !important;
+          }
+          
+          /* FIX: Hover state for rows with ACTIONS column */
+          .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right {
+            background: #ffffff !important;
+            z-index: 2 !important;
+          }
+          
+          .ant-table-tbody > tr:hover > td {
+            background: linear-gradient(135deg, #667eea08 0%, #764ba208 100%) !important;
+            transform: scale(1.001);
+          }
+          
+          /* Ensure light rows have white background in ACTIONS */
+          .table-row-light > td.ant-table-cell-fix-right {
+            background: #ffffff !important;
+          }
+          
+          /* Ensure dark rows have proper background in ACTIONS */
+          .table-row-dark > td.ant-table-cell-fix-right {
+            background: #ffffff !important;
+          }
+          
+          .ant-table-tbody > tr:hover {
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+          }
+          .ant-pagination-item-active {
+            border-color: #667eea !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+          }
+          .ant-pagination-item-active a {
+            color: #fff !important;
+            font-weight: 700 !important;
+          }
+          .ant-pagination-item {
+            border-radius: 8px !important;
+            border: 2px solid #e2e8f0 !important;
+            font-weight: 600 !important;
+          }
+          .ant-pagination-item:hover {
+            border-color: #667eea !important;
+          }
+          .ant-pagination-prev button, .ant-pagination-next button {
+            border-radius: 8px !important;
+          }
+        `}
+      </style>
     </div>
   );
 };

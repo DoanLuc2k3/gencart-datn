@@ -126,6 +126,43 @@
   box-shadow: 0 6px 14px rgba(99,102,241,0.14);
 }
 
+/* Collapsed avatar: thin colored ring (Option 2) */
+.admin-collapsed-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 2px solid #6d28d9; /* brand purple ring */
+  color: #6d28d9;
+  box-shadow: none;
+  font-weight: 700;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  cursor: pointer;
+}
+.admin-collapsed-avatar:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 18px rgba(109,40,217,0.08);
+}
+.admin-collapsed-avatar:focus {
+  outline: 2px solid rgba(109,40,217,0.12);
+  outline-offset: 2px;
+}
+/* ensure small images inside the collapsed avatar are clipped and centered */
+.admin-collapsed-avatar img,
+.admin-collapsed-avatar .ant-avatar-image {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+.admin-collapsed-avatar .ant-avatar-string {
+  font-size: 14px;
+}
+
 /* Text-only logo */
 .gencart-text-logo {
   display: flex;
@@ -186,17 +223,50 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
-  color: #fff; /* icon color */
-  box-shadow: 0 6px 14px rgba(109, 40, 217, 0.16);
+  /* Remove purple pill so icon-only style can be applied */
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  padding: 0;
 }
 .gencart-text-logo .logo-compact { display: none; }
 .gencart-text-logo.compact .logo-full { display: none; }
 .gencart-text-logo.compact .logo-compact { display: inline-flex; }
+/* When collapsed, show a minimal icon-only compact logo */
+.gencart-text-logo.compact .logo-compact {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 4px;
+}
+.gencart-text-logo.compact .logo-compact .logo-compact-icon,
+.gencart-text-logo.compact .logo-compact .anticon {
+  font-size: 20px;
+  color: #6d28d9; /* keep purple hue for the icon itself */
+}
+/* Keep fallback font-size for other uses */
 .gencart-text-logo .logo-compact .logo-compact-icon,
 .gencart-text-logo .logo-compact .anticon {
   font-size: 20px;
-  color: #fff;
+}
+
+/* Sidebar compact avatar image - circular ring */
+.gencart-text-logo.compact .logo-compact .sidebar-compact-avatar,
+.gencart-text-logo.compact .logo-compact img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  border: 2px solid #6d28d9;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+.gencart-text-logo.compact .logo-compact .sidebar-compact-avatar:hover,
+.gencart-text-logo.compact .logo-compact img:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 18px rgba(109,40,217,0.08);
 }
 
 /* Bottom area with collapse button - stick to the bottom of the sider */

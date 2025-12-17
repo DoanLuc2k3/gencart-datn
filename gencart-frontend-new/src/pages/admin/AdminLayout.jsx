@@ -30,10 +30,13 @@ import {
   SunOutlined,
   QuestionCircleOutlined,
   UploadOutlined,
+  StarOutlined,
+  StarFilled,
 } from "@ant-design/icons";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import api from "../../utils/api";
 import "./adminHeader.css";
+import FlowerFall from "../../components/FlowerFall";
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -53,6 +56,21 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = React.useRef(null);
+
+  // Flower decorations toggle (persisted in localStorage)
+  const [flowersEnabled, setFlowersEnabled] = useState(() => {
+    const s = localStorage.getItem("adminFlowers");
+    return s === null ? true : s === "true";
+  });
+
+  const toggleFlowers = () => {
+    setFlowersEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem("adminFlowers", String(next));
+      message.success(next ? "Flower decorations enabled" : "Flower decorations disabled");
+      return next;
+    });
+  };
 
   // Apply dark mode to document
   useEffect(() => {
@@ -353,9 +371,9 @@ const AdminLayout = () => {
               </div>
             ) : (
               <div className="logo-compact" aria-hidden role="img" aria-label="Admin logo">
-                {/* show a small admin icon when collapsed, with tooltip */}
-                <Tooltip title="Admin" placement="right">
-                  <UserOutlined className="logo-compact-icon" />
+                {/* show a small admin image when collapsed, with tooltip */}
+                <Tooltip title="Admin" placement="right" getPopupContainer={tooltipContainer} overlayStyle={{ zIndex: 2000 }}>
+                  <img src="https://i.imgur.com/x0BezLy.png" alt="Admin" className="sidebar-compact-avatar" />
                 </Tooltip>
               </div>
             )}
@@ -530,7 +548,8 @@ const AdminLayout = () => {
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  width: mobileView ? "150px" : "260px",
+                  // increased width so the search bar looks longer to the left
+                  width: mobileView ? "200px" : "360px",
                   boxShadow: darkMode
                     ? "0 4px 12px rgba(0,0,0,0.3)"
                     : "0 4px 12px rgba(0,0,0,0.03)",
@@ -609,6 +628,27 @@ const AdminLayout = () => {
                       <QuestionCircleOutlined style={{ fontSize: 16, color: darkMode ? '#e2e8f0' : '#68729e' }} />
                     </div>
                   </Tooltip>
+
+                  <Tooltip title={flowersEnabled ? "Disable decorations" : "Enable decorations"}>
+                    <div
+                      onClick={toggleFlowers}
+                      role="button"
+                      tabIndex={0}
+                      className="admin-search-icon-btn"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {flowersEnabled ? (
+                        <StarFilled style={{ fontSize: 16, color: '#f6e05e' }} />
+                      ) : (
+                        <StarOutlined style={{ fontSize: 16, color: darkMode ? '#e2e8f0' : '#68729e' }} />
+                      )}
+                    </div>
+                  </Tooltip>
                 </div>
               </div>
 
@@ -651,23 +691,31 @@ const AdminLayout = () => {
                   placement="bottomRight"
                   arrow
                 >
-                  <Avatar
-                    size={40}
-                    src={avatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=256&q=80"}
-                    style={{
-                      cursor: "pointer",
-                      border: "2px solid #fff",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                      backgroundColor: "#8b5cf6"
-                    }}
-                  >
-                    {_adminInitial}
-                  </Avatar>
+                  <Tooltip title={collapsed ? adminName : null} placement={collapsed ? "right" : "top"} getPopupContainer={tooltipContainer} overlayStyle={{ zIndex: 2000 }}>
+                    <Avatar
+                      className={collapsed ? "admin-collapsed-avatar" : ""}
+                      size={collapsed ? 36 : 40}
+                      src={avatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=256&q=80"}
+                      alt={adminName}
+                      style={{
+                        cursor: "pointer",
+                        border: collapsed ? undefined : "2px solid #fff",
+                        boxShadow: collapsed ? undefined : "0 2px 8px rgba(0,0,0,0.1)",
+                        backgroundColor: collapsed ? undefined : "#8b5cf6",
+                      }}
+                    >
+                      {_adminInitial}
+                    </Avatar>
+                  </Tooltip>
                 </Dropdown>
               </Space>
             </div>
           </div>
         </Header>
+
+        {/* Decorative flowers overlay (admin only) */}
+        <FlowerFall enabled={flowersEnabled} count={mobileView ? 10 : 24} zIndex={1200} />
+
         <Content
           style={{
             // reduce the space above content so it sits closer to the header
