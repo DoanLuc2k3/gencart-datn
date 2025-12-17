@@ -39,9 +39,6 @@ import {
   AlertOutlined,
   StockOutlined,
 } from "@ant-design/icons";
-// Cloudinary config moved to backend
-
-// Cloudinary config moved to utils/cloudinaryConfig
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -63,11 +60,12 @@ const currencyFormat = (v) =>
     maximumFractionDigits: 2,
   })}`;
 
-const formatNumber = (value) =>
+const _formatNumber = (value) =>
   new Intl.NumberFormat("vi-VN").format(Number(value) || 0);
 
 const AdminProducts = () => {
-  const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]); // Lưu trữ TẤT CẢ products gốc (không pagination)
+  const [products, setProducts] = useState([]); // Products sau khi filter để hiển thị
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -94,25 +92,26 @@ const AdminProducts = () => {
     pageSizeOptions: ["10", "20", "50", "100"],
   });
 
+  // QUAN TRỌNG: Tính metrics từ allProducts (dữ liệu gốc KHÔNG pagination)
   const productMetrics = useMemo(() => {
-    const total = products.length;
-    const active = products.filter((p) => p.is_active).length;
-    const lowStock = products.filter(
+    const total = allProducts.length;
+    const active = allProducts.filter((p) => p.is_active).length;
+    const lowStock = allProducts.filter(
       (p) => p.inventory !== undefined && Number(p.inventory) < 10
     ).length;
-    const discounted = products.filter((p) => {
+    const discounted = allProducts.filter((p) => {
       if (!p.discount_price) return false;
       const price = Number(p.price);
       const discount = Number(p.discount_price);
       return !Number.isNaN(price) && !Number.isNaN(discount) && discount < price;
     }).length;
-    const totalInventory = products.reduce(
+    const totalInventory = allProducts.reduce(
       (sum, p) => sum + (Number(p.inventory) || 0),
       0
     );
     const avgInventory = total ? Math.round(totalInventory / total) : 0;
     const categorySet = new Set(
-      products
+      allProducts
         .filter((p) => p.category?.name)
         .map((p) => p.category.name)
     );
@@ -125,10 +124,39 @@ const AdminProducts = () => {
       avgInventory,
       categories: categorySet.size,
     };
-  }, [products]);
+  }, [allProducts]);
 
+  // Function to fetch ALL products for metrics (không pagination)
+  const fetchAllProducts = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      // Fetch với page_size rất lớn để lấy tất cả
+      const url = new URL("http://localhost:8000/api/products/");
+      url.searchParams.append("page_size", "1000"); // Lấy 1000 products (adjust nếu cần)
+      
+      const response = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      
+      if (!response.ok) throw new Error(`Failed to fetch all products`);
+      
+      const data = await response.json();
+      const list = data.results || data || [];
+      
+      // Lưu TẤT CẢ products vào allProducts
+      setAllProducts(list);
+      
+      return true;
+    } catch (e) {
+      console.error("Error fetching all products:", e);
+      return false;
+    }
+  };
 
-  // Function to fetch products
+  // Function to fetch products for display (với pagination và filters)
   const fetchProducts = async (page = 1, pageSize = 10) => {
     try {
       setLoading(true);
@@ -137,7 +165,7 @@ const AdminProducts = () => {
       url.searchParams.append("page", page);
       url.searchParams.append("page_size", pageSize);
       if (debouncedSearch) url.searchParams.append("search", debouncedSearch);
-      // We will filter client-side for category selections (backend may not support multi-category filter yet)
+      
       const productsResponse = await fetch(url.toString(), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -148,6 +176,8 @@ const AdminProducts = () => {
         throw new Error(`Failed products ${productsResponse.status}`);
       const data = await productsResponse.json();
       const list = data.results || data || [];
+      
+      // Apply filters cho display
       let processed = [...list];
       if (onlyActive) processed = processed.filter((p) => p.is_active);
       if (lowStockOnly)
@@ -159,6 +189,7 @@ const AdminProducts = () => {
           (p) => p.category && selectedCategories.includes(p.category.name)
         );
       }
+      
       setProducts(processed);
       setPagination((prev) => ({
         ...prev,
@@ -178,24 +209,21 @@ const AdminProducts = () => {
 
   // Function to manually refresh products
   const handleRefresh = async () => {
-    message.loading("Refreshing products...", 1);
+    const hide = message.loading("Refreshing products...", 0);
     try {
-      const success = await fetchProducts(
-        pagination.current,
-        pagination.pageSize
-      );
-      if (success) {
-        message.success(`Refreshed ${products.length} products`);
-      } else {
-        message.error("Failed to refresh products");
-      }
+      // Fetch cả allProducts và display products
+      await fetchAllProducts();
+      await fetchProducts(pagination.current, pagination.pageSize);
+      hide();
+      message.success(`Refreshed successfully!`);
     } catch (error) {
+      hide();
       console.error("Error refreshing products:", error);
       message.error(`Failed to refresh product list: ${error.message}`);
     }
   };
 
-  // Fetch products and categories
+  // Fetch products and categories khi component mount
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -206,6 +234,8 @@ const AdminProducts = () => {
           setLoading(false);
           return;
         }
+        
+        // Fetch categories
         const categoriesResponse = await fetch(
           "http://localhost:8000/api/categories/",
           { headers: { Authorization: `Bearer ${token}` } }
@@ -214,6 +244,11 @@ const AdminProducts = () => {
           const catData = await categoriesResponse.json();
           setCategories(catData.results || catData || []);
         }
+        
+        // Fetch ALL products cho metrics
+        await fetchAllProducts();
+        
+        // Fetch paginated products cho display
         await fetchProducts(1, pagination.pageSize);
       } catch (e) {
         console.error(e);
@@ -225,7 +260,7 @@ const AdminProducts = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Refetch when search / filters change (client side modifications re-applied after fetch)
+  // Refetch when search / filters change
   useEffect(() => {
     fetchProducts(pagination.current, pagination.pageSize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,10 +298,7 @@ const AdminProducts = () => {
           : `http://localhost:8000${product.image}`;
       }
 
-      console.log("Product image URL for edit:", imageUrl);
-
       if (imageUrl) {
-        // Create a file list with the existing image
         setFileList([
           {
             uid: "-1",
@@ -295,7 +327,6 @@ const AdminProducts = () => {
         throw new Error("No authentication token found");
       }
 
-      // Prepare FormData for file upload to backend
       const formData = new FormData();
       formData.append("name", values.name);
       formData.append("description", values.description);
@@ -307,24 +338,11 @@ const AdminProducts = () => {
       formData.append("inventory", values.inventory);
       formData.append("is_active", values.is_active);
 
-      // Add image file if selected
-      console.log("FileList:", fileList);
-      console.log("FileList length:", fileList.length);
       if (fileList.length > 0) {
-        console.log("First file:", fileList[0]);
-        console.log("OriginFileObj:", fileList[0].originFileObj);
-        console.log("File itself:", fileList[0]);
-
-        // Try different ways to get the file
         const file = fileList[0].originFileObj || fileList[0];
         if (file && file instanceof File) {
-          console.log("Adding file to FormData:", file);
           formData.append("primary_image", file);
-        } else {
-          console.log("No valid file found in fileList");
         }
-      } else {
-        console.log("No file to add to FormData");
       }
 
       let url = "http://localhost:8000/api/products/";
@@ -338,7 +356,6 @@ const AdminProducts = () => {
         method,
         headers: {
           Authorization: `Bearer ${token}`,
-          // Don't set Content-Type for FormData - browser will set it with boundary
         },
         body: formData,
       });
@@ -350,17 +367,12 @@ const AdminProducts = () => {
           detail =
             typeof errJson === "string" ? errJson : JSON.stringify(errJson);
         } catch {
-          // ignore JSON parse error
+          // ignore
         }
         throw new Error(`Failed to save product${detail ? `: ${detail}` : ""}`);
       }
 
-      const productResponse = await response.json();
-      if (!editingProduct) setProducts((p) => [...p, productResponse]);
-      else
-        setProducts((p) =>
-          p.map((pr) => (pr.id === productResponse.id ? productResponse : pr))
-        );
+      const _productResponse = await response.json();
 
       message.success(
         `Product ${editingProduct ? "updated" : "added"} successfully`
@@ -369,7 +381,8 @@ const AdminProducts = () => {
       form.resetFields();
       setFileList([]);
 
-      // Refresh product list
+      // Refresh both allProducts and display products
+      await fetchAllProducts();
       await fetchProducts(pagination.current, pagination.pageSize);
     } catch (error) {
       console.error("Error saving product:", error);
@@ -399,7 +412,10 @@ const AdminProducts = () => {
       );
       if (!response.ok) throw new Error("Failed");
       message.success("Product deleted");
-      setProducts(products.filter((p) => p.id !== id));
+      
+      // Refresh both allProducts and display products
+      await fetchAllProducts();
+      await fetchProducts(pagination.current, pagination.pageSize);
     } catch (e) {
       console.error(e);
       message.error("Failed to delete product");
@@ -423,9 +439,12 @@ const AdminProducts = () => {
         }
       );
       if (!res.ok) throw new Error("Failed to update status");
-      setProducts((prev) =>
-        prev.map((p) => (p.id === record.id ? { ...p, ...updated } : p))
-      );
+      
+      // Refresh both allProducts and display products
+      await fetchAllProducts();
+      await fetchProducts(pagination.current, pagination.pageSize);
+      
+      message.success("Status updated");
     } catch {
       message.error("Toggle failed");
     }
@@ -566,7 +585,7 @@ const AdminProducts = () => {
         </div>
         {item.discount_price && (
           <Tag color="red" style={{ marginBottom: 4 }}>
-            Save {" "}
+            Save{" "}
             {(
               (1 - parseFloat(item.discount_price) / parseFloat(item.price)) *
               100
@@ -597,7 +616,7 @@ const AdminProducts = () => {
     onChange: handleFileChange,
   };
 
-  // Table columns (rebuilt cleanly after UX refactor)
+  // Table columns
   const columns = [
     {
       title: "ID",
@@ -864,7 +883,7 @@ const AdminProducts = () => {
     </Card>
   );
 
-  // Simplified, more modern header
+  // Header section
   const headerSection = (
     <Card
       style={{
@@ -944,7 +963,6 @@ const AdminProducts = () => {
   return (
     <div
       style={{
-        // reduce padding so content aligns closer to header
         padding: 8,
         background: "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
         borderRadius: 24,

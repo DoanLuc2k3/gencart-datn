@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   Space,
@@ -129,24 +130,29 @@ const getSparklinePath = (trends, key, w = 100, h = 28) => {
 }
 
 // --- Components ---
-
-function StatCard({ title, value, icon, bg, subtitle = "Last Month", animationDelay = '0s' }) {
+function StatCard({ title, value, bg, subtitle = "Last Month", animationDelay = '0s' }) {
+  const [isHovered, setIsHovered] = useState(false);
+  
   const cardStyle = {
-    borderRadius: 16,
+    borderRadius: 24,
     background: bg,
     overflow: 'hidden',
-    transition: 'all 0.3s ease',
-    boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+    transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    boxShadow: isHovered 
+      ? "0 20px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset" 
+      : "0 10px 30px rgba(0,0,0,0.15)",
     height: '100%',
-    minHeight: '200px',
+    minHeight: '180px',
     width: '100%',
-    padding: '20px',
+    padding: '24px',
     opacity: 0,
     willChange: 'transform, opacity',
-    animation: `revealAnimation 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) ${animationDelay} forwards`,
+    animation: `revealAnimation 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) ${animationDelay} forwards`,
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
+    transform: isHovered ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
+    border: '1px solid rgba(255,255,255,0.15)',
   };
 
   return (
@@ -154,40 +160,216 @@ function StatCard({ title, value, icon, bg, subtitle = "Last Month", animationDe
       bordered={false}
       style={cardStyle}
       bodyStyle={{ padding: 0, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
-      hoverable
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header: Title & Icon */}
-      <Flex justify="space-between" align="flex-start">
-        <Text style={{ color: 'white', fontWeight: 600, fontSize: 16 }}>
+      {/* Decorative gradient overlay */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: '200px',
+        height: '200px',
+        background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)',
+        borderRadius: '50%',
+        transform: isHovered ? 'scale(1.5)' : 'scale(1)',
+        transition: 'transform 0.6s ease',
+        pointerEvents: 'none',
+      }} />
+      
+      {/* Animated corner accent */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '60px',
+        height: '60px',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%)',
+        borderRadius: '0 0 24px 0',
+        opacity: isHovered ? 1 : 0,
+        transition: 'opacity 0.3s ease',
+      }} />
+
+      {/* Header: Icon in floating badge */}
+      <div style={{ position: 'relative', zIndex: 2 }}>
+        <Flex justify="space-between" align="flex-start" style={{ marginBottom: 16 }}>
+          <div style={{
+            width: 56,
+            height: 56,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 16,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: isHovered 
+              ? '0 12px 48px rgba(0,0,0,0.25), 0 0 0 3px rgba(255,255,255,0.5) inset'
+              : '0 8px 32px rgba(0,0,0,0.15), 0 0 0 2px rgba(255,255,255,0.4) inset',
+            border: '3px solid rgba(255,255,255,0.4)',
+            transform: isHovered ? 'rotate(8deg) scale(1.15)' : 'rotate(0deg) scale(1)',
+            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          }}>
+            <div style={{ 
+              fontSize: 32, 
+              display: 'flex', 
+              filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))',
+              transform: isHovered ? 'scale(1.1) rotate(-5deg)' : 'scale(1)',
+              transition: 'all 0.3s ease',
+            }}>
+              {title === 'Total Revenue' ? '💰' 
+                : title === 'Total Orders' ? '🛒'
+                : title === 'New Customers' ? '👥'
+                : title === 'Total Reviews' ? '⭐'
+                : '🔥'}
+            </div>
+          </div>
+          
+          {/* Growth Badge */}
+          <div style={{
+            padding: '6px 12px',
+            borderRadius: '12px',
+            background: 'rgba(255,255,255,0.25)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+            transition: 'all 0.3s ease',
+          }}>
+            <ArrowUpOutlined style={{ 
+              color: 'white', 
+              fontSize: 10,
+              fontWeight: 'bold',
+            }} />
+            <Text style={{ 
+              color: 'white', 
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: '0.3px',
+            }}>
+              {title === 'Total Revenue' ? '12.5%'
+                : title === 'Total Orders' ? '8.3%'
+                : title === 'New Customers' ? '15.7%'
+                : title === 'Total Reviews' ? '23.4%'
+                : '18.9%'}
+            </Text>
+          </div>
+        </Flex>
+        
+        <Text style={{ 
+          color: 'rgba(255,255,255,0.95)', 
+          fontWeight: 700, 
+          fontSize: 12,
+          letterSpacing: '1.2px',
+          textTransform: 'uppercase',
+          display: 'block',
+          marginBottom: 12,
+          textShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          opacity: 0.9,
+        }}>
           {title}
         </Text>
+      </div>
+
+      {/* Value with animation */}
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        alignItems: 'center', 
+        position: 'relative',
+        zIndex: 2,
+        marginTop: 2,
+        marginBottom: 2,
+      }}>
         <div style={{
-          width: 42,
-          height: 42,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}>
+          <AntTitle 
+            level={1} 
+            style={{ 
+              margin: 0, 
+              color: 'white', 
+              fontWeight: 800, 
+              fontSize: isHovered ? 44 : 40,
+              lineHeight: 1,
+              letterSpacing: '-1.2px',
+              textShadow: '0 6px 24px rgba(0,0,0,0.3), 0 3px 12px rgba(0,0,0,0.2)',
+              transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              WebkitFontSmoothing: 'antialiased',
+            }}
+          >
+            {value}
+          </AntTitle>
+          <div style={{
+            width: isHovered ? '50px' : '35px',
+            height: '2.5px',
+            background: 'rgba(255,255,255,0.4)',
+            borderRadius: '2px',
+            transition: 'all 0.4s ease',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          }} />
+        </div>
+      </div>
+
+      {/* Footer with trend indicator */}
+      <Flex justify="space-between" align="center" style={{ position: 'relative', zIndex: 2, marginTop: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            padding: '5px 12px',
+            background: 'rgba(255,255,255,0.25)',
+            borderRadius: '18px',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          }}>
+            <Text style={{ 
+              color: 'white', 
+              fontSize: 11, 
+              fontWeight: 600,
+              letterSpacing: '0.5px',
+            }}>
+              {subtitle}
+            </Text>
+          </div>
+          <div style={{
+            width: 26,
+            height: 26,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}>
+            <ArrowUpOutlined style={{ 
+              color: 'white', 
+              fontSize: 11,
+              animation: 'bounce 2s infinite',
+              fontWeight: 'bold',
+            }} />
+          </div>
+        </div>
+        <div style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.2)',
+          backdropFilter: 'blur(10px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 12,
-          background: 'rgba(255,255,255,0.2)',
-          backdropFilter: 'blur(4px)',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          transform: isHovered ? 'rotate(90deg) scale(1.1)' : 'rotate(0deg) scale(1)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          border: '1px solid rgba(255,255,255,0.25)',
         }}>
-          <div style={{ fontSize: 20, color: 'white', display: 'flex' }}>{icon}</div>
+          <MoreOutlined style={{ fontSize: 16, color: 'white', fontWeight: 'bold' }} />
         </div>
-      </Flex>
-
-      {/* Value */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', marginTop: 8, marginBottom: 8 }}>
-        <AntTitle level={2} style={{ margin: 0, color: 'white', fontWeight: 700, fontSize: 36, lineHeight: 1 }}>
-          {value}
-        </AntTitle>
-      </div>
-
-      {/* Footer: Subtitle & Menu */}
-      <Flex justify="space-between" align="center">
-        <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 500 }}>
-          {subtitle}
-        </Text>
-        <MoreOutlined style={{ fontSize: 20, color: 'white', cursor: 'pointer', opacity: 0.8 }} />
       </Flex>
     </Card>
   );
@@ -623,6 +805,7 @@ function TopCustomersRanking({ customers }) {
 }
 
 function RecentOrdersTable({ orders }) {
+  const navigate = useNavigate();
   const headerColumns = [
     "Product",
     "Quantity",
@@ -647,9 +830,9 @@ function RecentOrdersTable({ orders }) {
                 }}>
                     <ShoppingCartOutlined style={{ color: '#2563eb', fontSize: 18 }} />
                 </div>
-                <span style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>Recent Orders</span>
+                <span className="recent-orders-title" style={{ fontWeight: 700, fontSize: 16 }}>Recent Orders</span>
             </Space>
-            <Button type="link" size="small" style={{ fontWeight: 600 }}>View All</Button>
+            <Button type="link" size="small" style={{ fontWeight: 600 }} onClick={() => navigate('/admin/orders')}>View All</Button>
         </Flex>
       }
       bordered={false}
@@ -723,8 +906,9 @@ function RecentOrdersTable({ orders }) {
                         height: 28,
                         padding: '0 8px'
                     }}
+                  onClick={() => navigate(`/admin/orders?openId=${order.orderId || order.id}`)}
                 >
-                    Details
+                  Details
                 </Button>
               </div>
             </div>
@@ -737,6 +921,43 @@ function RecentOrdersTable({ orders }) {
           display: flex;
           flex-direction: column;
           gap: 0;
+        }
+        /* Use CSS variables so elements adapt to light/dark themes cleanly */
+        :root {
+          --recent-orders-title-color: #1e293b;
+          --alerts-product-name-color: #1f2937;
+          --product-performance-title-color: #111827;
+        }
+        .recent-orders-title {
+          color: var(--recent-orders-title-color) !important;
+          transition: color 180ms ease;
+        }
+        .alerts-product-name {
+          color: var(--alerts-product-name-color) !important;
+          font-weight: 600;
+          font-size: 14px;
+          display: inline-block;
+        }
+        .product-performance-title {
+          color: var(--product-performance-title-color) !important;
+          font-weight: 700;
+          font-size: 16px;
+          display: inline-block;
+        }
+
+        /* Dark-mode: set the variables to white for many common theme selectors */
+        html[data-theme="dark"],
+        body[data-theme="dark"],
+        body.dark,
+        .dark,
+        .dark-mode,
+        .theme-dark,
+        .ant-theme-dark,
+        .ant-layout.ant-layout-dark,
+        .ant-card-dark {
+          --recent-orders-title-color: #ffffff;
+          --alerts-product-name-color: #ffffff;
+          --product-performance-title-color: #ffffff;
         }
         .recent-orders-grid-head {
           display: grid;
@@ -1780,7 +2001,7 @@ const AdminDashboard = () => {
                 { 
                   title: "Product Name", 
                   dataIndex: "name",
-                  render: (text) => <span style={{ fontWeight: 600, fontSize: 14, color: '#1f2937' }}>{text}</span>,
+                  render: (text) => <span className="alerts-product-name">{text}</span>,
                   width: "45%"
                 },
                 {

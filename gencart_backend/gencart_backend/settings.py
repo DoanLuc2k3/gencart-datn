@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'gencart_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gencart',           # Replace with your PostgreSQL DB name
+        'NAME': 'nexcart_db',           # Replace with your PostgreSQL DB name
         'USER': 'postgres',             # Replace with your PostgreSQL username
         'PASSWORD': '123456',           # Replace with your PostgreSQL password
         'HOST': 'localhost',            # Or your DB host
