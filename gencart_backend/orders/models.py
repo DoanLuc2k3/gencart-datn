@@ -44,7 +44,9 @@ class CartItem(models.Model):
         """Calculate total price for this cart item"""
         if self.product is None or self.product.price is None or self.quantity is None:
             return 0
-        return self.product.price * self.quantity
+        # Use discount price if available, otherwise use regular price
+        price = self.product.discount_price if self.product.discount_price else self.product.price
+        return price * self.quantity
 
 class Order(models.Model):
     """

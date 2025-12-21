@@ -217,10 +217,15 @@ export const CartProvider = ({ children }) => {
       syncSuccess = await syncCartWithBackend(productId, 0, 'remove');
     }
 
-    // If backend sync failed or user is not logged in, update local cart
+    // If backend sync failed, don't update local cart
     if (!syncSuccess) {
-      setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+      message.error('Failed to remove item from cart. Please try again.');
+      return;
     }
+
+    // If sync succeeded, update local cart and refresh from backend
+    setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+    await fetchCartFromBackend();
   };
 
   // Update item quantity

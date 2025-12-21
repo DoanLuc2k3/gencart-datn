@@ -301,7 +301,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
         # Calculate total amount
-        total_amount = cart.total_price
+        subtotal = cart.total_price
+        shipping_cost = 50 if subtotal < 999 else 0  # Shipping logic
+        tax = 0  # Tax logic, set to 0 for now
+        total_amount = subtotal + shipping_cost + tax
 
         # Create the order
         order = Order.objects.create(
@@ -309,17 +312,22 @@ class OrderViewSet(viewsets.ModelViewSet):
             shipping_address=shipping_address,
             billing_address=billing_address,
             total_amount=total_amount,
-            shipping_cost=0  # You can calculate shipping cost based on your business logic
+            shipping_cost=shipping_cost
         )
 
         # Create order items from cart items and decrease inventory
         for cart_item in cart.items.all():
+            # Use discount price if available, otherwise use regular price
+            item_price = cart_item.product.discount_price if cart_item.product.discount_price else cart_item.product.price
+            
+            print(f"Creating OrderItem for {cart_item.product.name}: original_price={cart_item.product.price}, discount_price={cart_item.product.discount_price}, using_price={item_price}")
+            
             # Create order item
             OrderItem.objects.create(
                 order=order,
                 product=cart_item.product,
                 quantity=cart_item.quantity,
-                price=cart_item.product.price
+                price=item_price
             )
             
             # Decrease product inventory

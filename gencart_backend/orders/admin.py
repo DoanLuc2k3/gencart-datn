@@ -18,7 +18,7 @@ class CartAdmin(admin.ModelAdmin):
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ('total_price',)
+    readonly_fields = ('price', 'total_price')
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):

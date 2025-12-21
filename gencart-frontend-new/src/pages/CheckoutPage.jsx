@@ -44,6 +44,7 @@ import {
 } from '@ant-design/icons';
 import { useCart } from '../context/CartContext';
 import { triggerInventoryRefresh } from '../utils/inventoryEvents';
+import { CART_CONSTANTS, calculateShippingFee, calculateTax, calculateTotal } from '../utils/cartConstants';
 import useScrollToTop from '../hooks/useScrollToTop';
 
 const { Title, Text, Paragraph } = Typography;
@@ -252,6 +253,7 @@ const CheckoutPage = () => {
         from: walletAddress,
         value: '0x' + amountInWei,
         gas: '0x5208', // 21000 in hex
+        gasPrice: '0x2540BE400', // 10 gwei in hex (adjust as needed)
       };
 
       const txHash = await window.ethereum.request({
@@ -332,25 +334,6 @@ const CheckoutPage = () => {
         message.error('Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ trước khi đặt hàng.');
         setLoading(false);
         return;
-      }
-
-      // Sync cart items
-      for (const item of cartItems) {
-        try {
-          await fetch('http://localhost:8000/api/cart/add_item/', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              product_id: item.id,
-              quantity: item.quantity
-            }),
-          });
-        } catch (error) {
-          console.error('Error syncing cart item:', error);
-        }
       }
 
       // Get addresses
@@ -1343,12 +1326,16 @@ const CheckoutPage = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                   <Text style={{ color: '#94a3b8' }}>Phí vận chuyển</Text>
-                  <Text style={{ color: '#4ade80' }}>Miễn phí</Text>
+                  <Text style={{ color: calculateShippingFee(cartTotal) === 0 ? '#4ade80' : 'white' }}>
+                    {calculateShippingFee(cartTotal) === 0 ? 'Miễn phí' : `₫${calculateShippingFee(cartTotal).toLocaleString()}`}
+                  </Text>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
-                  <Text style={{ color: '#94a3b8' }}>Thuế (18%)</Text>
-                  <Text style={{ color: 'white' }}>₫{(cartTotal * 0.18).toLocaleString()}</Text>
-                </div>
+                {calculateTax(cartTotal) > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+                    <Text style={{ color: '#94a3b8' }}>Thuế ({(CART_CONSTANTS.TAX_RATE * 100).toFixed(0)}%)</Text>
+                    <Text style={{ color: 'white' }}>₫{calculateTax(cartTotal).toLocaleString()}</Text>
+                  </div>
+                )}
               </div>
 
               <Divider style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '24px 0' }} />
@@ -1357,7 +1344,7 @@ const CheckoutPage = () => {
                 <Text style={{ fontSize: '16px', color: '#cbd5e1' }}>Tổng cộng</Text>
                 <div style={{ textAlign: 'right' }}>
                   <Text style={{ fontSize: '32px', fontWeight: '800', color: 'white', lineHeight: 1 }}>
-                    ₫{(cartTotal + cartTotal * 0.18).toLocaleString()}
+                    ₫{calculateTotal(cartTotal).toLocaleString()}
                   </Text>
                 </div>
               </div>

@@ -158,7 +158,7 @@ const OrdersPage = () => {
 
         return {
           id: order.id,
-          date: new Date(order.created_at).toISOString().split('T')[0],
+          date: order.created_at, // Keep full datetime
           total: parseFloat(order.total_amount),
           status: order.status,
           items: orderItems.map(item => {
@@ -349,6 +349,7 @@ const OrdersPage = () => {
     const orderDate = new Date(order.date);
     const deliveryDate = new Date(orderDate);
     deliveryDate.setDate(deliveryDate.getDate() + 5);
+    deliveryDate.setHours(9, 0, 0, 0); // Set to 9:00 AM
 
     const formattedOrderDate = orderDate.toLocaleDateString('en-US', {
       month: 'short',
@@ -365,6 +366,9 @@ const OrdersPage = () => {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
+    }) + ' at ' + deliveryDate.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
     });
 
     const orderReviewData = reviewableProducts.get(order.id) || {};

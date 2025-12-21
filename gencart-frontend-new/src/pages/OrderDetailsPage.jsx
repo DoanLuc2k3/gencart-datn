@@ -167,18 +167,19 @@ const OrderDetailsPage = () => {
           console.log('First product image URL:', data.items[0].product.primary_image);
         }
 
-        // Calculate expected delivery date (5 days from order date)
+        // Calculate expected delivery date (5 days from order date, at 9 AM)
         const orderDate = new Date(data.created_at);
         const deliveryDate = new Date(orderDate);
         deliveryDate.setDate(deliveryDate.getDate() + 5);
+        deliveryDate.setHours(9, 0, 0, 0); // Set to 9:00 AM
 
         // Format delivery date with time
-        const formattedDeliveryDate = `${deliveryDate.toLocaleDateString('en-IN')} by ${deliveryDate.getHours()}:${String(deliveryDate.getMinutes()).padStart(2, '0')}`;
+        const formattedDeliveryDate = `${deliveryDate.toLocaleDateString('en-IN')} lúc ${deliveryDate.getHours()}:${String(deliveryDate.getMinutes()).padStart(2, '0')}`;
 
         // Format order data
         const formattedOrder = {
           id: data.id,
-          date: new Date(data.created_at).toISOString().split('T')[0],
+          date: data.created_at, // Keep full datetime
           deliveryDate: formattedDeliveryDate,
           total: parseFloat(data.total_amount),
           status: data.status,
@@ -453,7 +454,7 @@ const OrderDetailsPage = () => {
               <Space size={24} wrap>
                 <div style={headerMetaStyle}>
                   <ClockCircleOutlined />
-                  <span>Đặt vào {new Date(order.date).toLocaleDateString('en-IN')}</span>
+                  <span>Đặt vào {new Date(order.date).toLocaleDateString('en-IN')} lúc {new Date(order.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <div style={headerMetaStyle}>
                   <CarOutlined />
