@@ -15,6 +15,56 @@ const { Content } = Layout;
 const { Title, Text } = Typography;
 const { Search } = Input;
 
+// ============ BLOG STORAGE SYNC - CRITICAL ============
+// Sử dụng CÙNG KEY với file Blog.js để đồng bộ
+const BLOG_STORAGE_KEY = 'app_blog_posts_v1';
+
+// Helper functions để sync với Blog.js
+const getStoredBlogPosts = () => {
+  try {
+    const stored = localStorage.getItem(BLOG_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn("Could not parse blog posts from localStorage", e);
+  }
+  return [];
+};
+
+const saveStoredBlogPosts = (posts) => {
+  try {
+    const storablePosts = posts.map(post => ({
+      id: post.id,
+      title: post.title,
+      description: post.description,
+      image: post.image,
+      category: post.category,
+      tags: post.tags,
+      author: post.author,
+      avatar: post.avatar,
+      date: post.date,
+      views: post.views,
+      likes: post.likes,
+      comments: post.comments,
+      readTime: post.readTime,
+      commentsData: post.commentsData || [],
+      content: post.content,
+      status: post.status || 'published',
+      isPinned: post.isPinned || false,
+    }));
+
+    localStorage.setItem(BLOG_STORAGE_KEY, JSON.stringify(storablePosts));
+    
+    // Trigger storage event để Blog.js cập nhật
+    window.dispatchEvent(new CustomEvent('storage', { detail: { key: BLOG_STORAGE_KEY } }));
+    window.dispatchEvent(new Event('blog_posts_updated'));
+  } catch (e) {
+    console.error("Failed to save blog posts", e);
+  }
+};
+// ============ END BLOG STORAGE SYNC ============
+
 // Styles
 const GRADIENT_BUTTON_STYLE = {
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -94,11 +144,9 @@ const customStyles = `
   .admin-help-controls .ant-input-affix-wrapper .ant-input {
     padding-right: 48px;
   }
-  /* hide default suffix search icon inside Search in admin-help area */
   .admin-help-controls .ant-input-suffix {
     display: none !important;
   }
-  /* Ensure Select inner content vertically centers like Search */
   .admin-help-controls .ant-select {
     display: inline-flex;
     align-items: center;
@@ -107,7 +155,6 @@ const customStyles = `
     display: flex !important;
     align-items: center !important;
   }
-  /* View toggle wrapper (grid/list) */
   .admin-help-controls .view-toggle-wrap {
     display: inline-flex;
     align-items: center;
@@ -135,7 +182,6 @@ const customStyles = `
     color: #fff !important;
     box-shadow: 0 8px 20px rgba(91,33,182,0.12) !important;
   }
-  /* Make inputs/selects less square and ensure content doesn't overflow rounded corners */
   .admin-help-controls .ant-input-affix-wrapper,
   .admin-help-card .ant-input-affix-wrapper,
   .admin-help-controls .ant-select-selector {
@@ -145,7 +191,6 @@ const customStyles = `
   .admin-help-controls .admin-controls-card {
     borderRadius: 16px;
   }
-  /* White/soft card wrapper for the controls to match Categories layout */
   .admin-help-card {
     border-radius: 16px;
     border: 1px solid rgba(148,163,184,0.06);
@@ -155,7 +200,6 @@ const customStyles = `
     margin-bottom: 12px;
     padding: 16px 20px;
   }
-  /* Grid card visual polish */
   .admin-help-card .ant-list-item .ant-card {
     border-radius: 8px;
     overflow: hidden;
@@ -174,7 +218,6 @@ const customStyles = `
   .admin-help-card .ant-card-meta {
     padding: 12px 16px 8px 16px;
   }
-  /* Table inside admin-help card (table mode) */
   .admin-help-card .ant-table {
     border-radius: 8px;
     overflow: hidden;
@@ -185,7 +228,6 @@ const customStyles = `
   .admin-help-card .ant-list-item {
     padding: 0 !important;
   }
-  /* Hide right search button in Blog card but keep it for Ticket search */
   .admin-help-card .ant-input-search-button {
     display: none !important;
   }
@@ -227,85 +269,6 @@ const mockTickets = [
     source: 'Email', 
     SLA_due: currentTimestamp + 3600000 
   },
-];
-
-const mockBlogPosts = [
-  {
-    id: 1,
-    title: 'Hướng dẫn sử dụng mã giảm giá',
-    description: 'Cách áp dụng và sử dụng mã giảm giá hiệu quả nhất',
-    category: 'Khuyên Mái',
-    tags: ['Voucher', 'Giảm Giá'],
-    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400',
-    status: 'published',
-    views: 1250,
-    likes: 89,
-    comments: 12,
-    commentsData: [],
-    author: 'Admin',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    date: '2024-01-15',
-    readTime: '5 phút đọc',
-    isPinned: false,
-    content: 'Nội dung chi tiết về cách sử dụng mã giảm giá...'
-  },
-  {
-    id: 2,
-    title: 'Cập nhật chính sách đổi trả hàng',
-    description: 'Thông tin mới nhất về chính sách đổi trả sản phẩm',
-    category: 'Thông Báo',
-    tags: ['Chính sách', 'Đổi trả'],
-    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400',
-    status: 'published',
-    views: 890,
-    likes: 45,
-    comments: 8,
-    commentsData: [],
-    author: 'Admin',
-    avatar: 'https://i.pravatar.cc/150?img=2',
-    date: '2024-01-14',
-    readTime: '3 phút đọc',
-    isPinned: true,
-    content: 'Chi tiết về chính sách đổi trả...'
-  },
-  {
-    id: 3,
-    title: 'Mẹo chọn khuyên tai phù hợp với khuôn mặt',
-    description: 'Hướng dẫn chọn khuyên tai đẹp cho từng khuôn mặt',
-    category: 'Tư Vấn',
-    tags: ['Khuyên tai', 'Thời trang'],
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400',
-    status: 'published',
-    views: 2100,
-    likes: 156,
-    comments: 23,
-    commentsData: [],
-    author: 'Admin',
-    avatar: 'https://i.pravatar.cc/150?img=3',
-    date: '2024-01-13',
-    readTime: '7 phút đọc',
-    isPinned: false,
-    content: 'Hướng dẫn chi tiết về cách chọn khuyên tai...'
-  },
-  {
-    id: 4,
-    title: 'Sự kiện Flash Sale cuối tuần',
-    description: 'Giảm giá khủng lên đến 50% cho tất cả sản phẩm',
-    category: 'Sự Kiện',
-    tags: ['Flash Sale', 'Giảm giá'],
-    image: 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?w=400',
-    status: 'draft',
-    views: 0,
-    likes: 0,
-    comments: 0,
-    commentsData: [],
-    author: 'Admin',
-    avatar: 'https://i.pravatar.cc/150?img=4',
-    date: '2024-01-15',
-    readTime: '2 phút đọc',
-    isPinned: false,
-    content: 'Thông tin về sự kiện Flash Sale...'
-  }
 ];
 
 const mockAutomationRules = [
@@ -433,7 +396,7 @@ const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
         status: 'Mới',
         priority: values.priority,
         customer: values.customer,
-
+        assigned: 'Chưa gán',
         updated: Date.now(),
         source: values.source,
         SLA_due: Date.now() + 6 * 3600000,
@@ -468,7 +431,6 @@ const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
         </Space>
       ),
     },
-
   ];
 
   const newTicketsCount = tickets.filter(t => t.status === 'Mới').length;
@@ -647,7 +609,6 @@ const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
                 </Select>
               </Form.Item>
             </Col>
-  
           </Row>
         </Form>
       </Modal>
@@ -655,9 +616,10 @@ const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
   );
 };
 
-// Tab 2: Blog Management
+// Tab 2: Blog Management - SYNCHRONIZED VERSION
 const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
-  const [blogPosts, setBlogPosts] = useState(mockBlogPosts);
+  // Load từ localStorage thay vì mockBlogPosts
+  const [blogPosts, setBlogPosts] = useState(() => getStoredBlogPosts());
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
@@ -669,7 +631,7 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
   const [currentPostComments, setCurrentPostComments] = useState(null);
 
   const categories = [
-    { value: 'Khuyên Mái', label: 'Khuyên Mái' },
+    { value: 'Khuyến Mãi', label: 'Khuyến Mãi' },
     { value: 'Sản Phẩm', label: 'Sản Phẩm' },
     { value: 'Sự Kiện', label: 'Sự Kiện' },
     { value: 'Về Chúng Tôi', label: 'Về Chúng Tôi' },
@@ -678,6 +640,40 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
     { value: 'Thời Trang', label: 'Thời Trang' },
     { value: 'Thông Báo', label: 'Thông Báo' }
   ];
+
+  // Sync với localStorage khi component mount và khi có thay đổi từ Blog.js
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updated = getStoredBlogPosts();
+      setBlogPosts(updated);
+      if (onPostsLoaded) onPostsLoaded(updated);
+    };
+
+    window.addEventListener('blog_posts_updated', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('blog_posts_updated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [onPostsLoaded]);
+
+  // Update parent khi blogPosts thay đổi
+  useEffect(() => {
+    if (typeof onPostsLoaded === 'function') onPostsLoaded(blogPosts);
+  }, [blogPosts, onPostsLoaded]);
+
+  // Handle refresh
+  useEffect(() => {
+    if (typeof refreshKey !== 'undefined') {
+      setLoading(true);
+      setTimeout(() => {
+        const updated = getStoredBlogPosts();
+        setBlogPosts(updated);
+        setLoading(false);
+      }, 300);
+    }
+  }, [refreshKey]);
 
   const handleOpenModal = (post = null) => {
     setEditingPost(post);
@@ -699,10 +695,12 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
         tags: (values.tags || '').split(',').map(tag => tag.trim()).filter(Boolean),
       };
 
+      let updatedPosts;
+      
       if (editingPost) {
-        setBlogPosts(blogPosts.map(p =>
+        updatedPosts = blogPosts.map(p =>
           p.id === editingPost.id ? { ...editingPost, ...formValues } : p
-        ));
+        );
         message.success('Đã cập nhật bài viết!');
       } else {
         const newPost = {
@@ -719,9 +717,12 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
           status: 'published',
           isPinned: false,
         };
-        setBlogPosts([newPost, ...blogPosts]);
+        updatedPosts = [newPost, ...blogPosts];
         message.success('Đã tạo bài viết mới!');
       }
+
+      setBlogPosts(updatedPosts);
+      saveStoredBlogPosts(updatedPosts); // Save to localStorage
       setIsModalVisible(false);
       form.resetFields();
     });
@@ -735,43 +736,34 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
       okType: 'danger',
       cancelText: 'Hủy',
       onOk() {
-        setBlogPosts(blogPosts.filter(p => p.id !== id));
+        const updatedPosts = blogPosts.filter(p => p.id !== id);
+        setBlogPosts(updatedPosts);
+        saveStoredBlogPosts(updatedPosts); // Save to localStorage
         message.success('Đã xóa bài viết!');
       },
     });
   };
 
   const handleTogglePin = (id) => {
-    setBlogPosts(blogPosts.map(p =>
+    const updatedPosts = blogPosts.map(p =>
       p.id === id ? { ...p, isPinned: !p.isPinned } : p
-    ));
+    );
+    setBlogPosts(updatedPosts);
+    saveStoredBlogPosts(updatedPosts); // Save to localStorage
+    
     const post = blogPosts.find(p => p.id === id);
     message.success(post?.isPinned ? 'Đã bỏ ghim bài viết.' : 'Đã ghim bài viết!');
   };
 
   const handleTogglePublish = (postId, checked) => {
     const newStatus = checked ? 'published' : 'draft';
-    setBlogPosts(prevPosts => 
-      prevPosts.map(post =>
-        post.id === postId ? { ...post, status: newStatus } : post
-      )
+    const updatedPosts = blogPosts.map(post =>
+      post.id === postId ? { ...post, status: newStatus } : post
     );
+    setBlogPosts(updatedPosts);
+    saveStoredBlogPosts(updatedPosts); // Save to localStorage
     message.success(`Đã cập nhật trạng thái: ${newStatus === 'published' ? 'Xuất bản' : 'Bản nháp'}`);
   };
-
-  useEffect(() => {
-    if (typeof onPostsLoaded === 'function') onPostsLoaded(blogPosts);
-  }, [blogPosts, onPostsLoaded]);
-
-  useEffect(() => {
-    if (typeof refreshKey !== 'undefined') {
-      setLoading(true);
-      setTimeout(() => {
-        setBlogPosts(mockBlogPosts);
-        setLoading(false);
-      }, 300);
-    }
-  }, [refreshKey]);
 
   const showCommentModal = (post) => {
     setCurrentPostComments(post);
@@ -929,8 +921,6 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
         </Button>
       </div>
 
-      {/* End control card */}
-
       {viewMode === 'grid' ? (
         <List
           loading={loading}
@@ -977,13 +967,13 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
                   </div>
                 }
                 actions={[
-                  <Tooltip title={post.isPinned ? 'Bỏ ghim' : 'Ghim bài viết'}>
+                  <Tooltip title={post.isPinned ? 'Bỏ ghim' : 'Ghim bài viết'} key="pin">
                     <PushpinOutlined
                       style={{ color: post.isPinned ? '#1890ff' : 'inherit', fontSize: 16 }}
                       onClick={(e) => { e.stopPropagation(); handleTogglePin(post.id); }}
                     />
                   </Tooltip>,
-                  <Tooltip title={post.status === 'published' ? 'Tắt xuất bản' : 'Xuất bản'}>
+                  <Tooltip title={post.status === 'published' ? 'Tắt xuất bản' : 'Xuất bản'} key="publish">
                     <Switch
                       size="small"
                       checked={post.status === 'published'}
@@ -991,20 +981,18 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
                       onClick={(_, e) => e.stopPropagation()}
                     />
                   </Tooltip>,
-                  <Tooltip title="Chỉnh sửa">
+                  <Tooltip title="Chỉnh sửa" key="edit">
                     <EditOutlined 
                       style={{ fontSize: 16 }}
-                      key="edit" 
                       onClick={(e) => {
                         e.stopPropagation();
                         handleOpenModal(post);
                       }} 
                     />
                   </Tooltip>,
-                  <Tooltip title="Xóa">
+                  <Tooltip title="Xóa" key="delete">
                     <DeleteOutlined 
                       style={{ fontSize: 16, color: '#ff4d4f' }}
-                      key="delete" 
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(post.id);
@@ -1188,6 +1176,7 @@ const ReportsTab = ({ blogPosts = [] }) => {
   const [loadingReports, setLoadingReports] = useState(false);
   const [rangeDays, setRangeDays] = useState(14);
   const [statusFilter, setStatusFilter] = useState(null);
+  
   // Blog metrics
   const totalPosts = (blogPosts || []).length;
   const publishedCount = (blogPosts || []).filter(p => p.status === 'published').length;
@@ -1198,7 +1187,6 @@ const ReportsTab = ({ blogPosts = [] }) => {
   const totalComments = (blogPosts || []).reduce((s, p) => s + (p.commentsData?.length || p.comments || 0), 0);
   const recentPosts = (blogPosts || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
 
-  // load tickets from localStorage and listen to storage changes
   useEffect(() => {
     let mounted = true;
     const load = () => {
@@ -1222,7 +1210,6 @@ const ReportsTab = ({ blogPosts = [] }) => {
     return () => { mounted = false; window.removeEventListener('storage', handler); };
   }, []);
 
-  // utility: filter tickets by date range and status
   const getFiltered = (tickets, days, status) => {
     const end = new Date();
     const start = new Date();
@@ -1239,7 +1226,6 @@ const ReportsTab = ({ blogPosts = [] }) => {
 
   const filtered = getFiltered(ticketsData, rangeDays, statusFilter);
 
-  // Build time series for line chart
   const buildTimeSeries = (tickets, days) => {
     const end = new Date();
     const start = new Date();
@@ -1263,13 +1249,11 @@ const ReportsTab = ({ blogPosts = [] }) => {
 
   const ticketsSeries = buildTimeSeries(filtered, rangeDays);
 
-  // KPIs
   const totalTickets = filtered.length;
   const avgPerDay = rangeDays > 0 ? (totalTickets / rangeDays).toFixed(2) : 0;
   const busiest = ticketsSeries.reduce((acc, cur) => (cur.count > acc.count ? cur : acc), { date: null, count: 0 });
   const statusCounts = filtered.reduce((acc, t) => { acc[t.status] = (acc[t.status] || 0) + 1; return acc; }, {});
 
-  // CSV export
   const exportCSV = () => {
     const headers = ['id', 'title', 'status', 'priority', 'customer', 'email', 'phone', 'updated'];
     const rows = filtered.map(t => [t.id, t.title, t.status, t.priority, t.customer, t.email || '', t.phone || '', t.updated ? new Date(t.updated).toISOString() : '']);
@@ -1297,8 +1281,6 @@ const ReportsTab = ({ blogPosts = [] }) => {
     xAxis: { tickCount: Math.min(rangeDays, 10) },
     meta: { date: { alias: 'Ngày' }, count: { alias: 'Số ticket' } },
   };
-
-
 
   return (
     <div style={{ width: '100%' }}>
@@ -1341,7 +1323,6 @@ const ReportsTab = ({ blogPosts = [] }) => {
         </div>
       </Card>
 
-      {/* Blog reports */}
       <Card style={{ marginBottom: 12 }} bodyStyle={{ padding: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
