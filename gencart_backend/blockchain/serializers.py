@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    Wallet, WalletTransaction, WalletPayment, 
+    Wallet, WalletTransaction, WalletPayment, BlockchainPayment,
     BlockchainNetwork, Cryptocurrency
 )
 
@@ -134,3 +134,76 @@ class WalletDetailsSerializer(serializers.ModelSerializer):
         """Get last 10 transactions"""
         transactions = obj.transactions.all()[:10]
         return WalletTransactionSerializer(transactions, many=True).data
+
+
+class BlockchainPaymentSerializer(serializers.ModelSerializer):
+    """Serializer for BlockchainPayment model"""
+    order_id = serializers.CharField(source='order.id', read_only=True)
+    wallet_payment_details = WalletPaymentSerializer(source='wallet_payment', read_only=True)
+    is_expired = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlockchainPayment
+        fields = [
+            'id', 'order_id', 'wallet_payment_details', 'status',
+            'initiated_at', 'confirmed_at', 'expires_at', 'is_expired',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'initiated_at', 'confirmed_at', 'created_at', 'updated_at']
+
+    def get_is_expired(self, obj):
+        return obj.is_expired()
+
+
+class InitiateBlockchainPaymentSerializer(serializers.Serializer):
+    """Serializer for initiating blockchain payment"""
+    order_id = serializers.IntegerField()
+    wallet_id = serializers.UUIDField()
+    cryptocurrency_id = serializers.IntegerField()
+
+    def validate_order_id(self, value):
+        from orders.models import Order
+        try:
+            order = Order.objects.get(id=value)
+            if order.payment_status:
+                raise serializers.ValidationError("Order has already been paid")
+            return value
+        except Order.DoesNotExist:
+            raise serializers.ValidationError("Order not found")
+
+    def validate_wallet_id(self, value):
+        from .models import Wallet
+        try:
+            wallet = Wallet.objects.get(id=value, user=self.context['request'].user)
+            if not wallet.is_verified:
+                raise serializers.ValidationError("Wallet must be verified")
+            return value
+        except Wallet.DoesNotExist:
+            raise serializers.ValidationError("Wallet not found or not owned by user")
+
+    def validate_cryptocurrency_id(self, value):
+        from .models import Cryptocurrency
+        try:
+            crypto = Cryptocurrency.objects.get(id=value, is_active=True)
+            return value
+        except Cryptocurrency.DoesNotExist:
+            raise serializers.ValidationError("Cryptocurrency not found or inactive")
+
+
+class ConfirmBlockchainPaymentSerializer(serializers.Serializer):
+    """Serializer for confirming blockchain payment"""
+    transaction_hash = serializers.CharField(max_length=255)
+
+    def validate_transaction_hash(self, value):
+        from web3 import Web3
+        if not Web3.is_hex(value):
+            raise serializers.ValidationError("Invalid transaction hash format")
+        return value
+
+
+class BlockchainPaymentStatusSerializer(serializers.Serializer):
+    """Serializer for blockchain payment status"""
+    status = serializers.CharField()
+    confirmations = serializers.IntegerField(required=False)
+    block_number = serializers.IntegerField(required=False)
+    error = serializers.CharField(required=False)

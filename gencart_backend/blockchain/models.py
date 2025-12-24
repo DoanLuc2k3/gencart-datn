@@ -157,3 +157,53 @@ class WalletPayment(models.Model):
 
     def __str__(self):
         return f"Payment {self.id} - {self.amount} {self.cryptocurrency.symbol}"
+
+
+class BlockchainPayment(models.Model):
+    """
+    Liên kết giữa Order và Blockchain Payment để quản lý thanh toán
+    """
+    PAYMENT_STATUS_CHOICES = (
+        ('initiated', 'Initiated'),
+        ('pending_confirmation', 'Pending Confirmation'),
+        ('confirmed', 'Confirmed'),
+        ('failed', 'Failed'),
+        ('expired', 'Expired'),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.OneToOneField('orders.Order', on_delete=models.CASCADE, related_name='blockchain_payment')
+    wallet_payment = models.OneToOneField(WalletPayment, on_delete=models.CASCADE, related_name='order_link')
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='initiated')
+    initiated_at = models.DateTimeField(auto_now_add=True)
+    confirmed_at = models.DateTimeField(blank=True, null=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-initiated_at']
+
+    def __str__(self):
+        return f"Blockchain Payment for Order {self.order.id}"
+
+    def is_expired(self):
+        """Check if payment has expired"""
+        return timezone.now() > self.expires_at
+
+    def mark_as_confirmed(self):
+        """Mark payment as confirmed and update order"""
+        from django.utils import timezone
+        self.status = 'confirmed'
+        self.confirmed_at = timezone.now()
+        self.save()
+
+        # Update order payment status
+        self.order.payment_status = True
+        self.order.status = 'processing'  # Move to processing
+        self.order.save()
+
+    def mark_as_failed(self):
+        """Mark payment as failed"""
+        self.status = 'failed'
+        self.save()

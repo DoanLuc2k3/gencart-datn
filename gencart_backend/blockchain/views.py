@@ -7,13 +7,15 @@ from decimal import Decimal
 import uuid
 
 from .models import (
-    Wallet, WalletTransaction, WalletPayment,
+    Wallet, WalletTransaction, WalletPayment, BlockchainPayment,
     BlockchainNetwork, Cryptocurrency
 )
 from .serializers import (
     WalletSerializer, WalletCreateSerializer, WalletDetailsSerializer,
-    WalletTransactionSerializer, WalletPaymentSerializer,
+    WalletTransactionSerializer, WalletPaymentSerializer, BlockchainPaymentSerializer,
     WalletVerificationSerializer, InitiateWalletPaymentSerializer,
+    InitiateBlockchainPaymentSerializer, ConfirmBlockchainPaymentSerializer,
+    BlockchainPaymentStatusSerializer,
     BlockchainNetworkSerializer, CryptocurrencySerializer
 )
 
@@ -306,3 +308,198 @@ class WalletPaymentViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(
             {"detail": "Payment confirmed", "payment": WalletPaymentSerializer(payment).data}
         )
+
+
+class BlockchainPaymentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing blockchain payments
+    
+    Available endpoints:
+    - GET /blockchain-payments/ - List user's blockchain payments
+    - POST /blockchain-payments/initiate/ - Initiate a blockchain payment
+    - POST /blockchain-payments/{id}/confirm/ - Confirm payment with transaction hash
+    - GET /blockchain-payments/{id}/status/ - Get payment status
+    """
+    serializer_class = BlockchainPaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return BlockchainPayment.objects.filter(order__user=self.request.user)
+    
+    @action(detail=False, methods=['post'])
+    def initiate(self, request):
+        """
+        Initiate a blockchain payment for an order
+        
+        Request body:
+        {
+            "order_id": 123,
+            "wallet_id": "uuid",
+            "cryptocurrency_id": 1
+        }
+        """
+        serializer = InitiateBlockchainPaymentSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        
+        order_id = serializer.validated_data['order_id']
+        wallet_id = serializer.validated_data['wallet_id']
+        cryptocurrency_id = serializer.validated_data['cryptocurrency_id']
+        
+        # Get related objects
+        from orders.models import Order
+        order = Order.objects.get(id=order_id)
+        wallet = Wallet.objects.get(id=wallet_id)
+        cryptocurrency = Cryptocurrency.objects.get(id=cryptocurrency_id)
+        
+        # Calculate crypto amount (simplified conversion)
+        # In real implementation, you'd use price API
+        usd_amount = order.total_amount
+        crypto_amount = usd_amount / Decimal('2000')  # Simplified: assume 1 ETH = 2000 USD
+        
+        # Create wallet payment
+        wallet_payment = WalletPayment.objects.create(
+            wallet=wallet,
+            order_id=str(order.id),
+            cryptocurrency=cryptocurrency,
+            amount=crypto_amount,
+            usd_amount=usd_amount,
+            status='pending'
+        )
+        
+        # Create blockchain payment link
+        from django.utils import timezone
+        expires_at = timezone.now() + timezone.timedelta(hours=1)
+        
+        blockchain_payment = BlockchainPayment.objects.create(
+            order=order,
+            wallet_payment=wallet_payment,
+            expires_at=expires_at
+        )
+        
+        # Get merchant wallet address from settings
+        from django.conf import settings
+        merchant_address = getattr(settings, 'MERCHANT_WALLET_ADDRESS', '0x742d35Cc6634C0532925a3b844Bc454e4438f44e')
+        
+        return Response({
+            "payment_id": blockchain_payment.id,
+            "to_address": merchant_address,
+            "amount": str(crypto_amount),
+            "cryptocurrency": cryptocurrency.symbol,
+            "usd_amount": str(usd_amount),
+            "expires_at": expires_at.isoformat()
+        }, status=status.HTTP_201_CREATED)
+    
+    @action(detail=True, methods=['post'])
+    def confirm(self, request, pk=None):
+        """
+        Confirm blockchain payment with transaction hash
+        
+        Request body:
+        {
+            "transaction_hash": "0x..."
+        }
+        """
+        blockchain_payment = self.get_object()
+        serializer = ConfirmBlockchainPaymentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        tx_hash = serializer.validated_data['transaction_hash']
+        
+        # Check if payment is expired
+        if blockchain_payment.is_expired():
+            blockchain_payment.status = 'expired'
+            blockchain_payment.save()
+            return Response(
+                {"detail": "Payment has expired"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if already confirmed
+        if blockchain_payment.status == 'confirmed':
+            return Response(
+                {"detail": "Payment already confirmed"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create wallet transaction
+        wallet_payment = blockchain_payment.wallet_payment
+        transaction = WalletTransaction.objects.create(
+            wallet=wallet_payment.wallet,
+            transaction_type='payment',
+            cryptocurrency=wallet_payment.cryptocurrency,
+            amount=wallet_payment.amount,
+            from_address=wallet_payment.wallet.wallet_address,
+            to_address=getattr(settings, 'MERCHANT_WALLET_ADDRESS', '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'),
+            transaction_hash=tx_hash,
+            status='pending'
+        )
+        
+        # Link transaction to payment
+        wallet_payment.transaction = transaction
+        wallet_payment.transaction_hash = tx_hash
+        wallet_payment.save()
+        
+        # Update blockchain payment status
+        blockchain_payment.status = 'pending_confirmation'
+        blockchain_payment.save()
+        
+        # Trigger background monitoring (simplified - in real app use Celery)
+        # For now, we'll simulate immediate confirmation
+        try:
+            # In real implementation, this would be a background task
+            self._monitor_transaction(transaction.id)
+        except Exception as e:
+            return Response(
+                {"detail": f"Error monitoring transaction: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return Response({
+            "detail": "Payment confirmation initiated",
+            "payment": BlockchainPaymentSerializer(blockchain_payment).data
+        })
+    
+    @action(detail=True, methods=['get'])
+    def status(self, request, pk=None):
+        """
+        Get blockchain payment status
+        """
+        blockchain_payment = self.get_object()
+        
+        response_data = {
+            "status": blockchain_payment.status,
+            "is_expired": blockchain_payment.is_expired()
+        }
+        
+        if blockchain_payment.wallet_payment.transaction:
+            transaction = blockchain_payment.wallet_payment.transaction
+            response_data.update({
+                "confirmations": transaction.confirmation_count,
+                "block_number": transaction.block_number,
+                "transaction_hash": transaction.transaction_hash
+            })
+        
+        return Response(response_data)
+    
+    def _monitor_transaction(self, transaction_id):
+        """
+        Simplified transaction monitoring (in real app, use background task)
+        """
+        try:
+            transaction = WalletTransaction.objects.get(id=transaction_id)
+            blockchain_payment = transaction.payment.order_link
+            
+            # Simulate confirmation (in real app, check blockchain)
+            transaction.status = 'confirmed'
+            transaction.confirmation_count = 12  # Simulate 12 confirmations
+            transaction.block_number = 18500000  # Simulate block number
+            transaction.save()
+            
+            # Update payment and order
+            blockchain_payment.mark_as_confirmed()
+            
+        except Exception as e:
+            # Mark as failed
+            transaction.status = 'failed'
+            transaction.save()
+            blockchain_payment.mark_as_failed()

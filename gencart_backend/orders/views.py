@@ -315,6 +315,85 @@ class OrderViewSet(viewsets.ModelViewSet):
             shipping_cost=shipping_cost
         )
 
+        # Handle blockchain payment if provided
+        blockchain_tx_hash = request.data.get('blockchain_transaction_hash')
+        payment_method = request.data.get('payment_method')
+        blockchain_network = request.data.get('blockchain_network')
+        wallet_address = request.data.get('wallet_address')
+
+        if payment_method == 'blockchain' and blockchain_tx_hash:
+            # Import blockchain models
+            from blockchain.models import Wallet, Cryptocurrency, BlockchainPayment, WalletPayment, WalletTransaction
+
+            try:
+                # Get or create wallet for user
+                wallet, created = Wallet.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'wallet_address': wallet_address or 'unknown',
+                        'wallet_type': 'metamask',
+                        'is_verified': True  # Assume verified since they made payment
+                    }
+                )
+
+                # Get default cryptocurrency (ETH)
+                try:
+                    cryptocurrency = Cryptocurrency.objects.get(symbol='ETH')
+                except Cryptocurrency.DoesNotExist:
+                    cryptocurrency = Cryptocurrency.objects.create(
+                        symbol='ETH',
+                        name='Ethereum',
+                        decimals=18,
+                        is_active=True
+                    )
+
+                # Calculate crypto amount (simplified conversion)
+                crypto_amount = total_amount / 2000  # Assume 1 ETH = 2000 USD
+
+                # Create wallet payment
+                wallet_payment = WalletPayment.objects.create(
+                    wallet=wallet,
+                    order_id=str(order.id),
+                    cryptocurrency=cryptocurrency,
+                    amount=crypto_amount,
+                    usd_amount=total_amount,
+                    status='pending',
+                    transaction_hash=blockchain_tx_hash
+                )
+
+                # Create wallet transaction
+                transaction = WalletTransaction.objects.create(
+                    wallet=wallet,
+                    transaction_type='payment',
+                    cryptocurrency=cryptocurrency,
+                    amount=crypto_amount,
+                    from_address=wallet_address or 'unknown',
+                    to_address='0x742d35Cc6634C0532925a3b844Bc454e4438f44e',  # Merchant address
+                    transaction_hash=blockchain_tx_hash,
+                    status='pending'
+                )
+
+                # Link transaction to payment
+                wallet_payment.transaction = transaction
+                wallet_payment.save()
+
+                # Create blockchain payment link
+                from django.utils import timezone
+                blockchain_payment = BlockchainPayment.objects.create(
+                    order=order,
+                    wallet_payment=wallet_payment,
+                    expires_at=timezone.now() + timezone.timedelta(hours=1)
+                )
+
+                # Mark as confirmed (simplified - in real app use monitoring)
+                blockchain_payment.mark_as_confirmed()
+
+                print(f"Created blockchain payment for order {order.id}: {blockchain_tx_hash}")
+
+            except Exception as e:
+                print(f"Error creating blockchain payment: {str(e)}")
+                # Continue with order creation even if blockchain payment fails
+
         # Create order items from cart items and decrease inventory
         for cart_item in cart.items.all():
             # Use discount price if available, otherwise use regular price

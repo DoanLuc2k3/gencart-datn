@@ -2,7 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     BlockchainNetworkViewSet, CryptocurrencyViewSet,
-    WalletViewSet, WalletTransactionViewSet, WalletPaymentViewSet
+    WalletViewSet, WalletTransactionViewSet, WalletPaymentViewSet,
+    BlockchainPaymentViewSet
 )
 
 router = DefaultRouter()
@@ -11,6 +12,7 @@ router.register(r'cryptocurrencies', CryptocurrencyViewSet, basename='cryptocurr
 router.register(r'wallets', WalletViewSet, basename='wallet')
 router.register(r'transactions', WalletTransactionViewSet, basename='wallet-transaction')
 router.register(r'payments', WalletPaymentViewSet, basename='wallet-payment')
+router.register(r'blockchain-payments', BlockchainPaymentViewSet, basename='blockchain-payment')
 
 urlpatterns = [
     path('', include(router.urls)),

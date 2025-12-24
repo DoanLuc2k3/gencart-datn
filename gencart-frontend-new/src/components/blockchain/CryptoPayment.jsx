@@ -1,8 +1,8 @@
 /**
  * Cryptocurrency Payment Component
  * components/blockchain/CryptoPayment.jsx
- * 
- * Handles cryptocurrency payment for orders
+ *
+ * Handles cryptocurrency payment for orders using new blockchain-payments API
  */
 
 import React, { useState, useEffect } from 'react';
@@ -10,18 +10,18 @@ import useBlockchainWallet from '../../hooks/useBlockchainWallet';
 import './CryptoPayment.css';
 
 export function CryptoPayment({ orderId, orderAmount, onPaymentSuccess, onPaymentError }) {
-  const { 
-    wallet, 
-    loading, 
-    error, 
-    cryptocurrencies, 
-    makePayment 
+  const {
+    wallet,
+    loading,
+    error,
+    cryptocurrencies
   } = useBlockchainWallet();
-  
+
   const [selectedCrypto, setSelectedCrypto] = useState(null);
-  const [cryptoAmount, setCryptoAmount] = useState('');
-  const [exchangeRate, setExchangeRate] = useState(1);
-  const [isConfirming, setIsConfirming] = useState(false);
+  const [paymentData, setPaymentData] = useState(null);
+  const [transactionHash, setTransactionHash] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('idle'); // idle, initiated, waiting_tx, confirming, completed
+  const [statusCheckInterval, setStatusCheckInterval] = useState(null);
 
   // Initialize with first cryptocurrency
   useEffect(() => {
@@ -30,52 +30,164 @@ export function CryptoPayment({ orderId, orderAmount, onPaymentSuccess, onPaymen
     }
   }, [cryptocurrencies, selectedCrypto]);
 
-  // Calculate crypto amount based on USD amount
-  const handleCryptoChange = (e) => {
-    const crypto = cryptocurrencies.find(c => c.id === parseInt(e.target.value));
-    setSelectedCrypto(crypto);
-    // Reset amount when changing crypto
-    setCryptoAmount('');
-  };
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+      }
+    };
+  }, [statusCheckInterval]);
 
-  const handleUSDAmountChange = (usdAmount) => {
-    if (exchangeRate && usdAmount) {
-      const amount = (parseFloat(usdAmount) / exchangeRate).toFixed(8);
-      setCryptoAmount(amount);
-    }
-  };
-
-  const handlePaymentClick = () => {
+  const initiatePayment = async () => {
     if (!wallet) {
-      onPaymentError?.('Please connect and verify your wallet first');
+      onPaymentError?.('Please connect your wallet first');
       return;
     }
     if (!wallet.is_verified) {
       onPaymentError?.('Please verify your wallet before making payments');
       return;
     }
-    setIsConfirming(true);
-  };
+    if (!selectedCrypto) {
+      onPaymentError?.('Please select a cryptocurrency');
+      return;
+    }
 
-  const handleConfirmPayment = async () => {
     try {
-      if (!selectedCrypto || !cryptoAmount) {
-        throw new Error('Please select cryptocurrency and amount');
+      setPaymentStatus('initiated');
+
+      const response = await fetch('/api/blockchain/blockchain-payments/initiate/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          wallet_id: wallet.id,
+          cryptocurrency_id: selectedCrypto.id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to initiate payment');
       }
 
-      const result = await makePayment(
-        wallet.id,
-        orderId,
-        selectedCrypto.id,
-        cryptoAmount,
-        orderAmount
-      );
+      const data = await response.json();
+      setPaymentData(data);
+      setPaymentStatus('waiting_tx');
 
-      setIsConfirming(false);
-      setCryptoAmount('');
-      onPaymentSuccess?.(result);
+    } catch (err) {
+      setPaymentStatus('idle');
+      onPaymentError?.(err.message);
+    }
+  };
+
+  const sendTransaction = async () => {
+    if (!window.ethereum) {
+      onPaymentError?.('MetaMask not found');
+      return;
+    }
+
+    try {
+      // Request account access
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+      // Send transaction
+      const transactionParameters = {
+        to: paymentData.to_address,
+        from: window.ethereum.selectedAddress,
+        value: '0x' + (parseFloat(paymentData.amount) * 10**18).toString(16), // Convert to wei
+        gas: '0x5208', // 21000 gas
+      };
+
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParameters],
+      });
+
+      setTransactionHash(txHash);
+      setPaymentStatus('confirming');
+
+      // Confirm with backend
+      await confirmPayment(txHash);
+
     } catch (err) {
       onPaymentError?.(err.message);
+      setPaymentStatus('waiting_tx');
+    }
+  };
+
+  const confirmPayment = async (txHash) => {
+    try {
+      const response = await fetch(`/api/blockchain/blockchain-payments/${paymentData.payment_id}/confirm/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          transaction_hash: txHash
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to confirm payment');
+      }
+
+      // Start polling for status
+      startStatusPolling();
+
+    } catch (err) {
+      onPaymentError?.(err.message);
+      setPaymentStatus('waiting_tx');
+    }
+  };
+
+  const startStatusPolling = () => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/blockchain/blockchain-payments/${paymentData.payment_id}/status/`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
+
+        if (response.ok) {
+          const statusData = await response.json();
+
+          if (statusData.status === 'confirmed') {
+            clearInterval(interval);
+            setStatusCheckInterval(null);
+            setPaymentStatus('completed');
+            onPaymentSuccess?.({
+              transaction_hash: transactionHash,
+              payment_id: paymentData.payment_id
+            });
+          } else if (statusData.status === 'failed' || statusData.is_expired) {
+            clearInterval(interval);
+            setStatusCheckInterval(null);
+            setPaymentStatus('failed');
+            onPaymentError?.('Payment failed or expired');
+          }
+        }
+      } catch (err) {
+        console.error('Status check failed:', err);
+      }
+    }, 5000); // Check every 5 seconds
+
+    setStatusCheckInterval(interval);
+  };
+
+  const resetPayment = () => {
+    setPaymentData(null);
+    setTransactionHash('');
+    setPaymentStatus('idle');
+    if (statusCheckInterval) {
+      clearInterval(statusCheckInterval);
+      setStatusCheckInterval(null);
     }
   };
 
@@ -99,24 +211,12 @@ export function CryptoPayment({ orderId, orderAmount, onPaymentSuccess, onPaymen
     );
   }
 
-  if (parseFloat(wallet.balance) < parseFloat(cryptoAmount || 0)) {
-    return (
-      <div className="crypto-payment-card">
-        <div className="payment-placeholder error">
-          <p>❌ Insufficient balance</p>
-          <small>Balance: {wallet.balance} {selectedCrypto?.symbol}</small>
-          <small>Required: {cryptoAmount} {selectedCrypto?.symbol}</small>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="crypto-payment-card">
       <div className="payment-header">
         <h3>💰 Pay with Cryptocurrency</h3>
         <p className="balance-info">
-          Balance: <strong>{wallet.balance}</strong> {selectedCrypto?.symbol}
+          Wallet: <strong>{wallet.wallet_address?.slice(0, 6)}...{wallet.wallet_address?.slice(-4)}</strong>
         </p>
       </div>
 
@@ -126,7 +226,7 @@ export function CryptoPayment({ orderId, orderAmount, onPaymentSuccess, onPaymen
           <label>Order Amount (USD)</label>
           <div className="usd-amount">
             <span className="currency">$</span>
-            <input 
+            <input
               type="number"
               value={orderAmount}
               disabled
@@ -140,13 +240,10 @@ export function CryptoPayment({ orderId, orderAmount, onPaymentSuccess, onPaymen
           <label>Pay With:</label>
           <div className="crypto-selector">
             {cryptocurrencies.map(crypto => (
-              <div 
+              <div
                 key={crypto.id}
                 className={`crypto-option ${selectedCrypto?.id === crypto.id ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedCrypto(crypto);
-                  setCryptoAmount('');
-                }}
+                onClick={() => setSelectedCrypto(crypto)}
               >
                 {crypto.logo_url && (
                   <img src={crypto.logo_url} alt={crypto.symbol} className="crypto-icon" />
@@ -160,66 +257,31 @@ export function CryptoPayment({ orderId, orderAmount, onPaymentSuccess, onPaymen
           </div>
         </div>
 
-        {/* Exchange Rate */}
-        <div className="form-group">
-          <label>Exchange Rate</label>
-          <div className="exchange-rate">
-            <input 
-              type="number"
-              value={exchangeRate}
-              onChange={(e) => setExchangeRate(parseFloat(e.target.value))}
-              placeholder="Enter rate"
-              className="form-control"
-            />
-            <span className="rate-unit">USD per {selectedCrypto?.symbol}</span>
+        {/* Payment Status */}
+        {paymentStatus === 'waiting_tx' && paymentData && (
+          <div className="payment-instructions">
+            <h4>📤 Send Transaction</h4>
+            <div className="tx-details">
+              <p><strong>Send:</strong> {paymentData.amount} {paymentData.cryptocurrency}</p>
+              <p><strong>To:</strong> {paymentData.to_address}</p>
+              <p><strong>Expires:</strong> {new Date(paymentData.expires_at).toLocaleString()}</p>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Crypto Amount */}
-        <div className="form-group">
-          <label>Amount to Send ({selectedCrypto?.symbol})</label>
-          <div className="crypto-amount">
-            <input 
-              type="number"
-              value={cryptoAmount}
-              onChange={(e) => {
-                setCryptoAmount(e.target.value);
-              }}
-              placeholder="0.00000000"
-              className="form-control"
-              step="0.00000001"
-            />
-            {orderAmount && exchangeRate && (
-              <button 
-                className="btn-small"
-                onClick={() => handleUSDAmountChange(orderAmount)}
-              >
-                Calculate
-              </button>
-            )}
+        {paymentStatus === 'confirming' && (
+          <div className="payment-status">
+            <h4>⏳ Confirming Payment</h4>
+            <p>Transaction Hash: {transactionHash}</p>
+            <div className="loading-spinner"></div>
+            <small>Waiting for blockchain confirmation...</small>
           </div>
-          {cryptoAmount && (
-            <small className="calc-info">
-              ≈ ${(parseFloat(cryptoAmount) * exchangeRate).toFixed(2)} USD
-            </small>
-          )}
-        </div>
+        )}
 
-        {/* Payment Summary */}
-        {isConfirming && (
-          <div className="payment-summary">
-            <div className="summary-row">
-              <span>Amount:</span>
-              <strong>{cryptoAmount} {selectedCrypto?.symbol}</strong>
-            </div>
-            <div className="summary-row">
-              <span>USD Equivalent:</span>
-              <strong>${(parseFloat(cryptoAmount) * exchangeRate).toFixed(2)}</strong>
-            </div>
-            <div className="summary-row">
-              <span>Your Balance:</span>
-              <strong>{wallet.balance} {selectedCrypto?.symbol}</strong>
-            </div>
+        {paymentStatus === 'completed' && (
+          <div className="payment-success">
+            <h4>✅ Payment Completed!</h4>
+            <p>Transaction: {transactionHash}</p>
           </div>
         )}
 
@@ -227,31 +289,49 @@ export function CryptoPayment({ orderId, orderAmount, onPaymentSuccess, onPaymen
       </div>
 
       <div className="payment-footer">
-        {!isConfirming ? (
-          <button 
+        {paymentStatus === 'idle' && (
+          <button
             className="btn-primary btn-large"
-            onClick={handlePaymentClick}
-            disabled={loading || !cryptoAmount}
+            onClick={initiatePayment}
+            disabled={loading}
           >
-            {loading ? 'Processing...' : 'Proceed to Payment'}
+            {loading ? 'Initiating...' : 'Start Crypto Payment'}
           </button>
-        ) : (
+        )}
+
+        {paymentStatus === 'waiting_tx' && (
           <div className="confirmation-actions">
-            <button 
+            <button
               className="btn-secondary"
-              onClick={() => setIsConfirming(false)}
-              disabled={loading}
+              onClick={resetPayment}
             >
               Cancel
             </button>
-            <button 
+            <button
               className="btn-primary"
-              onClick={handleConfirmPayment}
-              disabled={loading}
+              onClick={sendTransaction}
             >
-              {loading ? 'Confirming...' : 'Confirm Payment'}
+              Send Transaction
             </button>
           </div>
+        )}
+
+        {paymentStatus === 'confirming' && (
+          <button
+            className="btn-secondary"
+            onClick={resetPayment}
+          >
+            Cancel
+          </button>
+        )}
+
+        {paymentStatus === 'completed' && (
+          <button
+            className="btn-success"
+            onClick={resetPayment}
+          >
+            Make Another Payment
+          </button>
         )}
       </div>
     </div>
