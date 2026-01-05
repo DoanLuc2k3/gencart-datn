@@ -14,6 +14,7 @@ import {
   getReviewCount,
   isOutOfStock,
 } from "../../utils/productUtils";
+import { formatCurrency } from "../../utils/format";
 
 const { Text } = Typography;
 
@@ -246,11 +247,11 @@ const ProductCard = ({ product, compact = false, wishlist, toggleWishlist, isHot
               fontWeight: 700,
             }}
           >
-            ₫{price.toFixed(2)}
+            {formatCurrency(price)}
           </Text>
           {productHasDiscount && (
             <Text delete style={{ color: "#9ca3af", fontSize: 14 }}>
-              ₫{parseFloat(product.price).toFixed(2)}
+              {formatCurrency(product.price)}
             </Text>
           )}
         </div>

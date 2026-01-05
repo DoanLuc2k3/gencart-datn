@@ -35,6 +35,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { inventoryEvents } from '../utils/inventoryEvents';
 import { getCategoryName, getCategoryGradient } from '../utils/productUtils';
+import { formatCurrency } from '../utils/format';
 import useScrollToTop from '../hooks/useScrollToTop';
 
 const { Title, Text, Paragraph } = Typography;
@@ -631,18 +632,18 @@ const ProductDetailPage = () => {
                   {product.discount_price ? (
                     <>
                       <Text delete style={{ fontSize: 20, color: '#94a3b8', display: 'block', marginBottom: 8 }}>
-                        ₫{parseFloat(product.price || 0).toLocaleString()}
+                        {formatCurrency(product.price)}
                       </Text>
                       <Text strong style={{ fontSize: 36, color: '#dc2626' }}>
-                        ₫{parseFloat(product.discount_price || 0).toLocaleString()}
+                        {formatCurrency(product.discount_price)}
                       </Text>
                       <Text style={{ marginLeft: 16, color: '#10b981', fontSize: 18, fontWeight: 600 }}>
-                        Tiết kiệm ₫{(parseFloat(product.price) - parseFloat(product.discount_price)).toLocaleString()}
+                        Tiết kiệm {formatCurrency(parseFloat(product.price) - parseFloat(product.discount_price))}
                       </Text>
                     </>
                   ) : (
                     <Text strong style={{ fontSize: 36, color: '#1e293b' }}>
-                      ₫{parseFloat(product.price || 0).toLocaleString()}
+                      {formatCurrency(product.price)}
                     </Text>
                   )}
                 </div>
@@ -1053,15 +1054,15 @@ const ProductDetailPage = () => {
                           {hasRelatedDiscount ? (
                             <>
                               <Text delete style={{ fontSize: 13, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
-                                ₫{parseFloat(relatedProduct.price || 0).toLocaleString()}
+                                {formatCurrency(relatedProduct.price)}
                               </Text>
                               <Text strong style={{ fontSize: 20, color: '#dc2626' }}>
-                                ₫{parseFloat(relatedProduct.discount_price || 0).toLocaleString()}
+                                {formatCurrency(relatedProduct.discount_price)}
                               </Text>
                             </>
                           ) : (
                             <Text strong style={{ fontSize: 20, color: '#667eea' }}>
-                              ₫{parseFloat(relatedProduct.price || 0).toLocaleString()}
+                              {formatCurrency(relatedProduct.price)}
                             </Text>
                           )}
                         </div>

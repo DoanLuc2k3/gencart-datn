@@ -32,6 +32,7 @@ import {
   TruckOutlined
 } from '@ant-design/icons';
 import { getValidImageUrl, handleImageError } from '../utils/imageUtils';
+import { formatCurrency } from '../utils/format';
 import useScrollToTop from '../hooks/useScrollToTop';
 
 const { Title, Text, Paragraph } = Typography;
@@ -424,7 +425,7 @@ const OrdersPage = () => {
 
           <div style={{ textAlign: 'right' }}>
             <Text style={{ fontSize: '22px', fontWeight: 700, color: '#312e81' }}>
-              ₫{order.total.toFixed(2)}
+              {formatCurrency(order.total)}
             </Text>
             <div style={{ marginTop: 8 }}>{getStatusTag(order.status)}</div>
           </div>
@@ -510,7 +511,7 @@ const OrdersPage = () => {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                       <Text style={{ fontSize: '12px', color: '#475569' }}>Số lượng: {item.quantity}</Text>
-                      <Text style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>₫{item.price}</Text>
+                      <Text style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>{formatCurrency(item.price)}</Text>
                     </div>
 
                     {order.status === 'delivered' && item.product_id && (

@@ -28,7 +28,8 @@ import {
   PlusOutlined
 } from "@ant-design/icons";
 import { getValidImageUrl, handleImageError } from "../utils/imageUtils";
-import { CART_CONSTANTS, calculateShippingFee, calculateTax, calculateTotal } from "../utils/cartConstants";
+import { CART_CONSTANTS, calculateShippingFee, calculateTax, calculateTotal, formatPriceVND, getFreeShippingThresholdVND } from "../utils/cartConstants";
+import { formatCurrency } from "../utils/format";
 import { useCart } from "../context/CartContext";
 import useScrollToTop from "../hooks/useScrollToTop";
 
@@ -229,15 +230,15 @@ const CartPage = () => {
                          {item.discount_price ? (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <Text delete style={{ color: "#94a3b8", fontSize: "13px" }}>
-                                ₫{parseFloat(item.price).toLocaleString()}
+                                {formatCurrency(item.price)}
                               </Text>
                               <Text strong style={{ color: "#ef4444", fontSize: "16px" }}>
-                                ₫{parseFloat(item.discount_price).toLocaleString()}
+                                {formatCurrency(item.discount_price)}
                               </Text>
                             </div>
                           ) : (
                             <Text strong style={{ color: "#334155", fontSize: "16px" }}>
-                              ₫{parseFloat(item.price).toLocaleString()}
+                              {formatCurrency(item.price)}
                             </Text>
                           )}
                       </Col>
@@ -278,7 +279,7 @@ const CartPage = () => {
                       <Col xs={12} md={4} style={{ textAlign: 'right' }}>
                          <div className="mobile-label" style={{ display: 'none', fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>Tổng</div>
                          <Text strong style={{ color: "#4f46e5", fontSize: "16px" }}>
-                            ₫{(parseFloat(item.discount_price || item.price) * item.quantity).toLocaleString()}
+                            {formatCurrency(parseFloat(item.discount_price || item.price) * item.quantity)}
                          </Text>
                       </Col>
 
@@ -324,19 +325,19 @@ const CartPage = () => {
                   <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", color: "#64748b" }}>
                       <Text>Tạm tính ({cartItems.length} sản phẩm)</Text>
-                      <Text strong style={{ color: "#334155" }}>₫{cartTotal.toLocaleString()}</Text>
+                      <Text strong style={{ color: "#334155" }}>{formatCurrency(cartTotal)}</Text>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", color: "#64748b" }}>
                       <Text>Phí vận chuyển</Text>
                       <Text strong style={{ color: calculateShippingFee(cartTotal) === 0 ? "#10b981" : "#334155" }}>
-                        {calculateShippingFee(cartTotal) === 0 ? "MIỄN PHÍ" : `₫${calculateShippingFee(cartTotal).toLocaleString()}`}
+                        {calculateShippingFee(cartTotal) === 0 ? "MIỄN PHÍ" : formatCurrency(calculateShippingFee(cartTotal))}
                       </Text>
                     </div>
                     
                     {calculateTax(cartTotal) > 0 && (
                       <div style={{ display: "flex", justifyContent: "space-between", color: "#64748b" }}>
                         <Text>Thuế ({(CART_CONSTANTS.TAX_RATE * 100).toFixed(0)}%)</Text>
-                        <Text strong style={{ color: "#334155" }}>₫{calculateTax(cartTotal).toLocaleString()}</Text>
+                        <Text strong style={{ color: "#334155" }}>{formatCurrency(calculateTax(cartTotal))}</Text>
                       </div>
                     )}
                     
@@ -344,7 +345,7 @@ const CartPage = () => {
                       <div style={{ background: "#f0fdf4", padding: "12px", borderRadius: "12px", border: "1px dashed #86efac", display: "flex", gap: "8px", alignItems: "center" }}>
                         <GiftOutlined style={{ color: "#16a34a" }} />
                         <Text style={{ fontSize: "13px", color: "#166534" }}>
-                          Thêm <strong>₫{(CART_CONSTANTS.FREE_SHIPPING_THRESHOLD - cartTotal).toLocaleString()}</strong> để được <span style={{ color: "#16a34a", fontWeight: "700" }}>MIỄN PHÍ vận chuyển</span>
+                          Thêm <strong>{formatCurrency(Math.max(0, CART_CONSTANTS.FREE_SHIPPING_THRESHOLD - cartTotal))}</strong> để được <span style={{ color: "#16a34a", fontWeight: "700" }}>MIỄN PHÍ vận chuyển</span>
                         </Text>
                       </div>
                     )}
@@ -356,7 +357,7 @@ const CartPage = () => {
                     <Text style={{ fontSize: "16px", color: "#334155", fontWeight: "600" }}>Tổng cộng</Text>
                     <div style={{ textAlign: "right" }}>
                       <Text style={{ fontSize: "32px", fontWeight: "800", color: "#4f46e5", lineHeight: 1 }}>
-                        ₫{calculateTotal(cartTotal).toLocaleString()}
+                        {formatCurrency(calculateTotal(cartTotal))}
                       </Text>
                       {calculateTax(cartTotal) > 0 && (
                         <Text type="secondary" style={{ fontSize: "12px", display: "block", marginTop: "4px" }}>

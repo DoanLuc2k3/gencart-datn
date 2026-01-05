@@ -47,6 +47,7 @@ import {
 } from "chart.js";
 import { Line, Bar } from "react-chartjs-2";
 import { useResponsive } from "../../hooks/useResponsive";
+import { formatCurrency, convertUsdToVnd, USD_TO_VND_RATE } from "../../utils/format";
 
 // Lazy load heavy chart component
 const SentimentChart = lazy(() => import("../../components/admin/SentimentChart"));
@@ -83,19 +84,17 @@ const sentimentPalette = {
 
 const formatNumber = (value) => Number(value || 0).toLocaleString("vi-VN");
 
+// Giá trị trong database là USD, cần convert sang VND khi hiển thị
 const formatCurrencyDisplay = (amount) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return formatCurrency(amount); // Sử dụng hàm đã convert USD->VND
 };
 
 const formatSpending = (amount) => {
-  if (amount >= 1000000000) return (amount / 1000000000).toFixed(2) + ' Tỷ VNĐ';
-  if (amount >= 1000000) return (amount / 1000000).toFixed(2) + ' Tr VNĐ';
-  return amount.toLocaleString('vi-VN') + ' VNĐ';
+  // Amount là USD, convert sang VND trước khi hiển thị
+  const vndAmount = convertUsdToVnd(amount);
+  if (vndAmount >= 1000000000) return (vndAmount / 1000000000).toFixed(2) + ' Tỷ VNĐ';
+  if (vndAmount >= 1000000) return (vndAmount / 1000000).toFixed(2) + ' Tr VNĐ';
+  return vndAmount.toLocaleString('vi-VN') + ' VNĐ';
 };
 
 // Compute a delta percentage comparing last 7 days vs previous 7 days for a sentiment key

@@ -42,6 +42,7 @@ import {
   IdcardOutlined,
 } from "@ant-design/icons";
 import { useResponsive } from "../../hooks/useResponsive";
+import { formatCurrency } from "../../utils/format";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -700,7 +701,7 @@ const AdminUsers = () => {
       title: "Tổng Tiền",
       dataIndex: "total_amount",
       key: "total_amount",
-      render: (text) => `₫${parseFloat(text).toFixed(2)}`,
+      render: (text) => formatCurrency(text),
     },
   ];
 

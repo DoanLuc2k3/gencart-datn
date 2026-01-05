@@ -22,6 +22,7 @@ import {
   Input
 } from 'antd';
 import { getValidImageUrl, handleImageError } from '../utils/imageUtils';
+import { formatCurrency as formatCurrencyUtil } from '../utils/format';
 import useScrollToTop from '../hooks/useScrollToTop';
 import {
   ShoppingOutlined,
@@ -113,13 +114,9 @@ const OrderDetailsPage = () => {
     whiteSpace: 'nowrap'
   };
 
-  // Format number to VND currency
+  // Format number to VND currency (sử dụng hàm từ format.js - đã convert USD->VND)
   const formatCurrency = (value) => {
-    try {
-      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-    } catch (e) {
-      return `₫${Number(value).toFixed(2)}`;
-    }
+    return formatCurrencyUtil(value);
   };
 
   // Map order status to steps index

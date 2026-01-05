@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'payments',
     'sentiment_analysis',
     'blockchain',
+    'blog',
 ]
 
 MIDDLEWARE = [

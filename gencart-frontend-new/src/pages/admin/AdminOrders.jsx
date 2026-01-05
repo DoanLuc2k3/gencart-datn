@@ -42,6 +42,7 @@ import {
 } from "@ant-design/icons";
 import { getValidImageUrl } from "../../utils/imageUtils";
 import { useResponsive } from "../../hooks/useResponsive";
+import { formatCurrency } from "../../utils/format";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -68,11 +69,8 @@ const AdminOrders = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const currencyFormat = (v) =>
-    `₫${parseFloat(v).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+  // Sử dụng formatCurrency từ format.js (đã convert USD->VND)
+  const currencyFormat = (v) => formatCurrency(v);
 
   const orderMetrics = useMemo(() => {
     const total = allOrders.length;
@@ -1252,10 +1250,10 @@ const AdminOrders = () => {
                             />
                           </div>
                           <Text style={{ fontSize: 13, color: "#64748b" }}>
-                            Price: <Text strong style={{ color: "#059669" }}>₫{parseFloat(item.price).toFixed(2)}</Text>
+                            Price: <Text strong style={{ color: "#059669" }}>{formatCurrency(item.price)}</Text>
                           </Text>
                           <Text style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
-                            Subtotal: <Text strong style={{ color: "#059669" }}>₫{(parseFloat(item.price) * item.quantity).toFixed(2)}</Text>
+                            Subtotal: <Text strong style={{ color: "#059669" }}>{formatCurrency(parseFloat(item.price) * item.quantity)}</Text>
                           </Text>
                         </Space>
                       }

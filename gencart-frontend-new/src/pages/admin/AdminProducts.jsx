@@ -39,6 +39,7 @@ import {
   AlertOutlined,
   StockOutlined,
 } from "@ant-design/icons";
+import { formatCurrency } from "../../utils/format";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -54,11 +55,8 @@ const useDebounce = (value, delay = 500) => {
   return debounced;
 };
 
-const currencyFormat = (v) =>
-  `₫${parseFloat(v).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+// Sử dụng formatCurrency từ format.js (đã tự động convert USD -> VND)
+const currencyFormat = (v) => formatCurrency(v);
 
 const _formatNumber = (value) =>
   new Intl.NumberFormat("vi-VN").format(Number(value) || 0);
@@ -1015,31 +1013,32 @@ const AdminProducts = () => {
 
           <Form.Item
             name="price"
-            label="Giá"
+            label="Giá (USD)"
             rules={[{ required: true, message: "Vui lòng nhập giá sản phẩm" }]}
+            tooltip="Giá được lưu bằng USD, hiển thị trên web sẽ tự động chuyển sang VND"
           >
             <InputNumber
               min={0}
               step={0.01}
               style={{ width: "100%" }}
               formatter={(value) =>
-                `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
               }
-              parser={(value) => value.replace(/₫\s?|(,*)/g, "")}
-              placeholder="Nhập giá"
+              parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+              placeholder="Nhập giá (USD)"
             />
           </Form.Item>
 
-          <Form.Item name="discount_price" label="Giá Giảm (Tùy Chọn)">
+          <Form.Item name="discount_price" label="Giá Giảm USD (Tùy Chọn)">
             <InputNumber
               min={0}
               step={0.01}
               style={{ width: "100%" }}
               formatter={(value) =>
-                value ? `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ""
+                value ? `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ""
               }
-              parser={(value) => value.replace(/₫\s?|(,*)/g, "")}
-              placeholder="Nhập giá giảm"
+              parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+              placeholder="Nhập giá giảm (USD)"
             />
           </Form.Item>
 

@@ -45,6 +45,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { triggerInventoryRefresh } from '../utils/inventoryEvents';
 import { CART_CONSTANTS, calculateShippingFee, calculateTax, calculateTotal } from '../utils/cartConstants';
+import { formatCurrency, formatUsd } from '../utils/format';
 import useScrollToTop from '../hooks/useScrollToTop';
 
 const { Title, Text, Paragraph } = Typography;
@@ -241,8 +242,9 @@ const CheckoutPage = () => {
       setBlockchainPaymentModalVisible(true);
       setTxStatus('pending');
 
-      // Tính toán số tiền (giả định: 1 ETH = 2000 USD)
-      const amountInCrypto = (cartTotal / 2000).toFixed(6);
+      // Tính toán số tiền bao gồm phí ship (giả định: 1 ETH = 2000 USD)
+      const totalWithShipping = calculateTotal(cartTotal);
+      const amountInCrypto = (totalWithShipping / 2000).toFixed(6);
       const amountInWei = BigInt(Math.floor(parseFloat(amountInCrypto) * 1e18)).toString(16);
 
       // Địa chỉ nhận hàng (thay bằng địa chỉ thực tế của bạn)
@@ -463,7 +465,7 @@ const CheckoutPage = () => {
       key: 'price',
       render: (_, record) => {
         const price = record.discount_price || record.price;
-        return <Text>₫{parseFloat(price).toFixed(2)}</Text>;
+        return <Text>{formatCurrency(price)}</Text>;
       },
     },
     {
@@ -471,7 +473,7 @@ const CheckoutPage = () => {
       key: 'total',
       render: (_, record) => {
         const price = record.discount_price || record.price;
-        return <Text strong>₫{(parseFloat(price) * record.quantity).toFixed(2)}</Text>;
+        return <Text strong>{formatCurrency(parseFloat(price) * record.quantity)}</Text>;
       },
     },
   ];
@@ -979,11 +981,11 @@ const CheckoutPage = () => {
                           border: '1px solid #e2e8f0'
                         }}>
                           <Text strong style={{ fontSize: '18px', color: '#1e293b' }}>
-                            ≈ {(cartTotal / 2000).toFixed(6)} {selectedNetwork === 'ethereum' ? 'ETH' : selectedNetwork === 'bsc' ? 'BNB' : 'MATIC'}
+                            ≈ {(calculateTotal(cartTotal) / 2000).toFixed(6)} {selectedNetwork === 'ethereum' ? 'ETH' : selectedNetwork === 'bsc' ? 'BNB' : 'MATIC'}
                           </Text>
                           <br />
                           <Text type="secondary" style={{ fontSize: '14px' }}>
-                            (₫{cartTotal.toLocaleString()})
+                            {formatCurrency(calculateTotal(cartTotal))} ({formatUsd(calculateTotal(cartTotal))})
                           </Text>
                         </div>
                       </Form.Item>
@@ -1322,18 +1324,18 @@ const CheckoutPage = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                   <Text style={{ color: '#94a3b8' }}>Tạm tính</Text>
-                  <Text style={{ color: 'white' }}>₫{cartTotal.toLocaleString()}</Text>
+                  <Text style={{ color: 'white' }}>{formatCurrency(cartTotal)}</Text>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                   <Text style={{ color: '#94a3b8' }}>Phí vận chuyển</Text>
                   <Text style={{ color: calculateShippingFee(cartTotal) === 0 ? '#4ade80' : 'white' }}>
-                    {calculateShippingFee(cartTotal) === 0 ? 'Miễn phí' : `₫${calculateShippingFee(cartTotal).toLocaleString()}`}
+                    {calculateShippingFee(cartTotal) === 0 ? 'Miễn phí' : formatCurrency(calculateShippingFee(cartTotal))}
                   </Text>
                 </div>
                 {calculateTax(cartTotal) > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
                     <Text style={{ color: '#94a3b8' }}>Thuế ({(CART_CONSTANTS.TAX_RATE * 100).toFixed(0)}%)</Text>
-                    <Text style={{ color: 'white' }}>₫{calculateTax(cartTotal).toLocaleString()}</Text>
+                    <Text style={{ color: 'white' }}>{formatCurrency(calculateTax(cartTotal))}</Text>
                   </div>
                 )}
               </div>
@@ -1344,7 +1346,7 @@ const CheckoutPage = () => {
                 <Text style={{ fontSize: '16px', color: '#cbd5e1' }}>Tổng cộng</Text>
                 <div style={{ textAlign: 'right' }}>
                   <Text style={{ fontSize: '32px', fontWeight: '800', color: 'white', lineHeight: 1 }}>
-                    ₫{calculateTotal(cartTotal).toLocaleString()}
+                    {formatCurrency(calculateTotal(cartTotal))}
                   </Text>
                 </div>
               </div>

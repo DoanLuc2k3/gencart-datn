@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
-  Card, Input, Tag, Button, Pagination, Avatar, Space, Select, Badge, Tooltip, Empty, Modal, List, Form
+  Card, Input, Tag, Button, Pagination, Avatar, Space, Select, Badge, Tooltip, Empty, Modal, List, Form, message, Spin
 } from 'antd';
 import {
   SearchOutlined,
@@ -10,10 +10,12 @@ import {
   EyeOutlined,
   ClockCircleOutlined,
   FilterOutlined,
-  SendOutlined
+  SendOutlined,
+  LoadingOutlined
 } from '@ant-design/icons';
 import '../user-css/Blog.css';
-// Removed i18n hooks to show Vietnamese only
+import { blogPostApi, blogCommentApi, blogCategoryApi, transformPostFromApi, transformCommentToApi } from '../api/blog';
+
 
 
 const { Search } = Input;
@@ -387,84 +389,138 @@ export const saveStoredBlogPosts = (posts) => {
 
 
 const Blog = () => {
-  // displaying Vietnamese only, removed i18n
-  const [allPosts, setAllPosts] = useState(() => getStoredBlogPosts());
+  // State for posts data
+  const [allPosts, setAllPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [form] = Form.useForm();
+  const [categories, setCategories] = useState(['all']);
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [likedPosts, setLikedPosts] = useState([]);
+  const [likedPosts, setLikedPosts] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('blog_liked_posts') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const pageSize = 6;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
 
-  useEffect(() => {
-    const refetchPosts = () => {
-      console.log("Blog.js: Nhận được cập nhật, đang tải lại bài viết...");
-      setAllPosts(getStoredBlogPosts());
-    };
-    window.addEventListener('blog_posts_updated', refetchPosts);
-    const onStorage = (ev) => {
-      if ((ev.key === BLOG_STORAGE_KEY) || (ev.detail && ev.detail.key === BLOG_STORAGE_KEY)) {
-        refetchPosts();
+  // Fetch posts from API
+  const fetchPosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = {};
+      if (selectedCategory && selectedCategory !== 'all') {
+        params.category_name = selectedCategory;
       }
-    };
-    window.addEventListener('storage', onStorage);
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+      
+      const data = await blogPostApi.getAll(params);
+      const posts = Array.isArray(data) ? data : (data.results || []);
+      const transformedPosts = posts.map(transformPostFromApi);
+      setAllPosts(transformedPosts);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      message.error('Không thể tải bài viết. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCategory, searchTerm]);
 
-    return () => {
-      window.removeEventListener('blog_posts_updated', refetchPosts);
-      window.removeEventListener('storage', onStorage);
-    };
+  // Fetch categories from API
+  const fetchCategories = useCallback(async () => {
+    try {
+      const data = await blogCategoryApi.getAll();
+      const cats = Array.isArray(data) ? data : (data.results || []);
+      const categoryNames = cats.map(cat => cat.name);
+      setCategories(['all', ...categoryNames]);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Use default categories if API fails
+      setCategories(['all', 'Khuyến Mãi', 'Sản Phẩm', 'Sự Kiện', 'Về Chúng Tôi', 'Tư Vấn', 'Mẹo Hay', 'Thời Trang', 'Thông Báo']);
+    }
   }, []);
 
-  const categories = useMemo(() => {
-    return ['all', ...new Set(allPosts.map(post => post.category))];
-  }, [allPosts]);
+  // Initial data fetch
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
+  // Fetch posts when filters change
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  // Listen for updates from admin
+  useEffect(() => {
+    const handleBlogUpdate = () => {
+      console.log("Blog.js: Nhận được cập nhật từ admin, đang tải lại...");
+      fetchPosts();
+    };
+    window.addEventListener('blog_posts_updated', handleBlogUpdate);
+    return () => window.removeEventListener('blog_posts_updated', handleBlogUpdate);
+  }, [fetchPosts]);
+
+  // Filter posts client-side (API already filtered, this is for extra filtering)
   const filteredPosts = useMemo(() => {
-    return allPosts.filter(post => {
-      const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (post.tags || []).some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [allPosts, searchTerm, selectedCategory]);
+    return allPosts;
+  }, [allPosts]);
 
   const paginatedPosts = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     return filteredPosts.slice(startIndex, startIndex + pageSize);
   }, [filteredPosts, currentPage]);
 
-  const handleLike = (postId) => {
+  // Handle like with API call
+  const handleLike = async (postId) => {
     const isLiked = likedPosts.includes(postId);
+    const action = isLiked ? 'unlike' : 'like';
 
-    setLikedPosts(prev =>
-      isLiked
+    // Optimistic update
+    setLikedPosts(prev => {
+      const newLiked = isLiked
         ? prev.filter(id => id !== postId)
-        : [...prev, postId]
-    );
+        : [...prev, postId];
+      localStorage.setItem('blog_liked_posts', JSON.stringify(newLiked));
+      return newLiked;
+    });
 
-    const updatedPosts = allPosts.map(post => {
+    setAllPosts(prev => prev.map(post => {
       if (post.id === postId) {
-        return {
-          ...post,
-          likes: isLiked ? post.likes - 1 : post.likes + 1
-        };
+        return { ...post, likes: isLiked ? post.likes - 1 : post.likes + 1 };
       }
       return post;
-    });
-    setAllPosts(updatedPosts);
-    saveStoredBlogPosts(updatedPosts);
+    }));
 
     if (selectedPost && selectedPost.id === postId) {
       setSelectedPost(prev => ({
         ...prev,
         likes: isLiked ? prev.likes - 1 : prev.likes + 1
       }));
+    }
+
+    // Call API
+    try {
+      await blogPostApi.like(postId, action);
+    } catch (error) {
+      console.error('Error liking post:', error);
+      // Revert on error
+      setLikedPosts(prev => {
+        const reverted = isLiked
+          ? [...prev, postId]
+          : prev.filter(id => id !== postId);
+        localStorage.setItem('blog_liked_posts', JSON.stringify(reverted));
+        return reverted;
+      });
     }
   };
 
@@ -473,10 +529,25 @@ const Blog = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleReadMore = (post) => {
-    const freshPost = allPosts.find(p => p.id === post.id);
-    setSelectedPost(freshPost);
-    setIsModalVisible(true);
+  const handleReadMore = async (post) => {
+    try {
+      // Fetch fresh post data with full details
+      const freshPostData = await blogPostApi.getById(post.id);
+      const freshPost = transformPostFromApi(freshPostData);
+      setSelectedPost(freshPost);
+      setIsModalVisible(true);
+      
+      // Update view count in local state
+      setAllPosts(prev => prev.map(p => 
+        p.id === post.id ? { ...p, views: (p.views || 0) + 1 } : p
+      ));
+    } catch (error) {
+      console.error('Error fetching post details:', error);
+      // Fallback to local data
+      const localPost = allPosts.find(p => p.id === post.id);
+      setSelectedPost(localPost);
+      setIsModalVisible(true);
+    }
   };
 
   const handleModalClose = () => {
@@ -486,39 +557,66 @@ const Blog = () => {
     setNewComment("");
   };
 
-  const handleCommentSubmit = () => {
-    if (!newComment.trim()) return;
+  const handleCommentSubmit = async () => {
+    if (!newComment.trim() || !selectedPost) return;
 
-    const newCommentObj = {
+    setSubmittingComment(true);
+    
+    const commentData = transformCommentToApi({
+      postId: selectedPost.id,
       author: 'Bạn',
       avatar: 'https://i.pravatar.cc/150?img=10',
       content: newComment,
-      date: new Date().toLocaleString('vi-VN'),
-    };
-
-    const updatedPosts = allPosts.map(post => {
-      if (post.id === selectedPost.id) {
-        return {
-          ...post,
-          comments: post.comments + 1,
-          commentsData: [...(post.commentsData || []), newCommentObj]
-        };
-      }
-      return post;
     });
-    setAllPosts(updatedPosts);
-    saveStoredBlogPosts(updatedPosts);
 
-    setSelectedPost(prevPost => ({
-      ...prevPost,
-      comments: prevPost.comments + 1,
-      commentsData: [...(prevPost.commentsData || []), newCommentObj]
-    }));
+    try {
+      const createdComment = await blogCommentApi.create(commentData);
+      
+      const newCommentObj = {
+        id: createdComment.id,
+        author: createdComment.author_name || 'Bạn',
+        avatar: createdComment.avatar || 'https://i.pravatar.cc/150?img=10',
+        content: createdComment.content,
+        date: createdComment.date || new Date().toLocaleString('vi-VN'),
+      };
 
-    setNewComment("");
-    form.resetFields();
+      // Update local state
+      setAllPosts(prev => prev.map(post => {
+        if (post.id === selectedPost.id) {
+          return {
+            ...post,
+            comments: post.comments + 1,
+            commentsData: [...(post.commentsData || []), newCommentObj]
+          };
+        }
+        return post;
+      }));
+
+      setSelectedPost(prevPost => ({
+        ...prevPost,
+        comments: prevPost.comments + 1,
+        commentsData: [...(prevPost.commentsData || []), newCommentObj]
+      }));
+
+      setNewComment("");
+      form.resetFields();
+      message.success('Bình luận đã được gửi!');
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+      message.error('Không thể gửi bình luận. Vui lòng thử lại.');
+    } finally {
+      setSubmittingComment(false);
+    }
   };
 
+  // Loading spinner
+  if (loading && allPosts.length === 0) {
+    return (
+      <div className="blog-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} tip="Đang tải bài viết..." />
+      </div>
+    );
+  }
 
   return (
     <div className="blog-container">
@@ -821,14 +919,16 @@ const Blog = () => {
                       placeholder={'Viết bình luận...'}
                       autoSize={{ minRows: 1, maxRows: 4 }}
                       className="comment-input"
+                      disabled={submittingComment}
                     />
                   </Form.Item>
                   <Button
                     type="primary"
                     htmlType="submit"
-                    icon={<SendOutlined />}
+                    icon={submittingComment ? <LoadingOutlined /> : <SendOutlined />}
                     className="comment-submit-btn"
-                    disabled={!newComment.trim()}
+                    disabled={!newComment.trim() || submittingComment}
+                    loading={submittingComment}
                   />
                 </Form>
               </div>

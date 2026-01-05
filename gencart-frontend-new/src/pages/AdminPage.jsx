@@ -33,6 +33,7 @@ import AdminProducts from "../components/admin/AdminProducts";
 import AdminOrders from "../components/admin/AdminOrders";
 import AdminUsers from "../components/admin/AdminUsers";
 import AdminCategories from "../components/admin/AdminCategories";
+import { formatCurrency } from "../utils/format";
 import { Column } from "@ant-design/plots";
 
 const { Header, Sider, Content } = Layout;
@@ -353,8 +354,8 @@ const AdminPage = () => {
             <Statistic
               title="Total Revenue"
               value={stats.totalRevenue}
-              precision={2}
-              prefix="₫"
+              precision={0}
+              formatter={(value) => formatCurrency(value)}
             />
           </Card>
         </Col>
@@ -409,7 +410,7 @@ const AdminPage = () => {
               title: "Total",
               dataIndex: "total_amount",
               key: "total_amount",
-              render: (text) => `₫${parseFloat(text).toFixed(2)}`,
+              render: (text) => formatCurrency(text),
             },
           ]}
         />

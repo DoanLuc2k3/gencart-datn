@@ -302,7 +302,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         # Calculate total amount
         subtotal = cart.total_price
-        shipping_cost = 50 if subtotal < 999 else 0  # Shipping logic
+        # Shipping: Miễn phí cho đơn trên $4 USD (100,000 VND), phí ship $1.2 USD (30,000 VND)
+        shipping_cost = 1.2 if subtotal < 4 else 0  # Free shipping for orders over $4 USD (100,000 VND)
         tax = 0  # Tax logic, set to 0 for now
         total_amount = subtotal + shipping_cost + tax
 

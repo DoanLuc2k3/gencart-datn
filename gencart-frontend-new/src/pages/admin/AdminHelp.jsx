@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Tabs, Layout, Typography, Table, Tag, Space, Card, Row, Col, Input,
-  Button, Modal, Form, message, Switch, Alert, Select, List, Avatar, Tooltip
+  Button, Modal, Form, message, Switch, Alert, Select, List, Avatar, Tooltip, Spin
 } from 'antd';
 import {
   ReloadOutlined, PlusOutlined, ClockCircleOutlined, SolutionOutlined,
   AlertOutlined, EditOutlined, BookOutlined, SettingOutlined,
   DeleteOutlined, LineChartOutlined, EyeOutlined, LikeOutlined, 
   SearchOutlined, MessageOutlined, AppstoreOutlined, BarsOutlined, PushpinOutlined,
-  DownloadOutlined
+  DownloadOutlined, LoadingOutlined
 } from '@ant-design/icons';
+import { blogPostApi, blogCategoryApi, blogCommentApi, transformPostFromApi, transformPostToApi } from '../../api/blog';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { Search } = Input;
+
 
 // ============ BLOG STORAGE SYNC - CRITICAL ============
 // Sử dụng CÙNG KEY với file Blog.js để đồng bộ
@@ -616,11 +618,11 @@ const TicketManagementTab = ({ onTicketsLoaded, refreshKey }) => {
   );
 };
 
-// Tab 2: Blog Management - SYNCHRONIZED VERSION
+// Tab 2: Blog Management - API VERSION
 const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
-  // Load từ localStorage thay vì mockBlogPosts
-  const [blogPosts, setBlogPosts] = useState(() => getStoredBlogPosts());
-  const [loading, setLoading] = useState(false);
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
   const [form] = Form.useForm();
@@ -629,8 +631,9 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
   const [viewMode, setViewMode] = useState('grid');
   const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
   const [currentPostComments, setCurrentPostComments] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const categories = [
+  const defaultCategories = [
     { value: 'Khuyến Mãi', label: 'Khuyến Mãi' },
     { value: 'Sản Phẩm', label: 'Sản Phẩm' },
     { value: 'Sự Kiện', label: 'Sự Kiện' },
@@ -641,39 +644,49 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
     { value: 'Thông Báo', label: 'Thông Báo' }
   ];
 
-  // Sync với localStorage khi component mount và khi có thay đổi từ Blog.js
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const updated = getStoredBlogPosts();
-      setBlogPosts(updated);
-      if (onPostsLoaded) onPostsLoaded(updated);
-    };
-
-    window.addEventListener('blog_posts_updated', handleStorageChange);
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('blog_posts_updated', handleStorageChange);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [onPostsLoaded]);
-
-  // Update parent khi blogPosts thay đổi
-  useEffect(() => {
-    if (typeof onPostsLoaded === 'function') onPostsLoaded(blogPosts);
-  }, [blogPosts, onPostsLoaded]);
-
-  // Handle refresh
-  useEffect(() => {
-    if (typeof refreshKey !== 'undefined') {
+  // Fetch posts from API
+  const fetchPosts = useCallback(async () => {
+    try {
       setLoading(true);
-      setTimeout(() => {
-        const updated = getStoredBlogPosts();
-        setBlogPosts(updated);
-        setLoading(false);
-      }, 300);
+      const data = await blogPostApi.getAllAdmin({ admin: 'true' });
+      const posts = Array.isArray(data) ? data : (data.results || []);
+      const transformedPosts = posts.map(transformPostFromApi);
+      setBlogPosts(transformedPosts);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      message.error('Không thể tải danh sách bài viết');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch categories from API
+  const fetchCategories = useCallback(async () => {
+    try {
+      const data = await blogCategoryApi.getAll();
+      const cats = Array.isArray(data) ? data : (data.results || []);
+      // Use ID as value for form submission
+      const categoryOptions = cats.map(cat => ({ value: cat.id, label: cat.name, id: cat.id }));
+      setCategories(categoryOptions.length > 0 ? categoryOptions : defaultCategories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories(defaultCategories);
+    }
+  }, []);
+
+  // Initial data fetch - only run once
+  useEffect(() => {
+    fetchPosts();
+    fetchCategories();
+  }, []);
+
+  // Handle refresh from parent
+  useEffect(() => {
+    if (refreshKey > 0) {
+      fetchPosts();
     }
   }, [refreshKey]);
+
 
   const handleOpenModal = (post = null) => {
     setEditingPost(post);
@@ -688,44 +701,44 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
     setIsModalVisible(true);
   };
 
-  const handleSave = () => {
-    form.validateFields().then(values => {
-      const formValues = {
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+      setSaving(true);
+      
+      const postData = transformPostToApi({
         ...values,
         tags: (values.tags || '').split(',').map(tag => tag.trim()).filter(Boolean),
-      };
-
-      let updatedPosts;
+      });
+      
+      console.log('Saving post data:', postData); // Debug log
       
       if (editingPost) {
-        updatedPosts = blogPosts.map(p =>
-          p.id === editingPost.id ? { ...editingPost, ...formValues } : p
-        );
+        // Update existing post
+        await blogPostApi.update(editingPost.id, postData);
         message.success('Đã cập nhật bài viết!');
       } else {
-        const newPost = {
-          ...formValues,
-          id: Date.now(),
-          date: new Date().toISOString().split('T')[0],
-          author: MOCK_CURRENT_USER,
-          avatar: 'https://i.pravatar.cc/150?img=1',
-          views: 0,
-          likes: 0,
-          comments: 0,
-          commentsData: [],
-          readTime: '5 phút đọc',
-          status: 'published',
-          isPinned: false,
-        };
-        updatedPosts = [newPost, ...blogPosts];
+        // Create new post
+        await blogPostApi.create(postData);
         message.success('Đã tạo bài viết mới!');
       }
 
-      setBlogPosts(updatedPosts);
-      saveStoredBlogPosts(updatedPosts); // Save to localStorage
+      // Refresh posts list
+      await fetchPosts();
+      
+      // Notify Blog.jsx to refresh
+      window.dispatchEvent(new Event('blog_posts_updated'));
+      
       setIsModalVisible(false);
       form.resetFields();
-    });
+      setEditingPost(null);
+    } catch (error) {
+      console.error('Error saving post:', error);
+      console.error('Error response:', error.response?.data); // Debug log
+      message.error('Không thể lưu bài viết. Vui lòng thử lại.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = (id) => {
@@ -735,34 +748,65 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
       okText: 'Xóa',
       okType: 'danger',
       cancelText: 'Hủy',
-      onOk() {
-        const updatedPosts = blogPosts.filter(p => p.id !== id);
-        setBlogPosts(updatedPosts);
-        saveStoredBlogPosts(updatedPosts); // Save to localStorage
-        message.success('Đã xóa bài viết!');
+      async onOk() {
+        try {
+          await blogPostApi.delete(id);
+          setBlogPosts(prev => prev.filter(p => p.id !== id));
+          window.dispatchEvent(new Event('blog_posts_updated'));
+          message.success('Đã xóa bài viết!');
+        } catch (error) {
+          console.error('Error deleting post:', error);
+          message.error('Không thể xóa bài viết. Vui lòng thử lại.');
+        }
+
       },
     });
   };
 
-  const handleTogglePin = (id) => {
-    const updatedPosts = blogPosts.map(p =>
-      p.id === id ? { ...p, isPinned: !p.isPinned } : p
-    );
-    setBlogPosts(updatedPosts);
-    saveStoredBlogPosts(updatedPosts); // Save to localStorage
-    
+  const handleTogglePin = async (id) => {
     const post = blogPosts.find(p => p.id === id);
-    message.success(post?.isPinned ? 'Đã bỏ ghim bài viết.' : 'Đã ghim bài viết!');
+    const newIsPinned = !post?.isPinned;
+    
+    // Optimistic update
+    setBlogPosts(prev => prev.map(p =>
+      p.id === id ? { ...p, isPinned: newIsPinned } : p
+    ));
+    
+    try {
+      await blogPostApi.patch(id, { is_pinned: newIsPinned });
+      window.dispatchEvent(new Event('blog_posts_updated'));
+      message.success(newIsPinned ? 'Đã ghim bài viết!' : 'Đã bỏ ghim bài viết.');
+    } catch (error) {
+      console.error('Error toggling pin:', error);
+      // Revert on error
+      setBlogPosts(prev => prev.map(p =>
+        p.id === id ? { ...p, isPinned: !newIsPinned } : p
+      ));
+      message.error('Không thể cập nhật. Vui lòng thử lại.');
+    }
   };
 
-  const handleTogglePublish = (postId, checked) => {
+  const handleTogglePublish = async (postId, checked) => {
     const newStatus = checked ? 'published' : 'draft';
-    const updatedPosts = blogPosts.map(post =>
+    
+    // Optimistic update
+    setBlogPosts(prev => prev.map(post =>
       post.id === postId ? { ...post, status: newStatus } : post
-    );
-    setBlogPosts(updatedPosts);
-    saveStoredBlogPosts(updatedPosts); // Save to localStorage
-    message.success(`Đã cập nhật trạng thái: ${newStatus === 'published' ? 'Xuất bản' : 'Bản nháp'}`);
+    ));
+    
+    try {
+      await blogPostApi.patch(postId, { status: newStatus });
+      window.dispatchEvent(new Event('blog_posts_updated'));
+      message.success(`Đã cập nhật trạng thái: ${newStatus === 'published' ? 'Xuất bản' : 'Bản nháp'}`);
+    } catch (error) {
+      console.error('Error toggling publish:', error);
+      // Revert on error
+      const oldStatus = checked ? 'draft' : 'published';
+      setBlogPosts(prev => prev.map(post =>
+        post.id === postId ? { ...post, status: oldStatus } : post
+      ));
+      message.error('Không thể cập nhật. Vui lòng thử lại.');
+    }
   };
 
   const showCommentModal = (post) => {
@@ -770,9 +814,29 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
     setIsCommentModalVisible(true);
   };
 
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await blogCommentApi.delete(commentId);
+      // Refresh posts to update comment count
+      await fetchPosts();
+      // Update current modal
+      if (currentPostComments) {
+        setCurrentPostComments(prev => ({
+          ...prev,
+          comments: prev.comments - 1,
+          commentsData: prev.commentsData.filter(c => c.id !== commentId)
+        }));
+      }
+      message.success('Đã xóa bình luận!');
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      message.error('Không thể xóa bình luận. Vui lòng thử lại.');
+    }
+  };
+
   const processedPosts = blogPosts
     .filter(post => {
-      const titleMatch = post.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const titleMatch = post.title?.toLowerCase().includes(searchTerm.toLowerCase());
       const categoryMatch = !selectedCategory || post.category === selectedCategory;
       return titleMatch && categoryMatch;
     })
@@ -781,6 +845,15 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
       if (!a.isPinned && b.isPinned) return 1;
       return b.id - a.id;
     });
+
+  // Loading state
+  if (loading && blogPosts.length === 0) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+        <Spin indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />} tip="Đang tải bài viết..." />
+      </div>
+    );
+  }
 
   const tableColumns = [
     {
