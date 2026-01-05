@@ -16,33 +16,18 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          // React vendor
-          if (id.includes('node_modules/react') || 
-              id.includes('node_modules/react-dom') || 
-              id.includes('node_modules/react-router')) {
-            return 'react-vendor';
-          }
-          
-          // Ant Design core
-          if (id.includes('node_modules/antd') && !id.includes('@ant-design/plots') && !id.includes('@ant-design/icons')) {
-            return 'antd-core';
-          }
-          
-          // Ant Design icons
-          if (id.includes('node_modules/@ant-design/icons')) {
-            return 'antd-icons';
-          }
-          
-          // DON'T bundle @ant-design/plots - let it be lazy loaded
-          // if (id.includes('node_modules/@ant-design/plots')) {
-          //   return 'antd-plots';
-          // }
-          
-          // Axios
-          if (id.includes('node_modules/axios')) {
-            return 'axios';
-          }
+        manualChunks: {
+          // React MUST be in a single chunk and load first
+          'react-vendor': [
+            'react', 
+            'react-dom', 
+            'react-router-dom',
+            'react/jsx-runtime'
+          ],
+          // Ant Design core (includes icons to avoid createContext issue)
+          'antd-core': ['antd', '@ant-design/icons'],
+          // Axios separate
+          'axios': ['axios'],
         },
       },
     },
