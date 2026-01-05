@@ -97,7 +97,7 @@ const AdminUsers = () => {
       setUsers(fetchedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
-      message.error("Failed to load users");
+      message.error("Không thể tải danh sách người dùng");
     } finally {
       setLoading(false);
     }
@@ -142,7 +142,7 @@ const AdminUsers = () => {
       setUserOrders(data.results || data || []);
     } catch (error) {
       console.error("Error fetching user orders:", error);
-      message.error("Failed to load user orders");
+      message.error("Không thể tải đơn hàng của người dùng");
     }
   };
 
@@ -185,14 +185,14 @@ const AdminUsers = () => {
       );
       if (!response.ok) throw new Error("Failed to update user");
       const updatedUser = await response.json();
-      message.success("User updated successfully");
+      message.success("Cập nhật người dùng thành công");
       setModalVisible(false);
       setUsers(users.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
       setAllUsers(allUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
       if (drawerVisible) setSelectedUser(updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);
-      message.error("Failed to update user");
+      message.error("Không thể cập nhật người dùng");
     }
   };
 
@@ -217,11 +217,11 @@ const AdminUsers = () => {
         }
       );
       if (!response.ok) throw new Error("Failed to change password");
-      message.success("Password changed successfully");
+      message.success("Đổi mật khẩu thành công");
       setPasswordModalVisible(false);
     } catch (error) {
       console.error("Error changing password:", error);
-      message.error("Failed to change password");
+      message.error("Không thể đổi mật khẩu");
     }
   };
 
@@ -237,7 +237,7 @@ const AdminUsers = () => {
         }
       );
       if (!response.ok) throw new Error("Failed to delete user");
-      message.success("User deleted successfully");
+      message.success("Xóa người dùng thành công");
       setUsers(users.filter((user) => user.id !== userId));
       setAllUsers(allUsers.filter((user) => user.id !== userId));
       if (drawerVisible && selectedUser && selectedUser.id === userId) {
@@ -245,7 +245,7 @@ const AdminUsers = () => {
       }
     } catch (error) {
       console.error("Error deleting user:", error);
-      message.error("Failed to delete user");
+      message.error("Không thể xóa người dùng");
     }
   };
 
@@ -623,7 +623,7 @@ const AdminUsers = () => {
                 },
               }}
             >
-              <Tooltip title={record.is_superuser ? "Cannot delete superusers" : "Delete User"}>
+              <Tooltip title={record.is_superuser ? "Không thể xóa siêu người dùng" : "Xóa Người dùng"}>
                 <Button
                   type="primary"
                   danger
@@ -672,18 +672,18 @@ const AdminUsers = () => {
   // Order columns for user details
   const orderColumns = [
     {
-      title: "Order ID",
+      title: "Mã Đơn Hàng",
       dataIndex: "id",
       key: "id",
     },
     {
-      title: "Date",
+      title: "Ngày",
       dataIndex: "created_at",
       key: "created_at",
       render: (text) => new Date(text).toLocaleDateString("en-IN"),
     },
     {
-      title: "Status",
+      title: "Trạng Thái",
       dataIndex: "status",
       key: "status",
       render: (status) => {
@@ -697,7 +697,7 @@ const AdminUsers = () => {
       },
     },
     {
-      title: "Total",
+      title: "Tổng Tiền",
       dataIndex: "total_amount",
       key: "total_amount",
       render: (text) => `₫${parseFloat(text).toFixed(2)}`,
@@ -728,21 +728,21 @@ const AdminUsers = () => {
           <Col xs={24} md={16} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0, fontWeight: 650 }}>
-                User Management
+                QUẢN LÝ NGƯỜI DÙNG
               </Title>
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <Tag color="geekblue" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Total: {formatNumber(usersMetrics.total)}
+                Tổng: {formatNumber(usersMetrics.total)}
               </Tag>
               <Tag color="cyan" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Staff: {formatNumber(usersMetrics.staff)}
+                Nhân viên: {formatNumber(usersMetrics.staff)}
               </Tag>
               <Tag color="gold" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
                 Superusers: {formatNumber(usersMetrics.superusers)}
               </Tag>
               <Tag color="green" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Active: {formatNumber(usersMetrics.active)}
+                Hoạt động: {formatNumber(usersMetrics.active)}
               </Tag>
             </div>
           </Col>
@@ -759,7 +759,7 @@ const AdminUsers = () => {
                   color: "#fff",
                 }}
               >
-                Refresh
+                Làm mới
               </Button>
             </Space>
           </Col>
@@ -781,7 +781,7 @@ const AdminUsers = () => {
         <Input
           allowClear
           prefix={<SearchOutlined style={{ color: "#94a3b8" }} />}
-          placeholder="Search by username, email, first name or last name..."
+          placeholder="Tìm kiếm theo tên đăng nhập, email, tên hoặc họ..."
           style={{ width: "100%" }}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -841,7 +841,7 @@ const AdminUsers = () => {
               <EditOutlined style={{ fontSize: 20, color: "#fff" }} />
             </div>
             <span style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>
-              Edit User
+              Chỉnh sửa Người dùng
             </span>
           </div>
         }
@@ -859,12 +859,12 @@ const AdminUsers = () => {
         >
           <Form.Item
             name="username"
-            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Username</span>}
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Tên đăng nhập</span>}
             rules={[{ required: true, message: "Please enter username" }]}
           >
             <Input 
               prefix={<UserOutlined />} 
-              placeholder="Username" 
+              placeholder="Tên đăng nhập" 
               size="large"
               style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
             />
@@ -890,10 +890,10 @@ const AdminUsers = () => {
             <Col span={12}>
               <Form.Item 
                 name="first_name" 
-                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>First Name</span>}
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Tên</span>}
               >
                 <Input 
-                  placeholder="First Name" 
+                  placeholder="Tên" 
                   size="large"
                   style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
                 />
@@ -902,10 +902,10 @@ const AdminUsers = () => {
             <Col span={12}>
               <Form.Item 
                 name="last_name" 
-                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Last Name</span>}
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Họ</span>}
               >
                 <Input 
-                  placeholder="Last Name" 
+                  placeholder="Họ" 
                   size="large"
                   style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
                 />
@@ -917,7 +917,7 @@ const AdminUsers = () => {
             <Col span={8}>
               <Form.Item 
                 name="is_active" 
-                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Active</span>} 
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Hoạt động</span>} 
                 valuePropName="checked"
               >
                 <Switch />
@@ -926,7 +926,7 @@ const AdminUsers = () => {
             <Col span={8}>
               <Form.Item
                 name="is_staff"
-                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Staff</span>}
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Nhân viên</span>}
                 valuePropName="checked"
               >
                 <Switch />
@@ -935,7 +935,7 @@ const AdminUsers = () => {
             <Col span={8}>
               <Form.Item
                 name="is_superuser"
-                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Superuser</span>}
+                label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Siêu người dùng</span>}
                 valuePropName="checked"
               >
                 <Switch />
@@ -956,7 +956,7 @@ const AdminUsers = () => {
                   fontWeight: 600,
                 }}
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 type="primary"
@@ -972,7 +972,7 @@ const AdminUsers = () => {
                   boxShadow: "0 4px 16px rgba(59, 130, 246, 0.35)",
                 }}
               >
-                Update User
+                Cập nhật Người dùng
               </Button>
             </div>
           </Form.Item>
@@ -997,7 +997,7 @@ const AdminUsers = () => {
               <LockOutlined style={{ fontSize: 20, color: "#fff" }} />
             </div>
             <span style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>
-              Change Password
+              Đổi Mật khẩu
             </span>
           </div>
         }
@@ -1015,7 +1015,7 @@ const AdminUsers = () => {
         >
           <Form.Item
             name="password"
-            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>New Password</span>}
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Mật khẩu mới</span>}
             rules={[
               { required: true, message: "Please enter new password" },
               { min: 8, message: "Password must be at least 8 characters" },
@@ -1023,7 +1023,7 @@ const AdminUsers = () => {
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="New Password"
+              placeholder="Mật khẩu mới"
               size="large"
               style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
             />
@@ -1031,7 +1031,7 @@ const AdminUsers = () => {
 
           <Form.Item
             name="confirm"
-            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Confirm Password</span>}
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Xác nhận mật khẩu</span>}
             dependencies={["password"]}
             rules={[
               { required: true, message: "Please confirm password" },
@@ -1049,7 +1049,7 @@ const AdminUsers = () => {
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="Confirm Password"
+              placeholder="Xác nhận mật khẩu"
               size="large"
               style={{ borderRadius: 10, border: "2px solid #e2e8f0" }}
             />
@@ -1068,7 +1068,7 @@ const AdminUsers = () => {
                   fontWeight: 600,
                 }}
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 type="primary"
@@ -1084,7 +1084,7 @@ const AdminUsers = () => {
                   boxShadow: "0 4px 16px rgba(245, 158, 11, 0.35)",
                 }}
               >
-                Change Password
+                Đổi Mật khẩu
               </Button>
             </div>
           </Form.Item>
@@ -1153,7 +1153,7 @@ const AdminUsers = () => {
                   #{selectedUser.id}
                 </Descriptions.Item>
                 <Descriptions.Item 
-                  label={<span style={{ fontWeight: 600 }}>Username</span>}
+                  label={<span style={{ fontWeight: 600 }}>Tên đăng nhập</span>}
                 >
                   {selectedUser.username}
                 </Descriptions.Item>
@@ -1166,14 +1166,14 @@ const AdminUsers = () => {
                   </div>
                 </Descriptions.Item>
                 <Descriptions.Item 
-                  label={<span style={{ fontWeight: 600 }}>Full Name</span>}
+                  label={<span style={{ fontWeight: 600 }}>Tên đầy đủ</span>}
                 >
                   {selectedUser.first_name && selectedUser.last_name
                     ? `${selectedUser.first_name} ${selectedUser.last_name}`
                     : "-"}
                 </Descriptions.Item>
                 <Descriptions.Item 
-                  label={<span style={{ fontWeight: 600 }}>Date Joined</span>}
+                  label={<span style={{ fontWeight: 600 }}>Ngày tham gia</span>}
                 >
                   {new Date(selectedUser.date_joined).toLocaleString("en-US", {
                     month: "long",
@@ -1184,7 +1184,7 @@ const AdminUsers = () => {
                   })}
                 </Descriptions.Item>
                 <Descriptions.Item 
-                  label={<span style={{ fontWeight: 600 }}>Last Login</span>}
+                  label={<span style={{ fontWeight: 600 }}>Đăng nhập lần cuối</span>}
                 >
                   {selectedUser.last_login
                     ? new Date(selectedUser.last_login).toLocaleString("en-US", {
@@ -1197,7 +1197,7 @@ const AdminUsers = () => {
                     : "Never"}
                 </Descriptions.Item>
                 <Descriptions.Item 
-                  label={<span style={{ fontWeight: 600 }}>Active Status</span>}
+                  label={<span style={{ fontWeight: 600 }}>Trạng thái hoạt động</span>}
                 >
                   <div
                     style={{
@@ -1222,7 +1222,7 @@ const AdminUsers = () => {
                   </div>
                 </Descriptions.Item>
                 <Descriptions.Item 
-                  label={<span style={{ fontWeight: 600 }}>Role</span>}
+                  label={<span style={{ fontWeight: 600 }}>Vai trò</span>}
                 >
                   {selectedUser.is_superuser && (
                     <div

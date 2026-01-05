@@ -369,7 +369,7 @@ const AdminOrders = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            ORDER ID
+            MÃ ĐƠN HÀNG
           </span>
         </div>
       ),
@@ -402,7 +402,7 @@ const AdminOrders = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            CUSTOMER
+            KHÁCH HÀNG
           </span>
         </div>
       ),
@@ -426,7 +426,7 @@ const AdminOrders = () => {
               </Avatar>
               <div>
                 <Text strong style={{ fontSize: 14, color: "#64748b" }}>
-                  Guest User
+                  Khách vãng lai
                 </Text>
               </div>
             </div>
@@ -448,7 +448,7 @@ const AdminOrders = () => {
               </Avatar>
               <div>
                 <Text strong style={{ fontSize: 14 }}>
-                  User #{record.user_id}
+                  Người dùng #{record.user_id}
                 </Text>
               </div>
             </div>
@@ -501,7 +501,7 @@ const AdminOrders = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            ORDER DATE
+            NGÀY ĐẶT HÀNG
           </span>
         </div>
       ),
@@ -523,7 +523,7 @@ const AdminOrders = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            STATUS
+            TRẠNG THÁI
           </span>
         </div>
       ),
@@ -532,11 +532,11 @@ const AdminOrders = () => {
       width: 160,
       render: (status) => getStatusTag(status),
       filters: [
-        { text: "Pending", value: "pending" },
-        { text: "Processing", value: "processing" },
-        { text: "Shipped", value: "shipped" },
-        { text: "Delivered", value: "delivered" },
-        { text: "Cancelled", value: "cancelled" },
+        { text: "Chờ xử lý", value: "pending" },
+        { text: "Đang xử lý", value: "processing" },
+        { text: "Đã giao hàng", value: "shipped" },
+        { text: "Đã giao", value: "delivered" },
+        { text: "Đã hủy", value: "cancelled" },
       ],
       onFilter: (value, record) => record.status === value,
     },
@@ -544,7 +544,7 @@ const AdminOrders = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            TOTAL
+            TỔNG TIỀN
           </span>
         </div>
       ),
@@ -576,7 +576,7 @@ const AdminOrders = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            ITEMS
+            SỐ LƯỢNG
           </span>
         </div>
       ),
@@ -602,7 +602,7 @@ const AdminOrders = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            ACTIONS
+            HÀNH ĐỘNG
           </span>
         </div>
       ),
@@ -611,7 +611,7 @@ const AdminOrders = () => {
       fixed: "right",
       render: (_, record) => (
         <Space size={8}>
-          <Tooltip title="View Details">
+          <Tooltip title="Xem Chi tiết">
             <Button
               icon={<EyeOutlined style={{ fontSize: 15 }} />}
               onClick={() => showOrderDetails(record)}
@@ -639,7 +639,7 @@ const AdminOrders = () => {
               }}
             />
           </Tooltip>
-          <Tooltip title="Update Status">
+          <Tooltip title="Cập nhật Trạng thái">
             <Button
               icon={<EditOutlined style={{ fontSize: 15 }} />}
               onClick={() => showEditModal(record)}
@@ -696,30 +696,30 @@ const AdminOrders = () => {
           <Col xs={24} md={16} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0, fontWeight: 650 }}>
-                Order Management
+                QUẢN LÝ ĐƠN HÀNG
               </Title>
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <Tag color="geekblue" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Total: {orderMetrics.total}
+                Tổng số: {orderMetrics.total}
               </Tag>
               <Tag color="orange" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Pending: {orderMetrics.pending}
+                Chờ xử lý: {orderMetrics.pending}
               </Tag>
               <Tag color="gold" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Processing: {orderMetrics.processing}
+                Đang xử lý: {orderMetrics.processing}
               </Tag>
               <Tag color="cyan" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Shipped: {orderMetrics.shipped}
+                Đã giao hàng: {orderMetrics.shipped}
               </Tag>
               <Tag color="green" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Delivered: {orderMetrics.delivered}
+                Đã giao: {orderMetrics.delivered}
               </Tag>
               <Tag color="red" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Cancelled: {orderMetrics.cancelled}
+                Đã hủy: {orderMetrics.cancelled}
               </Tag>
               <Tag color="purple" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Revenue: {currencyFormat(orderMetrics.totalRevenue)}
+                Doanh thu: {currencyFormat(orderMetrics.totalRevenue)}
               </Tag>
             </div>
           </Col>
@@ -736,7 +736,7 @@ const AdminOrders = () => {
                   color: "#fff",
                 }}
               >
-                Refresh
+                Làm mới
               </Button>
             </Space>
           </Col>
@@ -758,7 +758,7 @@ const AdminOrders = () => {
         <Input
           allowClear
           prefix={<SearchOutlined style={{ color: "#94a3b8" }} />}
-          placeholder="Search by order ID, customer name, username, email or status..."
+          placeholder="Tìm kiếm theo mã đơn hàng, tên khách hàng, tên đăng nhập, email hoặc trạng thái..."
           style={{ width: "100%" }}
           value={searchText}
           onChange={(e) => handleSearch(e.target.value)}
@@ -792,7 +792,7 @@ const AdminOrders = () => {
                   pageSizeOptions: ["10", "20", "50", "100"],
                   showTotal: (total, range) => (
                     <span style={{ fontWeight: 600, color: "#475569" }}>
-                      {range[0]}-{range[1]} of <span style={{ color: "#667eea", fontWeight: 700 }}>{total}</span> orders
+                      {range[0]}-{range[1]} của <span style={{ color: "#667eea", fontWeight: 700 }}>{total}</span> đơn hàng
                     </span>
                   ),
                   style: { padding: "20px 24px", margin: 0 },
@@ -801,7 +801,7 @@ const AdminOrders = () => {
                   ...pagination,
                   showTotal: (total, range) => (
                     <span style={{ fontWeight: 600, color: "#475569" }}>
-                      {range[0]}-{range[1]} of <span style={{ color: "#667eea", fontWeight: 700 }}>{total}</span> orders
+                      {range[0]}-{range[1]} của <span style={{ color: "#667eea", fontWeight: 700 }}>{total}</span> đơn hàng
                     </span>
                   ),
                   style: { padding: "20px 24px", margin: 0 },
@@ -834,7 +834,7 @@ const AdminOrders = () => {
               <EditOutlined style={{ fontSize: 20, color: "#fff" }} />
             </div>
             <span style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>
-              Update Order Status
+              Cập nhật Trạng thái Đơn hàng
             </span>
           </div>
         }

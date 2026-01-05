@@ -269,7 +269,7 @@ const AdminProducts = () => {
   // Handle add/edit product
   const showModal = (product = null) => {
     setEditingProduct(product);
-    setModalTitle(product ? "Edit Product" : "Add Product");
+    setModalTitle(product ? "Chỉnh Sửa Sản Phẩm" : "Thêm Sản Phẩm");
 
     if (product) {
       form.setFieldsValue({
@@ -375,7 +375,7 @@ const AdminProducts = () => {
       const _productResponse = await response.json();
 
       message.success(
-        `Product ${editingProduct ? "updated" : "added"} successfully`
+        `Sản phẩm ${editingProduct ? "đã được cập nhật" : "đã được thêm"} thành công`
       );
       setModalVisible(false);
       form.resetFields();
@@ -411,7 +411,7 @@ const AdminProducts = () => {
         { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("Failed");
-      message.success("Product deleted");
+      message.success("Sản phẩm đã được xóa");
       
       // Refresh both allProducts and display products
       await fetchAllProducts();
@@ -444,17 +444,17 @@ const AdminProducts = () => {
       await fetchAllProducts();
       await fetchProducts(pagination.current, pagination.pageSize);
       
-      message.success("Status updated");
+      message.success("Trạng thái đã được cập nhật");
     } catch {
       message.error("Toggle failed");
     }
   };
 
   const renderInventoryTag = (inv) => {
-    if (inv === 0) return <Tag color="red">Out of stock</Tag>;
-    if (inv < 5) return <Tag color="volcano">Low stock ({inv})</Tag>;
-    if (inv < 15) return <Tag color="gold">{inv} in stock</Tag>;
-    return <Tag color="green">{inv} in stock</Tag>;
+    if (inv === 0) return <Tag color="red">Hết hàng</Tag>;
+    if (inv < 5) return <Tag color="volcano">Tồn kho thấp ({inv})</Tag>;
+    if (inv < 15) return <Tag color="gold">{inv} trong kho</Tag>;
+    return <Tag color="green">{inv} trong kho</Tag>;
   };
 
   const renderPrice = (price, discount) => {
@@ -505,7 +505,7 @@ const AdminProducts = () => {
         bodyStyle={{ display: "flex", flexDirection: "column", gap: 10, padding: 18 }}
         cover={
           <Badge.Ribbon
-            text={item.is_active ? "Active" : "Inactive"}
+            text={item.is_active ? "Hoạt Động" : "Không Hoạt Động"}
             color={item.is_active ? "green" : "gray"}
             style={{ fontWeight: 600 }}
           >
@@ -529,18 +529,18 @@ const AdminProducts = () => {
           </Badge.Ribbon>
         }
         actions={[
-          <Tooltip title="Edit" key="edit">
+          <Tooltip title="Chỉnh sửa" key="edit">
             <EditOutlined onClick={() => showModal(item)} />
           </Tooltip>,
-          <Tooltip title="Delete" key="delete">
+          <Tooltip title="Xóa" key="delete">
             <Popconfirm
-              title="Delete product?"
+              title="Xóa sản phẩm?"
               onConfirm={() => handleDelete(item.id)}
             >
               <DeleteOutlined style={{ color: "#ff4d4f" }} />
             </Popconfirm>
           </Tooltip>,
-          <Tooltip title="Toggle active" key="active">
+          <Tooltip title="Chuyển trạng thái" key="active">
             <Switch
               size="small"
               checked={item.is_active}
@@ -559,7 +559,7 @@ const AdminProducts = () => {
             marginBottom: 6,
           }}
         >
-          {item.category?.name || "Uncategorized"}
+          {item.category?.name || "Chưa Phân Loại"}
         </Tag>
         <Title level={5} style={{ marginBottom: 4 }}>
           {item.name}
@@ -575,7 +575,7 @@ const AdminProducts = () => {
             minHeight: 32,
           }}
         >
-          {item.description || "No description"}
+          {item.description || "Không có mô tả"}
         </Text>
         <div style={{ marginBottom: 6 }}>
           {renderPrice(item.price, item.discount_price)}
@@ -585,7 +585,7 @@ const AdminProducts = () => {
         </div>
         {item.discount_price && (
           <Tag color="red" style={{ marginBottom: 4 }}>
-            Save{" "}
+            Tiết kiệm{" "}
             {(
               (1 - parseFloat(item.discount_price) / parseFloat(item.price)) *
               100
@@ -594,7 +594,7 @@ const AdminProducts = () => {
           </Tag>
         )}
         <Text type="secondary" style={{ fontSize: 12 }}>
-          ID: {item.id}
+          Mã: {item.id}
         </Text>
       </Card>
     );
@@ -619,14 +619,14 @@ const AdminProducts = () => {
   // Table columns
   const columns = [
     {
-      title: "ID",
+      title: "Mã",
       dataIndex: "id",
       key: "id",
       width: 70,
       sorter: (a, b) => a.id - b.id,
     },
     {
-      title: "Image",
+      title: "Hình Ảnh",
       dataIndex: "image_url",
       key: "image_url",
       width: 80,
@@ -647,7 +647,7 @@ const AdminProducts = () => {
       },
     },
     {
-      title: "Name",
+      title: "Tên",
       dataIndex: "name",
       key: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
@@ -658,7 +658,7 @@ const AdminProducts = () => {
       ),
     },
     {
-      title: "Category",
+      title: "Danh Mục",
       dataIndex: ["category", "name"],
       key: "category",
       filters: categories.map((c) => ({ text: c.name, value: c.name })),
@@ -666,14 +666,14 @@ const AdminProducts = () => {
       render: (value) => <Tag>{value || "—"}</Tag>,
     },
     {
-      title: "Price",
+      title: "Giá",
       dataIndex: "price",
       key: "price",
       sorter: (a, b) => parseFloat(a.price) - parseFloat(b.price),
       render: (text, record) => renderPrice(text, record.discount_price),
     },
     {
-      title: "Discount",
+      title: "Giảm Giá",
       dataIndex: "discount_price",
       key: "discount_price",
       render: (text) =>
@@ -684,19 +684,19 @@ const AdminProducts = () => {
         ),
     },
     {
-      title: "Inventory",
+      title: "Tồn Kho",
       dataIndex: "inventory",
       key: "inventory",
       sorter: (a, b) => a.inventory - b.inventory,
       render: (inv) => renderInventoryTag(inv),
     },
     {
-      title: "Active",
+      title: "Hoạt Động",
       dataIndex: "is_active",
       key: "is_active",
       filters: [
-        { text: "Active", value: true },
-        { text: "Inactive", value: false },
+        { text: "Hoạt Động", value: true },
+        { text: "Không Hoạt Động", value: false },
       ],
       onFilter: (value, record) => record.is_active === value,
       render: (active, record) => (
@@ -708,11 +708,11 @@ const AdminProducts = () => {
       ),
     },
     {
-      title: "Actions",
+      title: "Hành Động",
       key: "actions",
       render: (_, record) => (
         <Space size="small">
-          <Tooltip title="Edit">
+          <Tooltip title="Chỉnh sửa">
             <Button
               type="primary"
               icon={<EditOutlined />}
@@ -720,12 +720,12 @@ const AdminProducts = () => {
               size="small"
             />
           </Tooltip>
-          <Tooltip title="Delete">
+          <Tooltip title="Xóa">
             <Popconfirm
-              title="Are you sure you want to delete this product?"
+              title="Bạn có chắc chắn muốn xóa sản phẩm này?"
               onConfirm={() => handleDelete(record.id)}
-              okText="Yes"
-              cancelText="No"
+              okText="Có"
+              cancelText="Không"
             >
               <Button
                 type="primary"
@@ -757,7 +757,7 @@ const AdminProducts = () => {
           <Input
             allowClear
             prefix={<SearchOutlined style={{ color: "#94a3b8" }} />}
-            placeholder="Search by name or description"
+            placeholder="Tìm kiếm theo tên hoặc mô tả"
             style={{ width: "100%" }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -767,7 +767,7 @@ const AdminProducts = () => {
           <Select
             mode="multiple"
             maxTagCount={2}
-            placeholder="Select categories"
+            placeholder="Chọn danh mục"
             style={{ width: "100%" }}
             value={selectedCategories}
             onChange={setSelectedCategories}
@@ -781,26 +781,26 @@ const AdminProducts = () => {
           </Select>
         </Col>
         <Col xs={24} md={12} lg={4}>
-          <Tooltip title="Show only active products">
+          <Tooltip title="Chỉ hiển thị sản phẩm hoạt động">
             <Space align="center">
               <Switch
                 checked={onlyActive}
                 onChange={setOnlyActive}
                 size="small"
               />
-              <Text>Active</Text>
+              <Text>Hoạt Động</Text>
             </Space>
           </Tooltip>
         </Col>
         <Col xs={24} md={12} lg={4}>
-          <Tooltip title="Filter products with inventory below 10">
+          <Tooltip title="Lọc sản phẩm có tồn kho dưới 10">
             <Space align="center">
               <Switch
                 checked={lowStockOnly}
                 onChange={setLowStockOnly}
                 size="small"
               />
-              <Text>Low Stock</Text>
+              <Text>Tồn Kho Thấp</Text>
             </Space>
           </Tooltip>
         </Col>
@@ -839,7 +839,7 @@ const AdminProducts = () => {
             ))}
           </Row>
         ) : (
-          <Empty description="No products found" />
+          <Empty description="Không tìm thấy sản phẩm" />
         )}
       </div>
     </Card>
@@ -874,7 +874,7 @@ const AdminProducts = () => {
                 onClick={handleRefresh}
                 icon={<ReloadOutlined />}
               >
-                Reload Products
+                Tải Lại Sản Phẩm
               </Button>
             </div>
           ),
@@ -900,24 +900,24 @@ const AdminProducts = () => {
         <Col xs={24} md={14} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Title level={2} style={{ color: "#fff", margin: 0, fontWeight: 650 }}>
-              Product Management
+              QUẢN LÝ SẢN PHẨM
             </Title>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             <Tag color="geekblue" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-              Total: {productMetrics.total}
+              Tổng: {productMetrics.total}
             </Tag>
             <Tag color="green" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-              Active: {productMetrics.active}
+              Hoạt Động: {productMetrics.active}
             </Tag>
             <Tag color="volcano" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-              Low stock: {productMetrics.lowStock}
+              Tồn Kho Thấp: {productMetrics.lowStock}
             </Tag>
           </div>
         </Col>
         <Col xs={24} md={10}>
           <Space size={12} style={{ width: '100%', justifyContent: 'flex-end', alignItems: 'center' }}>
-            <Tooltip title={viewMode === 'Table' ? 'Table view' : 'Grid view'}>
+            <Tooltip title={viewMode === 'Table' ? 'Chế độ bảng' : 'Chế độ lưới'}>
               <Segmented
                 size="middle"
                 options={[
@@ -936,7 +936,7 @@ const AdminProducts = () => {
               />
             </Tooltip>
 
-            <Tooltip title="Refresh products">
+            <Tooltip title="Làm mới sản phẩm">
               <Button
                 shape="circle"
                 icon={<ReloadOutlined />}
@@ -952,7 +952,7 @@ const AdminProducts = () => {
               onClick={() => showModal()}
               style={{ borderRadius: 10 }}
             >
-              Add Product
+              Thêm Sản Phẩm
             </Button>
           </Space>
         </Col>
@@ -983,28 +983,28 @@ const AdminProducts = () => {
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             name="name"
-            label="Product Name"
-            rules={[{ required: true, message: "Please enter product name" }]}
+            label="Tên Sản Phẩm"
+            rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm" }]}
           >
-            <Input placeholder="Enter product name" />
+            <Input placeholder="Nhập tên sản phẩm" />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label="Description"
+            label="Mô Tả"
             rules={[
-              { required: true, message: "Please enter product description" },
+              { required: true, message: "Vui lòng nhập mô tả sản phẩm" },
             ]}
           >
-            <TextArea rows={4} placeholder="Enter product description" />
+            <TextArea rows={4} placeholder="Nhập mô tả sản phẩm" />
           </Form.Item>
 
           <Form.Item
             name="category_id"
-            label="Category"
-            rules={[{ required: true, message: "Please select a category" }]}
+            label="Danh Mục"
+            rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
           >
-            <Select placeholder="Select a category">
+            <Select placeholder="Chọn danh mục">
               {categories.map((category) => (
                 <Option key={category.id} value={category.id}>
                   {category.name}
@@ -1015,8 +1015,8 @@ const AdminProducts = () => {
 
           <Form.Item
             name="price"
-            label="Price"
-            rules={[{ required: true, message: "Please enter product price" }]}
+            label="Giá"
+            rules={[{ required: true, message: "Vui lòng nhập giá sản phẩm" }]}
           >
             <InputNumber
               min={0}
@@ -1026,11 +1026,11 @@ const AdminProducts = () => {
                 `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
               }
               parser={(value) => value.replace(/₫\s?|(,*)/g, "")}
-              placeholder="Enter price"
+              placeholder="Nhập giá"
             />
           </Form.Item>
 
-          <Form.Item name="discount_price" label="Discount Price (Optional)">
+          <Form.Item name="discount_price" label="Giá Giảm (Tùy Chọn)">
             <InputNumber
               min={0}
               step={0.01}
@@ -1039,27 +1039,27 @@ const AdminProducts = () => {
                 value ? `₫ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ""
               }
               parser={(value) => value.replace(/₫\s?|(,*)/g, "")}
-              placeholder="Enter discount price"
+              placeholder="Nhập giá giảm"
             />
           </Form.Item>
 
           <Form.Item
             name="inventory"
-            label="Inventory"
+            label="Tồn Kho"
             rules={[
-              { required: true, message: "Please enter inventory count" },
+              { required: true, message: "Vui lòng nhập số lượng tồn kho" },
             ]}
           >
             <InputNumber
               min={0}
               style={{ width: "100%" }}
-              placeholder="Enter inventory count"
+              placeholder="Nhập số lượng tồn kho"
             />
           </Form.Item>
 
           <Form.Item
             name="is_active"
-            label="Active"
+            label="Hoạt Động"
             valuePropName="checked"
             initialValue={true}
           >
@@ -1067,8 +1067,8 @@ const AdminProducts = () => {
           </Form.Item>
 
           <Form.Item
-            label="Product Image"
-            tooltip="Upload images to Cloudinary via backend"
+            label="Hình Ảnh Sản Phẩm"
+            tooltip="Tải lên hình ảnh lên Cloudinary qua backend"
           >
             <Upload
               {...uploadProps}
@@ -1076,11 +1076,11 @@ const AdminProducts = () => {
               maxCount={1}
               accept="image/*"
             >
-              <Button icon={<UploadOutlined />}>Select Image</Button>
+              <Button icon={<UploadOutlined />}>Chọn Hình Ảnh</Button>
             </Upload>
             <div style={{ marginTop: 6 }}>
               <Text type="secondary">
-                Image will be uploaded to Cloudinary when you save the product.
+                Hình ảnh sẽ được tải lên Cloudinary khi bạn lưu sản phẩm.
               </Text>
             </div>
           </Form.Item>
@@ -1089,9 +1089,9 @@ const AdminProducts = () => {
             <div
               style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
             >
-              <Button onClick={() => setModalVisible(false)}>Cancel</Button>
+              <Button onClick={() => setModalVisible(false)}>Hủy</Button>
               <Button type="primary" htmlType="submit" loading={uploading}>
-                {editingProduct ? "Update" : "Add"} Product
+                {editingProduct ? "Cập Nhật" : "Thêm"} Sản Phẩm
               </Button>
             </div>
           </Form.Item>

@@ -216,10 +216,10 @@ function StatCard({ title, value, bg, subtitle = "Tháng Trước", animationDel
               transform: isHovered ? 'scale(1.1) rotate(-5deg)' : 'scale(1)',
               transition: 'all 0.3s ease',
             }}>
-              {title === 'Total Revenue' || title === 'Tổng Doanh Thu' ? '💰' 
-                : title === 'Total Orders' || title === 'Tổng Đơn Hàng' ? '🛒'
-                : title === 'New Customers' || title === 'Khách Hàng Mới' ? '👥'
-                : title === 'Total Reviews' || title === 'TỔNG ĐÁNH GIÁ' || title === 'Tổng đánh giá' ? '⭐'
+              {title === 'Tổng Doanh Thu' ? '💰' 
+                : title === 'Tổng Đơn Hàng' ? '🛒'
+                : title === 'Khách Hàng Mới' ? '👥'
+                : title === 'TỔNG ĐÁNH GIÁ' || title === 'Tổng đánh giá' ? '⭐'
                 : '🔥'}
             </div>
           </div>
@@ -249,10 +249,10 @@ function StatCard({ title, value, bg, subtitle = "Tháng Trước", animationDel
               fontWeight: 700,
               letterSpacing: '0.3px',
             }}>
-              {title === 'Total Revenue' || title === 'Tổng Doanh Thu' ? '12.5%'
-                : title === 'Total Orders' || title === 'Tổng Đơn Hàng' ? '8.3%'
-                : title === 'New Customers' || title === 'Khách Hàng Mới' ? '15.7%'
-                : title === 'Total Reviews' || title === 'TỔNG ĐÁNH GIÁ' || title === 'Tổng đánh giá' ? '23.4%'
+              {title === 'Tổng Doanh Thu' ? '12.5%'
+                : title === 'Tổng Đơn Hàng' ? '8.3%'
+                : title === 'Khách Hàng Mới' ? '15.7%'
+                : title === 'TỔNG ĐÁNH GIÁ' || title === 'Tổng đánh giá' ? '23.4%'
                 : '18.9%'}
             </Text>
           </div>
@@ -401,7 +401,7 @@ function MonthlyRevenueChart({ data }) {
     labels,
     datasets: [
       {
-        label: `Revenue ${unit}`,
+        label: `Doanh thu ${unit}`,
         data: data,
         borderColor: 'rgb(255, 99, 132)',
         backgroundColor: 'rgba(255, 99, 132, 0.1)',
@@ -428,7 +428,7 @@ function MonthlyRevenueChart({ data }) {
 
   return (
     <Card
-      title ="Phân tích doanh thu"
+      title ="PHÂN TÍCH DOANH THU"
       bordered={false}
       style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}
     >
@@ -531,7 +531,7 @@ function BestSellingProductsChart({ data, style, bodyStyle }) {
       title={
         <Space style={{ whiteSpace: 'nowrap' }}>
           <FireOutlined style={{ color: '#ff4d4f' }} />
-          Hiệu suất sản phẩm
+         HIỆU SUẤT SẢN PHẨM
         </Space>
       }
       bordered={false}
@@ -671,7 +671,7 @@ function TopCustomersRanking({ customers }) {
           }}>
             <TrophyOutlined style={{ color: '#fa8c16', fontSize: 18 }} />
           </div>
-          <span style={{ fontWeight: 700, fontSize: 16 }}>Top Spending Customers</span>
+          <span style={{ fontWeight: 700, fontSize: 16 }}>KHÁCH HÀNG CHI TIÊU NHIỀU NHẤT</span>
         </Space>
       }
       bordered={false}
@@ -830,9 +830,9 @@ function RecentOrdersTable({ orders }) {
                 }}>
                     <ShoppingCartOutlined style={{ color: '#2563eb', fontSize: 18 }} />
                 </div>
-                <span className="recent-orders-title" style={{ fontWeight: 700, fontSize: 16 }}>Đơn hàng gần đây</span>
+                <span className="recent-orders-title" style={{ fontWeight: 700, fontSize: 16 }}>ĐƠN HÀNG GẦN ĐÂY</span>
             </Space>
-            <Button type="link" size="small" style={{ fontWeight: 600 }} onClick={() => navigate('/admin/orders')}>Xem tất cả</Button>
+            <Button type="link" size="small" style={{ fontWeight: 600}} onClick={() => navigate('/admin/orders')}>XEM TẤT CẢ</Button>
         </Flex>
       }
       bordered={false}
@@ -1015,23 +1015,23 @@ function RecentOrdersTable({ orders }) {
 
 function GreetingCard() {
   const [hovered, setHovered] = useState(false);
-  const date = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const date = new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const hour = new Date().getHours();
   
-  let greeting = "Good Morning";
+  let greeting = "Chào buổi sáng";
   let icon = "☀️";
   let gradient = "linear-gradient(135deg, #fff 0%, #fff7ed 100%)"; // Warm morning
   let iconBg = "linear-gradient(135deg, #ffedd5 0%, #fff 100%)";
   let iconColor = "#f59e0b";
 
   if (hour >= 12 && hour < 17) {
-    greeting = "Good Afternoon";
+    greeting = "Chào buổi chiều";
     icon = "🌤️";
     gradient = "linear-gradient(135deg, #fff 0%, #f0f9ff 100%)"; // Blue afternoon
     iconBg = "linear-gradient(135deg, #e0f2fe 0%, #fff 100%)";
     iconColor = "#0ea5e9";
   } else if (hour >= 17) {
-    greeting = "Good Evening";
+    greeting = "Chào buổi tối";
     icon = "🌙";
     gradient = "linear-gradient(135deg, #fff 0%, #f5f3ff 100%)"; // Purple evening
     iconBg = "linear-gradient(135deg, #ede9fe 0%, #fff 100%)";
@@ -1078,10 +1078,10 @@ function GreetingCard() {
         </div>
         <div>
           <Typography.Title level={2} style={{ margin: 0, fontSize: '28px', fontWeight: 800, color: '#1f2937', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-            {greeting}, Admin! <span style={{ display: 'inline-block', animation: 'wave 2.5s infinite', transformOrigin: '70% 70%' }}>👋</span>
+            {greeting}, Quản trị viên! <span style={{ display: 'inline-block', animation: 'wave 2.5s infinite', transformOrigin: '70% 70%' }}>👋</span>
           </Typography.Title>
           <Typography.Text style={{ fontSize: '15px', fontWeight: 500, color: '#6b7280', display: 'block', marginTop: 6 }}>
-            Here's what's happening with your store today.
+            Đây là những gì đang xảy ra với cửa hàng của bạn hôm nay.
           </Typography.Text>
         </div>
       </div>
@@ -1652,7 +1652,7 @@ const AdminDashboard = () => {
         title={
           <Space style={{ whiteSpace: 'nowrap', fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px" }}>
             <span style={{ fontSize: 28 }}>📊</span>
-            Phân tích cảm xúc
+            PHÂN TÍCH CẢM XÚC
           </Space>
         }
         bordered={false}
@@ -1672,8 +1672,8 @@ const AdminDashboard = () => {
               value={mode}
               onChange={handleModeChange}
               options={[
-                { label: isMobile ? "All" : "Overview", value: "global" },
-                { label: isMobile ? "Prod" : "By Product", value: "product" },
+                { label: isMobile ? "Tất cả" : "Tổng quan", value: "global" },
+                { label: isMobile ? "SP" : "Theo sản phẩm", value: "product" },
               ]}
               style={{ background: "#f0f2f5", padding: "2px" }}
             />
@@ -1967,7 +1967,7 @@ const AdminDashboard = () => {
         title={
           <Space style={{ whiteSpace: 'nowrap', fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px" }}>
             <span style={{ fontSize: 28 }}>⚠️</span>
-            Cảnh báo tiêu cực
+            CẢNH BÁO TIÊU CỰC
           </Space>
         }
         bordered={false}

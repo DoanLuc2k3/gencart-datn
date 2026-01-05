@@ -48,7 +48,7 @@ const AdminCategories = () => {
   const [allCategories, setAllCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalTitle, setModalTitle] = useState("Add Category");
+  const [modalTitle, setModalTitle] = useState("Thêm Danh mục");
   const [form] = Form.useForm();
   const [editingCategory, setEditingCategory] = useState(null);
   const [fileList, setFileList] = useState([]);
@@ -76,7 +76,7 @@ const AdminCategories = () => {
       setCategories(fetchedCategories);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      message.error("Failed to load categories");
+      message.error("Không thể tải danh sách danh mục");
     } finally {
       setLoading(false);
     }
@@ -104,7 +104,7 @@ const AdminCategories = () => {
   // Show add/edit modal
   const showModal = (category = null) => {
     setEditingCategory(category);
-    setModalTitle(category ? "Edit Category" : "Add Category");
+    setModalTitle(category ? "Chỉnh sửa Danh mục" : "Thêm Danh mục");
 
     if (category) {
       form.setFieldsValue({
@@ -161,7 +161,7 @@ const AdminCategories = () => {
       if (!response.ok) throw new Error("Failed to save category");
 
       message.success(
-        `Category ${editingCategory ? "updated" : "added"} successfully`
+        `Danh mục ${editingCategory ? "đã được cập nhật" : "đã được thêm"} thành công`
       );
       setModalVisible(false);
 
@@ -177,7 +177,7 @@ const AdminCategories = () => {
       }
     } catch (error) {
       console.error("Error saving category:", error);
-      message.error("Failed to save category");
+      message.error("Không thể lưu danh mục");
     } finally {
       setUploading(false);
     }
@@ -192,7 +192,7 @@ const AdminCategories = () => {
         { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("Failed to delete category");
-      message.success("Category deleted successfully");
+      message.success("Danh mục đã được xóa thành công");
       const updatedCategories = allCategories.filter((c) => c.id !== id);
       setAllCategories(updatedCategories);
       setCategories(
@@ -207,7 +207,7 @@ const AdminCategories = () => {
       );
     } catch (error) {
       console.error("Error deleting category:", error);
-      message.error("Failed to delete category");
+      message.error("Không thể xóa danh mục");
     }
   };
 
@@ -239,7 +239,7 @@ const AdminCategories = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            ID
+            MÃ
           </span>
         </div>
       ),
@@ -272,7 +272,7 @@ const AdminCategories = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            IMAGE
+            HÌNH ẢNH
           </span>
         </div>
       ),
@@ -313,7 +313,7 @@ const AdminCategories = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            CATEGORY NAME
+            TÊN DANH MỤC
           </span>
         </div>
       ),
@@ -340,7 +340,7 @@ const AdminCategories = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            DESCRIPTION
+            MÔ TẢ
           </span>
         </div>
       ),
@@ -348,9 +348,9 @@ const AdminCategories = () => {
       key: "description",
       ellipsis: true,
       render: (text) => (
-        <Tooltip title={text || "No description"}>
+        <Tooltip title={text || "Không có mô tả"}>
           <Text style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6 }}>
-            {text || <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>No description</span>}
+            {text || <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>Không có mô tả</span>}
           </Text>
         </Tooltip>
       ),
@@ -359,7 +359,7 @@ const AdminCategories = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            PRODUCTS
+            SẢN PHẨM
           </span>
         </div>
       ),
@@ -395,7 +395,7 @@ const AdminCategories = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            STATUS
+            TRẠNG THÁI
           </span>
         </div>
       ),
@@ -422,7 +422,7 @@ const AdminCategories = () => {
           }}
         >
           {active ? <CheckCircleOutlined style={{ fontSize: 14 }} /> : <CloseCircleOutlined style={{ fontSize: 14 }} />}
-          {active ? "Active" : "Inactive"}
+          {active ? "Hoạt động" : "Không hoạt động"}
         </div>
       ),
       filters: [
@@ -435,7 +435,7 @@ const AdminCategories = () => {
       title: (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.5px" }}>
-            ACTIONS
+            HÀNH ĐỘNG
           </span>
         </div>
       ),
@@ -444,7 +444,7 @@ const AdminCategories = () => {
       fixed: "right",
       render: (_, record) => (
         <Space size={8}>
-          <Tooltip title="Edit Category">
+          <Tooltip title="Chỉnh sửa Danh mục">
             <Button
               icon={<EditOutlined style={{ fontSize: 15 }} />}
               onClick={() => showModal(record)}
@@ -473,11 +473,11 @@ const AdminCategories = () => {
             />
           </Tooltip>
           <Popconfirm
-            title={<span style={{ fontWeight: 600 }}>Delete Category</span>}
-            description="Are you sure you want to delete this category?"
+            title={<span style={{ fontWeight: 600 }}>Xóa Danh mục</span>}
+            description="Bạn có chắc chắn muốn xóa danh mục này không?"
             onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
+            okText="Có"
+            cancelText="Không"
             okButtonProps={{
               style: {
                 background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
@@ -486,7 +486,7 @@ const AdminCategories = () => {
               },
             }}
           >
-            <Tooltip title={record.product_count > 0 ? "Cannot delete categories with products" : "Delete Category"}>
+            <Tooltip title={record.product_count > 0 ? "Không thể xóa danh mục có sản phẩm" : "Xóa Danh mục"}>
               <Button
                 type="primary"
                 danger
@@ -555,18 +555,18 @@ const AdminCategories = () => {
           <Col xs={24} md={16} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Title level={isMobile ? 3 : 2} style={{ color: "#fff", margin: 0, fontWeight: 650 }}>
-                Product Categories
+               DANH MỤC SẢN PHẨM
               </Title>
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <Tag color="geekblue" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Total: {formatNumber(categoriesMetrics.total)}
+                Tổng số: {formatNumber(categoriesMetrics.total)}
               </Tag>
               <Tag color="green" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                Active: {formatNumber(categoriesMetrics.active)}
+                Hoạt động: {formatNumber(categoriesMetrics.active)}
               </Tag>
               <Tag color="volcano" style={{ background: "rgba(255,255,255,0.08)", color: '#fff' }}>
-                With Products: {formatNumber(categoriesMetrics.withProducts)}
+                Có sản phẩm: {formatNumber(categoriesMetrics.withProducts)}
               </Tag>
             </div>
           </Col>
@@ -579,7 +579,7 @@ const AdminCategories = () => {
                 type="primary"
                 style={{ background: "rgba(255,255,255,0.12)", border: "none", color: "#fff" }}
               >
-                Refresh
+                Làm mới
               </Button>
               <Button
                 type="primary"
@@ -592,7 +592,7 @@ const AdminCategories = () => {
                   color: "#fff",
                 }}
               >
-                {isMobile ? "Add" : "Add Category"}
+                {isMobile ? "Thêm" : "Thêm Danh mục"}
               </Button>
             </Space>
           </Col>
@@ -614,7 +614,7 @@ const AdminCategories = () => {
         <Input
           allowClear
           prefix={<SearchOutlined style={{ color: "#94a3b8" }} />}
-          placeholder="Search by category name or description..."
+          placeholder="Tìm kiếm theo tên danh mục hoặc mô tả..."
           style={{ width: "100%" }}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -700,11 +700,11 @@ const AdminCategories = () => {
         >
           <Form.Item
             name="name"
-            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Category Name</span>}
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Tên Danh mục</span>}
             rules={[{ required: true, message: "Please enter category name" }]}
           >
             <Input
-              placeholder="Enter category name"
+              placeholder="Nhập tên danh mục"
               size="large"
               style={{ 
                 borderRadius: 10,
@@ -716,11 +716,11 @@ const AdminCategories = () => {
 
           <Form.Item
             name="description"
-            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Description</span>}
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Mô tả</span>}
           >
             <TextArea
               rows={4}
-              placeholder="Enter category description"
+              placeholder="Nhập mô tả danh mục"
               style={{ 
                 borderRadius: 10,
                 border: "2px solid #e2e8f0",
@@ -731,7 +731,7 @@ const AdminCategories = () => {
 
           <Form.Item
             name="is_active"
-            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Active Status</span>}
+            label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Trạng thái Hoạt động</span>}
             valuePropName="checked"
           >
             <Switch 
@@ -741,7 +741,7 @@ const AdminCategories = () => {
             />
           </Form.Item>
 
-          <Form.Item label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Category Image</span>}>
+          <Form.Item label={<span style={{ fontWeight: 700, fontSize: 14, color: "#334155" }}>Hình ảnh Danh mục</span>}>
             <Upload {...uploadProps} listType="picture" maxCount={1}>
               <Button 
                 icon={<UploadOutlined />} 
@@ -770,7 +770,7 @@ const AdminCategories = () => {
                   fontWeight: 600,
                 }}
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 type="primary"
@@ -787,7 +787,7 @@ const AdminCategories = () => {
                   boxShadow: "0 4px 16px rgba(102, 126, 234, 0.35)",
                 }}
               >
-                {editingCategory ? "Update" : "Add"} Category
+                {editingCategory ? "Cập nhật" : "Thêm"} Danh mục
               </Button>
             </div>
           </Form.Item>

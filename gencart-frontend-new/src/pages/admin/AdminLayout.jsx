@@ -77,7 +77,7 @@ const AdminLayout = () => {
     setFlowersEnabled((prev) => {
       const next = !prev;
       localStorage.setItem("adminFlowers", String(next));
-      message.success(next ? "Flower decorations enabled" : "Flower decorations disabled");
+      message.success(next ? "Đã bật trang trí hoa" : "Đã tắt trang trí hoa");
       return next;
     });
   };
@@ -97,7 +97,7 @@ const AdminLayout = () => {
   // Toggle dark mode
   const toggleDarkMode = () => {
     setDarkMode(prev => !prev);
-    message.success(`${!darkMode ? 'Dark' : 'Light'} mode activated`);
+    message.success(`${!darkMode ? 'Chế độ tối' : 'Chế độ sáng'} đã được kích hoạt`);
   };
 
   // Handle responsive
@@ -227,7 +227,7 @@ const AdminLayout = () => {
     if (!file) return;
 
     if (!userId) {
-        message.error("User ID not found");
+        message.error("Không tìm thấy ID người dùng");
         return;
     }
 
@@ -241,7 +241,7 @@ const AdminLayout = () => {
         },
       });
       setAvatarUrl(response.data.avatar_url);
-      message.success("Avatar updated successfully");
+      message.success("Cập nhật ảnh đại diện thành công");
       
       // Update local storage
       const userDataStr = localStorage.getItem("user");
@@ -251,20 +251,20 @@ const AdminLayout = () => {
           localStorage.setItem("user", JSON.stringify(userData));
       }
     } catch (error) {
-      message.error("Failed to update avatar");
+      message.error("Cập nhật ảnh đại diện thất bại");
       console.error(error);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("isAdmin");
     localStorage.removeItem("user");
-    message.success("Logged out successfully");
+    message.success("Đăng xuất thành công");
     navigate("/login");
-  };
+  }, [navigate]);
 
   // Get the current selected key based on the path
   const getSelectedKey = () => {
@@ -281,7 +281,15 @@ const AdminLayout = () => {
   // Get active tab label
   const getActiveTabLabel = () => {
     const key = getSelectedKey();
-    return key.charAt(0).toUpperCase() + key.slice(1);
+    const labels = {
+      dashboard: "Tổng quan",
+      products: "Sản phẩm",
+      orders: "Đơn hàng",
+      users: "Người dùng",
+      categories: "Danh mục",
+      help: "Trợ giúp"
+    };
+    return labels[key] || key.charAt(0).toUpperCase() + key.slice(1);
   };
 
   // Return a React icon element for the active tab
@@ -313,37 +321,37 @@ const AdminLayout = () => {
       {
         key: "dashboard",
         icon: <DashboardOutlined />,
-        label: "Dashboard",
+        label: "Tổng quan",
         onClick: () => navigate("/admin/dashboard"),
       },
       {
         key: "products",
         icon: <AppstoreOutlined />,
-        label: "Products",
+        label: "Sản phẩm",
         onClick: () => navigate("/admin/products"),
       },
       {
         key: "orders",
         icon: <ShoppingOutlined />,
-        label: "Orders",
+        label: "Đơn hàng",
         onClick: () => navigate("/admin/orders"),
       },
       {
         key: "users",
         icon: <UserOutlined />,
-        label: "Users",
+        label: "Người dùng",
         onClick: () => navigate("/admin/users"),
       },
       {
         key: "categories",
         icon: <TagOutlined />,
-        label: "Categories",
+        label: "Danh mục",
         onClick: () => navigate("/admin/categories"),
       },
       {
         key: "help",
         icon: <QuestionCircleOutlined />,
-        label: "Help",
+        label: "Trợ giúp",
         onClick: () => navigate("/admin/help"),
       },
       {
@@ -352,11 +360,11 @@ const AdminLayout = () => {
       {
         key: "logout",
         icon: <LogoutOutlined />,
-        label: "Logout",
+        label: "Đăng xuất",
         onClick: handleLogout,
       },
     ],
-    [navigate]
+    [navigate, handleLogout]
   );
 
   const tooltipContainer = useCallback((triggerNode) => {
@@ -448,7 +456,7 @@ const AdminLayout = () => {
         </div>
         <div className={`gencart-sidebar-bottom ${collapsed ? 'compact' : ''}`}>
           <Tooltip
-            title={collapsed ? "Expand" : "Collapse"}
+            title={collapsed ? "Mở rộng" : "Thu gọn"}
             placement={collapsed ? "right" : "top"}
             getPopupContainer={tooltipContainer}
             overlayStyle={{ zIndex: 2000 }}
@@ -614,7 +622,7 @@ const AdminLayout = () => {
                 }} />
                 <input
                   type="text"
-                  placeholder="Search"
+                  placeholder="Tìm kiếm"
                   style={{ 
                     background: "transparent",
                     border: "none",
@@ -641,7 +649,7 @@ const AdminLayout = () => {
                           <List
                             loading={reviewsLoading}
                             dataSource={reviews}
-                            locale={{ emptyText: 'No recent reviews' }}
+                            locale={{ emptyText: 'Không có đánh giá gần đây' }}
                             renderItem={(item) => (
                               <List.Item key={item.id} style={{ padding: 8 }}>
                                 <List.Item.Meta
@@ -670,7 +678,7 @@ const AdminLayout = () => {
                           />
                         </div>
                         <div style={{ textAlign: 'center', marginTop: 8 }}>
-                          <Button type="link" onClick={() => navigate('/admin/reviews')}>View all</Button>
+                          <Button type="link" onClick={() => navigate('/admin/reviews')}>Xem tất cả</Button>
                         </div>
                       </div>
                     }
@@ -695,7 +703,7 @@ const AdminLayout = () => {
                     </Badge>
                   </Popover>
 
-                  <Tooltip title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+                  <Tooltip title={darkMode ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}>
                     <div
                       onClick={toggleDarkMode}
                       className="admin-search-icon-btn"
@@ -713,7 +721,7 @@ const AdminLayout = () => {
                     </div>
                   </Tooltip>
 
-                  <Tooltip title="Help">
+                  <Tooltip title="Trợ giúp">
                     <div
                       className="admin-search-icon-btn"
                       style={{
@@ -726,7 +734,7 @@ const AdminLayout = () => {
                     </div>
                   </Tooltip>
 
-                  <Tooltip title={flowersEnabled ? "Disable decorations" : "Enable decorations"}>
+                  <Tooltip title={flowersEnabled ? "Tắt trang trí" : "Bật trang trí"}>
                     <div
                       onClick={toggleFlowers}
                       role="button"
@@ -765,13 +773,13 @@ const AdminLayout = () => {
                       {
                         key: 'home',
                         icon: <HomeOutlined />,
-                        label: 'Home',
+                        label: 'Trang chủ',
                         onClick: () => navigate("/")
                       },
                       {
                         key: 'change-avatar',
                         icon: <UploadOutlined />,
-                        label: 'Change Avatar',
+                        label: 'Đổi ảnh đại diện',
                         onClick: () => fileInputRef.current.click()
                       },
                       {
@@ -780,7 +788,7 @@ const AdminLayout = () => {
                       {
                         key: 'logout',
                         icon: <LogoutOutlined />,
-                        label: 'Logout',
+                        label: 'Đăng xuất',
                         onClick: handleLogout
                       }
                     ]
