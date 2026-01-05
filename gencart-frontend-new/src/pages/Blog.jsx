@@ -345,7 +345,7 @@ export const getStoredBlogPosts = () => {
   }
 
   const storablePosts = initialMockPosts.map(post => {
-    const { content, ...rest } = post;
+    const {  ...rest } = post;
     return { ...rest, content: (typeof post.content === 'string' ? post.content : post.description) };
   });
 

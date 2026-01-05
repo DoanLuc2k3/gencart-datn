@@ -130,7 +130,7 @@ const getSparklinePath = (trends, key, w = 100, h = 28) => {
 }
 
 // --- Components ---
-function StatCard({ title, value, bg, subtitle = "Last Month", animationDelay = '0s' }) {
+function StatCard({ title, value, bg, subtitle = "Tháng Trước", animationDelay = '0s' }) {
   const [isHovered, setIsHovered] = useState(false);
   
   const cardStyle = {
@@ -216,10 +216,10 @@ function StatCard({ title, value, bg, subtitle = "Last Month", animationDelay = 
               transform: isHovered ? 'scale(1.1) rotate(-5deg)' : 'scale(1)',
               transition: 'all 0.3s ease',
             }}>
-              {title === 'Total Revenue' ? '💰' 
-                : title === 'Total Orders' ? '🛒'
-                : title === 'New Customers' ? '👥'
-                : title === 'Total Reviews' ? '⭐'
+              {title === 'Total Revenue' || title === 'Tổng Doanh Thu' ? '💰' 
+                : title === 'Total Orders' || title === 'Tổng Đơn Hàng' ? '🛒'
+                : title === 'New Customers' || title === 'Khách Hàng Mới' ? '👥'
+                : title === 'Total Reviews' || title === 'TỔNG ĐÁNH GIÁ' || title === 'Tổng đánh giá' ? '⭐'
                 : '🔥'}
             </div>
           </div>
@@ -249,10 +249,10 @@ function StatCard({ title, value, bg, subtitle = "Last Month", animationDelay = 
               fontWeight: 700,
               letterSpacing: '0.3px',
             }}>
-              {title === 'Total Revenue' ? '12.5%'
-                : title === 'Total Orders' ? '8.3%'
-                : title === 'New Customers' ? '15.7%'
-                : title === 'Total Reviews' ? '23.4%'
+              {title === 'Total Revenue' || title === 'Tổng Doanh Thu' ? '12.5%'
+                : title === 'Total Orders' || title === 'Tổng Đơn Hàng' ? '8.3%'
+                : title === 'New Customers' || title === 'Khách Hàng Mới' ? '15.7%'
+                : title === 'Total Reviews' || title === 'TỔNG ĐÁNH GIÁ' || title === 'Tổng đánh giá' ? '23.4%'
                 : '18.9%'}
             </Text>
           </div>
@@ -428,7 +428,7 @@ function MonthlyRevenueChart({ data }) {
 
   return (
     <Card
-      title ="Revenue Analysis"
+      title ="Phân tích doanh thu"
       bordered={false}
       style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}
     >
@@ -469,7 +469,7 @@ function BestSellingProductsChart({ data, style, bodyStyle }) {
     labels: labels.length > 0 ? labels : ['No data'],
     datasets: [
       {
-        label: 'Revenue (K VND)',
+        label: 'Doanh thu (K VNĐ)',
         data: salesData.length > 0 ? salesData : [0],
         backgroundColor: backgroundColors.slice(0, salesData.length || 1),
         borderColor: borderColors.slice(0, salesData.length || 1),
@@ -531,7 +531,7 @@ function BestSellingProductsChart({ data, style, bodyStyle }) {
       title={
         <Space style={{ whiteSpace: 'nowrap' }}>
           <FireOutlined style={{ color: '#ff4d4f' }} />
-          Product Performance
+          Hiệu suất sản phẩm
         </Space>
       }
       bordered={false}
@@ -543,7 +543,7 @@ function BestSellingProductsChart({ data, style, bodyStyle }) {
       </div>
       {salesData.length === 0 && (
         <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
-          No recent orders
+          Không có đơn hàng gần đây
         </div>
       )}
     </Card>
@@ -713,7 +713,7 @@ function TopCustomersRanking({ customers }) {
       ) : (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#bfbfbf' }}>
             <UserOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }} />
-            <div>No customer data available</div>
+            <div>Không có dữ liệu khách hàng</div>
         </div>
       )}
 
@@ -807,10 +807,10 @@ function TopCustomersRanking({ customers }) {
 function RecentOrdersTable({ orders }) {
   const navigate = useNavigate();
   const headerColumns = [
-    "Product",
-    "Quantity",
-    "Price",
-    "Action",
+    "Sản phẩm",
+    "Số lượng",
+    "Giá",
+    "Hành động",
   ];
 
   return (
@@ -830,9 +830,9 @@ function RecentOrdersTable({ orders }) {
                 }}>
                     <ShoppingCartOutlined style={{ color: '#2563eb', fontSize: 18 }} />
                 </div>
-                <span className="recent-orders-title" style={{ fontWeight: 700, fontSize: 16 }}>Recent Orders</span>
+                <span className="recent-orders-title" style={{ fontWeight: 700, fontSize: 16 }}>Đơn hàng gần đây</span>
             </Space>
-            <Button type="link" size="small" style={{ fontWeight: 600 }} onClick={() => navigate('/admin/orders')}>View All</Button>
+            <Button type="link" size="small" style={{ fontWeight: 600 }} onClick={() => navigate('/admin/orders')}>Xem tất cả</Button>
         </Flex>
       }
       bordered={false}
@@ -875,7 +875,7 @@ function RecentOrdersTable({ orders }) {
                     </div>
                     <div style={{ minWidth: 0 }}>
                         <Typography.Text strong style={{ display: 'block', fontSize: 13, color: '#334155', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {order.title || 'Unknown'}
+                        {order.title || 'Không rõ'}
                         </Typography.Text>
                         <Typography.Text type="secondary" style={{ fontSize: 11 }}>
                             #{order.orderId ? order.orderId.toString().slice(-6) : '---'}
@@ -908,7 +908,7 @@ function RecentOrdersTable({ orders }) {
                     }}
                   onClick={() => navigate(`/admin/orders?openId=${order.orderId || order.id}`)}
                 >
-                  Details
+                  Chi tiết
                 </Button>
               </div>
             </div>
@@ -1406,7 +1406,7 @@ const AdminDashboard = () => {
         // item.product might be an object or ID depending on serializer
         const product = item.product || {};
         const productId = product.id || item.product_id || 'unknown';
-        const title = product.name || item.title || 'Unknown Product';
+        const title = product.name || item.title || 'Sản phẩm không rõ';
         
         if (!sales.has(productId)) {
           sales.set(productId, {
@@ -1501,7 +1501,7 @@ const AdminDashboard = () => {
         if (items.length < 5) {
           items.push({
             key: `${order.id}-${item.id}`,
-            title: item.product?.name || 'Unknown',
+            title: item.product?.name || 'Không rõ',
             quantity: item.quantity,
             price: parseFloat(item.price || 0),
             image: item.product?.primary_image || item.product?.image_url || null,
@@ -1577,44 +1577,44 @@ const AdminDashboard = () => {
         >
           <div style={{ display: 'flex', width: '100%' }}>
             <StatCard
-              title="Total Revenue"
+              title="Tổng Doanh Thu"
               value={formatCurrencyDisplay(stats.totalRevenue)}
               icon={<DollarOutlined />}
               bg="linear-gradient(135deg, #1e9d72, #b89229ff)"
-              subtitle="Last Month"
+              subtitle="Tháng Trước"
               animationDelay="0.1s"
             />
           </div>
 
           <div style={{ display: 'flex', width: '100%' }}>
             <StatCard
-              title="Total Orders"
+              title="Tổng Đơn Hàng"
               value="277"
               icon={<ShoppingCartOutlined />}
               bg="linear-gradient(135deg, #c01313ff, #231f1fff)"
-              subtitle="Last Month"
+              subtitle="Tháng Trước"
               animationDelay="0.2s"
             />
           </div>
 
           <div style={{ display: 'flex', width: '100%' }}>
             <StatCard
-              title="New Customers"
+              title="Khách Hàng Mới"
               value={stats.totalUsers}
               icon={<UserAddOutlined />}
               bg="linear-gradient(135deg, #043746ff, #3b74e1)"
-              subtitle="Last Month"
+              subtitle="Tháng Trước"
               animationDelay="0.3s"
             />
           </div>
 
           <div style={{ display: 'flex', width: '100%' }}>
             <StatCard
-              title="Top Selling"
+              title="Bán Chạy Nhất"
               value={topProductTitle.substring(0, 15) + (topProductTitle.length > 15 ? '...' : '')}
               icon={<FireOutlined />}
               bg="linear-gradient(135deg, #e39d37, #cf0e92ff)"
-              subtitle="Last Month"
+              subtitle="Tháng Trước"
               animationDelay="0.4s"
             />
           </div>
@@ -1652,7 +1652,7 @@ const AdminDashboard = () => {
         title={
           <Space style={{ whiteSpace: 'nowrap', fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px" }}>
             <span style={{ fontSize: 28 }}>📊</span>
-            Sentiment Analysis
+            Phân tích cảm xúc
           </Space>
         }
         bordered={false}
@@ -1684,8 +1684,8 @@ const AdminDashboard = () => {
                   value={chartMode}
                   onChange={(value) => setChartMode(value)}
                   options={[
-                    { label: "% per day", value: "percent" },
-                    { label: "Counts", value: "counts" },
+                    { label: "% mỗi ngày", value: "percent" },
+                    { label: "Số lượng", value: "counts" },
                   ]}
                   style={{ background: "#f0f2f5", padding: "2px" }}
                 />
@@ -1694,7 +1694,7 @@ const AdminDashboard = () => {
                   value={String(minDailyTotal)}
                   onChange={(value) => setMinDailyTotal(Number(value))}
                   options={[
-                    { label: "All", value: "0" },
+                    { label: "Tất cả", value: "0" },
                     { label: "≥1", value: "1" },
                     { label: "≥3", value: "3" },
                     { label: "≥5", value: "5" },
@@ -1704,7 +1704,7 @@ const AdminDashboard = () => {
               </>
             ) : (
               <Select
-                placeholder="Select product"
+                placeholder="Chọn sản phẩm"
                 value={selectedProductId}
                 onChange={handleProductChange}
                 style={{ minWidth: 240 }}
@@ -1721,7 +1721,7 @@ const AdminDashboard = () => {
       >
         {sentimentLoading ? (
            <div style={{ textAlign: 'center', padding: '40px' }}>
-             <Spin tip="Loading analytics data..." />
+             <Spin tip="Đang tải dữ liệu phân tích..." />
            </div>
         ) : (
           <>
@@ -1750,7 +1750,7 @@ const AdminDashboard = () => {
                         className={`sentiment-card sentiment-card--${key}`}
                         tabIndex={0}
                         role="region"
-                        aria-label={`${key.charAt(0).toUpperCase()}${key.slice(1)} feedback summary`}
+                        aria-label={`${key === 'positive' ? 'Tích cực' : key === 'neutral' ? 'Trung tính' : 'Tiêu cực'} - tóm tắt phản hồi`}
                         style={{
                           borderRadius: 20,
                           padding: 28,
@@ -1782,24 +1782,24 @@ const AdminDashboard = () => {
                                   <div
                                     className={`sentiment-emoji sentiment-emoji--${key} ${delta >= 15 ? 'pulse' : ''}`}
                                     style={{ marginBottom: 12 }}
-                                    title={key.charAt(0).toUpperCase() + key.slice(1)}
+                                    title={key === 'positive' ? 'Tích cực' : key === 'neutral' ? 'Trung tính' : 'Tiêu cực'}
                                     role="img"
-                                    aria-label={`${key} sentiment emoji`}
+                                    aria-label={`${key === 'positive' ? 'Tích cực' : key === 'neutral' ? 'Trung tính' : 'Tiêu cực'} emoji cảm xúc`}
                                   >
                                     <span style={{ fontSize: 36 }}>{icons[key]}</span>
                                   </div>
                           <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.75, marginBottom: 12, letterSpacing: "0.5px" }}>
                             {key === "positive"
-                              ? "POSITIVE FEEDBACK"
+                              ? "PHẢN HỒI TÍCH CỰC"
                               : key === "neutral"
-                              ? "NEUTRAL FEEDBACK"
-                              : "NEGATIVE FEEDBACK"}
+                              ? "PHẢN HỒI TRUNG TÍNH"
+                              : "PHẢN HỒI TIÊU CỰC"}
                           </div>
                           <div className="sentiment-count" style={{ fontSize: 44, fontWeight: 800, marginBottom: 10, lineHeight: 1 }}>
                             {formatNumber(sentimentStats.counts[key] || 0)}
                           </div>
                           <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.85, marginBottom: 12 }}>
-                            {sentimentStats.percents[key]}% of total reviews
+                            {sentimentStats.percents[key]}% trong tổng đánh giá
                           </div>
                           <div style={{ marginTop: 6, position: 'relative' }}>
                             <Progress
@@ -1821,7 +1821,7 @@ const AdminDashboard = () => {
                             />
                           </div>
                           <div style={{ fontSize: 12, opacity: 0.75, marginTop: 8 }}>
-                            Analyzed: {formatNumber(sentimentStats.analyzed || 0)} / {formatNumber(sentimentStats.total_reviews || 0)}
+                            Đã phân tích: {formatNumber(sentimentStats.analyzed || 0)} / {formatNumber(sentimentStats.total_reviews || 0)}
                           </div>
                           {/* sparkline */}
                           <div style={{ position: 'absolute', right: 20, bottom: 18, zIndex: 3 }}>
@@ -1854,7 +1854,7 @@ const AdminDashboard = () => {
                   <Col xs={24} md={16}>
                     <div style={{ marginBottom: 20 }}>
                       <Text style={{ fontSize: 15, fontWeight: 700, color: "#4f46e5", letterSpacing: "0.5px" }}>
-                        📈 REVIEW ANALYSIS PROGRESS
+                        📈 TIẾN ĐỘ PHÂN TÍCH ĐÁNH GIÁ
                       </Text>
                     </div>
                     <Progress
@@ -1864,13 +1864,13 @@ const AdminDashboard = () => {
                       style={{ marginBottom: 18 }}
                       format={(percent) => (
                         <span style={{ color: '#4f46e5', fontWeight: 700, fontSize: 14 }}>
-                          {percent}% Complete
+                          {percent}% Hoàn thành
                         </span>
                       )}
                     />
                     <Text style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
-                      <span style={{ color: '#4f46e5', fontWeight: 700 }}>{formatNumber(sentimentStats.analyzed)}</span> of{" "}
-                      <span style={{ color: '#4f46e5', fontWeight: 700 }}>{formatNumber(stats.totalReviews || totalReviewsCount)}</span> reviews processed
+                      <span style={{ color: '#4f46e5', fontWeight: 700 }}>{formatNumber(sentimentStats.analyzed)}</span> trong tổng 
+                      <span style={{ color: '#4f46e5', fontWeight: 700 }}>{formatNumber(stats.totalReviews || totalReviewsCount)}</span> đánh giá đã được xử lý
                     </Text>
                   </Col>
                   <Col xs={24} md={8}>
@@ -1884,13 +1884,13 @@ const AdminDashboard = () => {
                       backdropFilter: 'blur(10px)',
                     }}>
                       <Text style={{ fontSize: 11, color: '#64748b', fontWeight: 700, display: 'block', marginBottom: 12, letterSpacing: "0.5px" }}>
-                        TOTAL REVIEWS
+                        TỔNG ĐÁNH GIÁ
                       </Text>
                       <Text style={{ fontSize: 48, fontWeight: 800, color: '#4f46e5', display: 'block', lineHeight: 1, marginBottom: 12 }}>
                         {formatNumber(totalReviewsCount)}
                       </Text>
                       <Text style={{ fontSize: 12, color: '#ef4444', fontWeight: 600, display: 'block' }}>
-                        {formatNumber(outstandingReviews)} pending
+                        {formatNumber(outstandingReviews)} chưa xử lý
                       </Text>
                     </div>
                   </Col>
@@ -1967,7 +1967,7 @@ const AdminDashboard = () => {
         title={
           <Space style={{ whiteSpace: 'nowrap', fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px" }}>
             <span style={{ fontSize: 28 }}>⚠️</span>
-            Negative Alerts
+            Cảnh báo tiêu cực
           </Space>
         }
         bordered={false}
@@ -1983,9 +1983,9 @@ const AdminDashboard = () => {
       >
         {sentimentAlerts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <Text style={{ fontSize: 16, color: '#64748b' }}>✅ No negative alerts detected</Text>
+            <Text style={{ fontSize: 16, color: '#64748b' }}>✅ Không có cảnh báo tiêu cực</Text>
             <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 14 }}>
-              All products have positive sentiment
+              Tất cả sản phẩm có cảm xúc tích cực
             </Text>
           </div>
         ) : (
@@ -1999,13 +1999,13 @@ const AdminDashboard = () => {
               }))}
               columns={[
                 { 
-                  title: "Product Name", 
+                  title: "Tên sản phẩm", 
                   dataIndex: "name",
                   render: (text) => <span className="alerts-product-name">{text}</span>,
                   width: "45%"
                 },
                 {
-                  title: "Negative %",
+                  title: "% tiêu cực",
                   dataIndex: "negative_percent",
                   render: (v) => (
                     <div style={{ 
@@ -2034,7 +2034,7 @@ const AdminDashboard = () => {
                   width: "30%"
                 },
                 {
-                  title: "Total Reviews",
+                  title: "Tổng đánh giá",
                   dataIndex: "total_reviews",
                   render: (v) => <span style={{ fontWeight: 600, fontSize: 14, color: '#4f46e5' }}>{formatNumber(v)}</span>,
                   width: "25%"
@@ -2049,7 +2049,7 @@ const AdminDashboard = () => {
             />
             <div style={{ marginTop: 20, padding: '16px 14px', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.02) 100%)', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
               <Text style={{ fontSize: 13, color: '#92400e', fontWeight: 500 }}>
-                📋 Products displayed exceed the negative sentiment threshold or show highest recent negative feedback.
+                📋 Các sản phẩm hiển thị vượt ngưỡng tiêu cực hoặc có tỷ lệ phản hồi tiêu cực cao gần đây.
               </Text>
             </div>
           </>
