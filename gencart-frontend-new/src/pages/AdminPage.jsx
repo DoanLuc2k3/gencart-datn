@@ -66,74 +66,61 @@ const AdminPage = () => {
   // Fetch sentiment data first (needed by fetchDashboardStats)
   const loadSentimentData = useCallback(
     async (productId = selectedProductId, targetMode = mode) => {
-      // Use the simplified, unauthenticated endpoints. Try port 8001, then 8000.
-      const buildUrl = (port, path) => `http://localhost:${port}${path}`;
-      const ports = [8001, 8000];
       const productQuery =
         targetMode === "product" && productId ? `?product_id=${productId}` : "";
-      const statsPaths = ports.map((p) =>
-        buildUrl(p, `/api/sentiment/statistics/${productQuery}`)
-      );
-      const trendsPaths = ports.map((p) =>
-        buildUrl(
-          p,
-          `/api/sentiment/trends/?days=30&mode=analyzed${
-            productQuery ? `&product_id=${productId}` : ""
-          }`
-        )
-      );
-
-      const tryFetchJson = async (urls) => {
-        for (const u of urls) {
-          try {
-            const r = await fetch(u);
-            if (r.ok) return await r.json();
-          } catch {
-            // try next
-          }
-        }
-        throw new Error(`All endpoints failed: ${urls.join(", ")}`);
-      };
+      
+      const statsUrl = `${API_BASE_URL}/sentiment/statistics/${productQuery}`;
+      const trendsUrl = `${API_BASE_URL}/sentiment/trends/?days=30&mode=analyzed${
+        productQuery ? `&product_id=${productId}` : ""
+      }`;
 
       try {
         // 1) Fetch statistics for summary cards
-        const statsJson = await tryFetchJson(statsPaths);
-        if (statsJson && statsJson.success) {
-          const counts = statsJson.sentiment_counts || {
-            positive: 0,
-            neutral: 0,
-            negative: 0,
-          };
-          const analyzed = statsJson.analyzed_reviews || 0;
-          const total = analyzed > 0 ? analyzed : statsJson.total_reviews || 0;
-          const pct = (v) =>
-            total > 0 ? ((v / total) * 100).toFixed(1) : "0.0";
-          setSentimentStats({
-            counts,
-            percents: {
-              positive: pct(counts.positive || 0),
-              neutral: pct(counts.neutral || 0),
-              negative: pct(counts.negative || 0),
-            },
-            analyzed,
-            total_reviews: statsJson.total_reviews || 0,
-            unanalyzed_reviews: statsJson.unanalyzed_reviews || 0,
-          });
+        const statsRes = await fetch(statsUrl);
+        if (statsRes.ok) {
+          const statsJson = await statsRes.json();
+          if (statsJson && statsJson.success) {
+            const counts = statsJson.sentiment_counts || {
+              positive: 0,
+              neutral: 0,
+              negative: 0,
+            };
+            const analyzed = statsJson.analyzed_reviews || 0;
+            const total = analyzed > 0 ? analyzed : statsJson.total_reviews || 0;
+            const pct = (v) =>
+              total > 0 ? ((v / total) * 100).toFixed(1) : "0.0";
+            setSentimentStats({
+              counts,
+              percents: {
+                positive: pct(counts.positive || 0),
+                neutral: pct(counts.neutral || 0),
+                negative: pct(counts.negative || 0),
+              },
+              analyzed,
+              total_reviews: statsJson.total_reviews || 0,
+              unanalyzed_reviews: statsJson.unanalyzed_reviews || 0,
+            });
+          }
         }
 
-        // 2) Fetch trends for the 30-day distribution chart (kept as before)
-        const trendsJson = await tryFetchJson(trendsPaths);
-        if (trendsJson && trendsJson.success) {
-          setSentimentTrends(trendsJson.data || null);
+        // 2) Fetch trends for the 30-day distribution chart
+        const trendsRes = await fetch(trendsUrl);
+        if (trendsRes.ok) {
+          const trendsJson = await trendsRes.json();
+          if (trendsJson && trendsJson.success) {
+            setSentimentTrends(trendsJson.data || null);
+          }
         }
 
-        // 3) Alerts (optional) - use port fallback same as above
+        // 3) Alerts (optional)
         try {
-          const alertUrls = ports.map((p) =>
-            buildUrl(p, "/api/products/sentiment_alerts/?negative_percent=40")
+          const alertRes = await fetch(
+            `${API_BASE_URL}/products/sentiment_alerts/?negative_percent=40`
           );
-          const a = await tryFetchJson(alertUrls);
-          setSentimentAlerts(a.alerts || []);
+          if (alertRes.ok) {
+            const a = await alertRes.json();
+            setSentimentAlerts(a.alerts || []);
+          }
         } catch {
           // best-effort only
         }
