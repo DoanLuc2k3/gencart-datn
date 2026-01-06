@@ -1,8 +1,11 @@
 import axios from "axios";
 
+// API Base URL - uses environment variable in production, localhost in development
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: "http://localhost:8000/api", // Django backend URL
+  baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

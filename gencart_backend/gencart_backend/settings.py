@@ -208,6 +208,9 @@ CORS_ALLOW_ALL_ORIGINS = True  # For development only, set specific origins in p
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
+    "http://localhost:3000",
+    "https://gencart-datn.vercel.app",  # Vercel frontend
+    "https://gencart-frontend.vercel.app",
 ]
 CORS_ALLOW_HEADERS = [
     'accept',
