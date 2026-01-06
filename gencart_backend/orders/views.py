@@ -328,14 +328,27 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             try:
                 # Get or create wallet for user
-                wallet, created = Wallet.objects.get_or_create(
-                    user=user,
-                    defaults={
-                        'wallet_address': wallet_address or 'unknown',
-                        'wallet_type': 'metamask',
-                        'is_verified': True  # Assume verified since they made payment
-                    }
-                )
+                # First try to get existing wallet by user
+                try:
+                    wallet = Wallet.objects.get(user=user)
+                    # Update wallet address if different
+                    if wallet_address and wallet.wallet_address != wallet_address:
+                        wallet.wallet_address = wallet_address
+                        wallet.save()
+                except Wallet.DoesNotExist:
+                    # Check if wallet_address already exists for another user
+                    if wallet_address:
+                        existing_wallet = Wallet.objects.filter(wallet_address=wallet_address).first()
+                        if existing_wallet:
+                            # Use a modified address to avoid conflict
+                            wallet_address = f"{wallet_address}_{user.id}"
+                    
+                    wallet = Wallet.objects.create(
+                        user=user,
+                        wallet_address=wallet_address or f'user_{user.id}_wallet',
+                        wallet_type='metamask',
+                        is_verified=True
+                    )
 
                 # Get default cryptocurrency (ETH)
                 try:
