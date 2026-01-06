@@ -1,4 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
+import { API_BASE_URL } from '../utils/api';
 import {
   Row,
   Col,
@@ -35,7 +36,7 @@ const SentimentAnalytics = () => {
     const fetchProducts = async () => {
       try {
         const res = await fetch(
-          "http://localhost:8000/api/products/?no_pagination=true"
+          `${API_BASE_URL}/products/?no_pagination=true`
         );
         if (res.ok) {
           const data = await res.json();
@@ -62,7 +63,7 @@ const SentimentAnalytics = () => {
         viewMode === "product" && selectedProduct
           ? `?product_id=${selectedProduct}`
           : "";
-      const statsUrl = `http://localhost:8000/api/sentiment/statistics/${productParam}`;
+      const statsUrl = `${API_BASE_URL}/sentiment/statistics/${productParam}`;
 
       // Fetch statistics
       const statsRes = await fetch(statsUrl, { headers });
@@ -121,7 +122,7 @@ const SentimentAnalytics = () => {
         viewMode === "product" && selectedProduct
           ? `?days=30&mode=${mode}&product_id=${selectedProduct}`
           : `?days=30&mode=${mode}`;
-      const trendsUrl = `http://localhost:8000/api/sentiment/trends/${trendsParam}`;
+      const trendsUrl = `${API_BASE_URL}/sentiment/trends/${trendsParam}`;
 
       const trendsRes = await fetch(trendsUrl, { headers });
       if (trendsRes.ok) {
@@ -169,7 +170,7 @@ const SentimentAnalytics = () => {
       }
 
       const res = await fetch(
-        "http://localhost:8000/api/sentiment/analyze/all/",
+        `${API_BASE_URL}/sentiment/analyze/all/`,
         {
           method: "POST",
           headers: {

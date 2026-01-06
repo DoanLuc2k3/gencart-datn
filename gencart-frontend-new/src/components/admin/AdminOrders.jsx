@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from '../../utils/api';
 import {
   Table,
   Button,
@@ -48,7 +49,7 @@ const AdminOrders = () => {
         const token = localStorage.getItem("access_token");
 
         // Fetch orders from existing endpoint
-        const response = await fetch("http://localhost:8000/api/orders/", {
+        const response = await fetch(`${API_BASE_URL}/orders/`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -62,7 +63,7 @@ const AdminOrders = () => {
         const orders = data.results || data || [];
 
         // Fetch users (admin will get all users)
-        const usersResponse = await fetch("http://localhost:8000/api/users/", {
+        const usersResponse = await fetch(`${API_BASE_URL}/users/`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -118,7 +119,7 @@ const AdminOrders = () => {
     try {
       const token = localStorage.getItem("access_token");
       const response = await fetch(
-        `http://localhost:8000/api/orders/${selectedOrder.id}/`,
+        `${API_BASE_URL}/orders/${selectedOrder.id}/`,
         {
           method: "PATCH",
           headers: {

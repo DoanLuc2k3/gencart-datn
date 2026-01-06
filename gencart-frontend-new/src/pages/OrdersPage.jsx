@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../utils/api';
 import { 
   Typography, 
   Tag, 
@@ -126,7 +127,7 @@ const OrdersPage = () => {
       }
 
       // Fetch orders with pagination
-      const response = await fetch(`http://localhost:8000/api/orders/?page=${page}&page_size=${pageSize}`, {
+      const response = await fetch(`${API_BASE_URL}/orders/?page=${page}&page_size=${pageSize}`, {
         credentials: 'include',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -209,7 +210,7 @@ const OrdersPage = () => {
           if (!item.product_id) return null;
           
           try {
-            const response = await fetch(`http://localhost:8000/api/products/${item.product_id}/can_review/`, {
+            const response = await fetch(`${API_BASE_URL}/products/${item.product_id}/can_review/`, {
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
@@ -267,7 +268,7 @@ const OrdersPage = () => {
       }
 
       // Call API to cancel order
-      const response = await fetch(`http://localhost:8000/api/orders/${selectedOrderId}/cancel_order/`, {
+      const response = await fetch(`${API_BASE_URL}/orders/${selectedOrderId}/cancel_order/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

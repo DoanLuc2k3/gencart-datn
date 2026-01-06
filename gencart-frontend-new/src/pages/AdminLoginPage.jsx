@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from '../utils/api';
 import { Form, Input, Button, Card, Typography, message, Spin } from "antd";
 import { UserOutlined, LockOutlined, ShieldOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +13,7 @@ const AdminLoginPage = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/api/auth/login/", {
+      const response = await fetch(`${API_BASE_URL}/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -24,13 +25,13 @@ const AdminLoginPage = () => {
       const data = await response.json();
       localStorage.setItem("access_token", data.access);
       localStorage.setItem("refresh_token", data.refresh);
-      const me = await fetch("http://localhost:8000/api/auth/me/", {
+      const me = await fetch(`${API_BASE_URL}/auth/me/`, {
         headers: { Authorization: `Bearer ${data.access}` },
       });
       if (!me.ok) throw new Error("Failed to fetch user");
       const userData = await me.json();
       const adminCheck = await fetch(
-        "http://localhost:8000/api/auth/check_admin/",
+        `${API_BASE_URL}/auth/check_admin/`,
         { headers: { Authorization: `Bearer ${data.access}` } }
       );
       const adminData = adminCheck.ok

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from '../../utils/api';
 import {
   Table,
   Button,
@@ -40,7 +41,7 @@ const AdminCategories = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("access_token");
-        const response = await fetch("http://localhost:8000/api/categories/", {
+        const response = await fetch(`${API_BASE_URL}/categories/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error("Failed to fetch categories");
@@ -100,10 +101,10 @@ const AdminCategories = () => {
       if (fileList.length > 0 && fileList[0].originFileObj)
         formData.append("image", fileList[0].originFileObj);
 
-      let url = "http://localhost:8000/api/categories/";
+      let url = `${API_BASE_URL}/categories/`;
       let method = "POST";
       if (editingCategory) {
-        url = `http://localhost:8000/api/categories/${editingCategory.id}/`;
+        url = `${API_BASE_URL}/categories/${editingCategory.id}/`;
         method = "PATCH";
       }
 
@@ -122,7 +123,7 @@ const AdminCategories = () => {
 
       // Refresh category list
       const categoriesResponse = await fetch(
-        "http://localhost:8000/api/categories/",
+        `${API_BASE_URL}/categories/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (categoriesResponse.ok) {
@@ -142,7 +143,7 @@ const AdminCategories = () => {
     try {
       const token = localStorage.getItem("access_token");
       const response = await fetch(
-        `http://localhost:8000/api/categories/${id}/`,
+        `${API_BASE_URL}/categories/${id}/`,
         { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("Failed to delete category");

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../utils/api';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -84,7 +85,7 @@ const ProductDetailPage = () => {
           'X-Requested-With': 'XMLHttpRequest'
         };
 
-        const response = await fetch(`http://localhost:8000/api/products/${id}/`, { headers });
+        const response = await fetch(`${API_BASE_URL}/products/${id}/`, { headers });
         if (!response.ok) {
           throw new Error('Failed to fetch product');
         }
@@ -120,7 +121,7 @@ const ProductDetailPage = () => {
           'X-Requested-With': 'XMLHttpRequest'
         };
 
-        const response = await fetch(`http://localhost:8000/api/products/?category=${categoryId}`, { headers });
+        const response = await fetch(`${API_BASE_URL}/products/?category=${categoryId}`, { headers });
         if (!response.ok) {
           throw new Error('Failed to fetch related products');
         }
@@ -141,7 +142,7 @@ const ProductDetailPage = () => {
         const token = localStorage.getItem('access_token');
         if (!token) return;
 
-        const response = await fetch(`http://localhost:8000/api/products/${id}/can_review/`, {
+        const response = await fetch(`${API_BASE_URL}/products/${id}/can_review/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -206,7 +207,7 @@ const ProductDetailPage = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:8000/api/products/${id}/add_review/`, {
+      const response = await fetch(`${API_BASE_URL}/products/${id}/add_review/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -229,7 +230,7 @@ const ProductDetailPage = () => {
         message.success('Đánh giá thành công!');
         
         // Refresh product data to get updated average rating
-        const productResponse = await fetch(`http://localhost:8000/api/products/${id}/`);
+        const productResponse = await fetch(`${API_BASE_URL}/products/${id}/`);
         if (productResponse.ok) {
           const updatedProduct = await productResponse.json();
           setProduct(updatedProduct);

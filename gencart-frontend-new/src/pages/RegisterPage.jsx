@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from '../utils/api';
 import {
   Typography,
   Form,
@@ -36,7 +37,7 @@ const RegisterPage = () => {
         phone_number: values.phone,
       });
 
-      const response = await fetch("http://localhost:8000/api/users/", {
+      const response = await fetch(`${API_BASE_URL}/users/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

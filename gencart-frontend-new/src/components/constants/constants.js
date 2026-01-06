@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../../utils/api';
 // Category Colors Mapping
 export const CATEGORY_COLORS = {
   Electronics: {
@@ -42,7 +43,7 @@ export const DEFAULT_CATEGORY_COLOR = {
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  PRODUCTS: "http://localhost:8000/api/products/?no_pagination=true&ordering=name",
+  PRODUCTS: `${API_BASE_URL}/products/?no_pagination=true&ordering=name`,
 };
 
 // Hero Features

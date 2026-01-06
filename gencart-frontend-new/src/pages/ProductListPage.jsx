@@ -36,6 +36,7 @@ import {
   UnorderedListOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../utils/api';
 import { useCart } from "../context/CartContext";
 import { inventoryEvents } from "../utils/inventoryEvents";
 import useDebounce from "../hooks/useDebounce";
@@ -167,7 +168,7 @@ const ProductListPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/categories/");
+        const response = await fetch(`${API_BASE_URL}/categories/`);
         if (!response.ok) {
           throw new Error("Failed to fetch categories");
         }
@@ -205,7 +206,7 @@ const ProductListPage = () => {
       setLoading(true);
       try {
         // Build URL with server-side filters
-        let baseUrl = "http://localhost:8000/api/products/?";
+        let baseUrl = `${API_BASE_URL}/products/?`;
 
         // Pagination parameters
         baseUrl += `page=${currentPage}&`;

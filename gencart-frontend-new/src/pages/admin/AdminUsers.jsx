@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { API_BASE_URL } from '../../utils/api';
 import {
   Table,
   Button,
@@ -88,7 +89,7 @@ const AdminUsers = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("access_token");
-      const response = await fetch("http://localhost:8000/api/users/", {
+      const response = await fetch(`${API_BASE_URL}/users/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Failed to fetch users");
@@ -133,7 +134,7 @@ const AdminUsers = () => {
     try {
       const token = localStorage.getItem("access_token");
       const response = await fetch(
-        `http://localhost:8000/api/orders/?user=${user.id}`,
+        `${API_BASE_URL}/orders/?user=${user.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -174,7 +175,7 @@ const AdminUsers = () => {
     try {
       const token = localStorage.getItem("access_token");
       const response = await fetch(
-        `http://localhost:8000/api/users/${selectedUser.id}/`,
+        `${API_BASE_URL}/users/${selectedUser.id}/`,
         {
           method: "PATCH",
           headers: {
@@ -207,7 +208,7 @@ const AdminUsers = () => {
         confirm_password: values.confirm || values.password,
       };
       const response = await fetch(
-        `http://localhost:8000/api/users/${selectedUser.id}/change_password/`,
+        `${API_BASE_URL}/users/${selectedUser.id}/change_password/`,
         {
           method: "POST",
           headers: {
@@ -231,7 +232,7 @@ const AdminUsers = () => {
     try {
       const token = localStorage.getItem("access_token");
       const response = await fetch(
-        `http://localhost:8000/api/users/${userId}/`,
+        `${API_BASE_URL}/users/${userId}/`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

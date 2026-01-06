@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { API_BASE_URL } from '../../utils/api';
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Table,
@@ -91,7 +92,7 @@ const AdminOrders = () => {
       const token = localStorage.getItem("access_token");
       
       const response = await fetch(
-        `http://localhost:8000/api/orders/?page_size=1000`,
+        `${API_BASE_URL}/orders/?page_size=1000`,
         {
           credentials: "include",
           headers: {
@@ -122,7 +123,7 @@ const AdminOrders = () => {
       const token = localStorage.getItem("access_token");
 
       const response = await fetch(
-        `http://localhost:8000/api/orders/?page=${page}&page_size=${pageSize}`,
+        `${API_BASE_URL}/orders/?page=${page}&page_size=${pageSize}`,
         {
           credentials: "include",
           headers: {
@@ -168,7 +169,7 @@ const AdminOrders = () => {
         if (openId) {
           try {
             const token = localStorage.getItem("access_token");
-            const r = await fetch(`http://localhost:8000/api/orders/${openId}/`, {
+            const r = await fetch(`${API_BASE_URL}/orders/${openId}/`, {
               credentials: "include",
               headers: { Authorization: `Bearer ${token}` },
             });
@@ -249,7 +250,7 @@ const AdminOrders = () => {
     try {
       const token = localStorage.getItem("access_token");
       const response = await fetch(
-        `http://localhost:8000/api/orders/${selectedOrder.id}/`,
+        `${API_BASE_URL}/orders/${selectedOrder.id}/`,
         {
           method: "PATCH",
           headers: {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -340,7 +341,7 @@ const CheckoutPage = () => {
 
       // Get addresses
       let shippingAddressId, billingAddressId;
-      const addressResponse = await fetch('http://localhost:8000/api/addresses/', {
+      const addressResponse = await fetch(`${API_BASE_URL}/addresses/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -370,7 +371,7 @@ const CheckoutPage = () => {
           default: true
         };
 
-        const createShippingResponse = await fetch('http://localhost:8000/api/addresses/', {
+        const createShippingResponse = await fetch(`${API_BASE_URL}/addresses/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -404,7 +405,7 @@ const CheckoutPage = () => {
         orderPayload.wallet_address = walletAddress;
       }
 
-      const createOrderResponse = await fetch('http://localhost:8000/api/orders/create_from_cart/', {
+      const createOrderResponse = await fetch(`${API_BASE_URL}/orders/create_from_cart/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -422,7 +423,7 @@ const CheckoutPage = () => {
       setOrderId(orderData.id);
 
       // Clear cart
-      await fetch('http://localhost:8000/api/cart/clear/', {
+      await fetch(`${API_BASE_URL}/cart/clear/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from '../utils/api';
 import {
   Typography,
   Form,
@@ -24,7 +25,7 @@ const LoginPage = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/api/auth/login/", {
+      const response = await fetch(`${API_BASE_URL}/auth/login/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,7 +67,7 @@ const LoginPage = () => {
       localStorage.setItem("refresh_token", data.refresh);
       localStorage.setItem("isLoggedIn", "true");
 
-      const userResponse = await fetch("http://localhost:8000/api/users/me/", {
+      const userResponse = await fetch(`${API_BASE_URL}/users/me/`, {
         headers: {
           Authorization: `Bearer ${data.access}`,
         },

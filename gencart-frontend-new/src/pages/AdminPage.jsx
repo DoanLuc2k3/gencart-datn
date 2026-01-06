@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { API_BASE_URL } from '../utils/api';
 import { useNavigate, Routes, Route } from "react-router-dom";
 import {
   Layout,
@@ -148,7 +149,7 @@ const AdminPage = () => {
     try {
       const token = localStorage.getItem("access_token");
       const prodRes = await fetch(
-        "http://localhost:8000/api/products/?no_pagination=true"
+        `${API_BASE_URL}/products/?no_pagination=true`
       );
       let products = [];
       if (prodRes.ok) {
@@ -160,10 +161,10 @@ const AdminPage = () => {
       let orders = [];
       if (token) {
         const [userRes, orderRes] = await Promise.all([
-          fetch("http://localhost:8000/api/users/", {
+          fetch(`${API_BASE_URL}/users/`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:8000/api/orders/", {
+          fetch(`${API_BASE_URL}/orders/`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -190,7 +191,7 @@ const AdminPage = () => {
       }));
       try {
         const gRes = await fetch(
-          "http://localhost:8000/api/products/sentiment_overview/"
+          `${API_BASE_URL}/products/sentiment_overview/`
         );
         if (gRes.ok) {
           await gRes.json();
@@ -255,7 +256,7 @@ const AdminPage = () => {
         // Now check with the backend
         console.log("Making request to check_admin endpoint...");
         const response = await fetch(
-          "http://localhost:8000/api/users/check_admin/",
+          `${API_BASE_URL}/users/check_admin/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

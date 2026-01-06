@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from '../../utils/api';
 import { Layout, Menu, Typography, Spin, Badge, Button } from "antd";
 import { Link } from "react-router-dom";
 import {
@@ -40,7 +41,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:8000/api/categories/");
+        const response = await fetch(`${API_BASE_URL}/categories/`);
         if (response.ok) {
           const data = await response.json();
           setCategories(data.results || data);
@@ -50,7 +51,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           for (const category of data.results || data) {
             try {
               const countResponse = await fetch(
-                `http://localhost:8000/api/products/?category=${category.id}`
+                `${API_BASE_URL}/products/?category=${category.id}`
               );
               if (countResponse.ok) {
                 const countData = await countResponse.json();

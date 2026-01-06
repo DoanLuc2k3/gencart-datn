@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { API_BASE_URL } from '../../utils/api';
 import {
   Table,
   Button,
@@ -129,7 +130,7 @@ const AdminProducts = () => {
     try {
       const token = localStorage.getItem("access_token");
       // Fetch với page_size rất lớn để lấy tất cả
-      const url = new URL("http://localhost:8000/api/products/");
+      const url = new URL(`${API_BASE_URL}/products/`);
       url.searchParams.append("page_size", "1000"); // Lấy 1000 products (adjust nếu cần)
       
       const response = await fetch(url.toString(), {
@@ -159,7 +160,7 @@ const AdminProducts = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("access_token");
-      const url = new URL("http://localhost:8000/api/products/");
+      const url = new URL(`${API_BASE_URL}/products/`);
       url.searchParams.append("page", page);
       url.searchParams.append("page_size", pageSize);
       if (debouncedSearch) url.searchParams.append("search", debouncedSearch);
@@ -235,7 +236,7 @@ const AdminProducts = () => {
         
         // Fetch categories
         const categoriesResponse = await fetch(
-          "http://localhost:8000/api/categories/",
+          `${API_BASE_URL}/categories/`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (categoriesResponse.ok) {
@@ -293,7 +294,7 @@ const AdminProducts = () => {
       } else if (product.image && typeof product.image === "string") {
         imageUrl = product.image.startsWith("http")
           ? product.image
-          : `http://localhost:8000${product.image}`;
+          : `${API_BASE_URL.replace("/api", "")}${product.image}`;
       }
 
       if (imageUrl) {
@@ -343,10 +344,10 @@ const AdminProducts = () => {
         }
       }
 
-      let url = "http://localhost:8000/api/products/";
+      let url = `${API_BASE_URL}/products/`;
       let method = "POST";
       if (editingProduct) {
-        url = `http://localhost:8000/api/products/${editingProduct.id}/`;
+        url = `${API_BASE_URL}/products/${editingProduct.id}/`;
         method = "PATCH";
       }
 
@@ -405,7 +406,7 @@ const AdminProducts = () => {
     try {
       const token = localStorage.getItem("access_token");
       const response = await fetch(
-        `http://localhost:8000/api/products/${id}/`,
+        `${API_BASE_URL}/products/${id}/`,
         { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("Failed");
@@ -426,7 +427,7 @@ const AdminProducts = () => {
       const token = localStorage.getItem("access_token");
       const updated = { is_active: !record.is_active };
       const res = await fetch(
-        `http://localhost:8000/api/products/${record.id}/`,
+        `${API_BASE_URL}/products/${record.id}/`,
         {
           method: "PATCH",
           headers: {

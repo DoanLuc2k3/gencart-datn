@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense, useMemo } from "react";
+import { API_BASE_URL } from '../../utils/api';
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -1263,7 +1264,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem("access_token");
       const prodRes = await fetch(
-        "http://localhost:8000/api/products/?no_pagination=true",
+        `${API_BASE_URL}/products/?no_pagination=true`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         }
@@ -1289,10 +1290,10 @@ const AdminDashboard = () => {
       let ordersTotalCount = 0;
       if (token) {
         const [userRes, orderRes] = await Promise.all([
-          fetch("http://localhost:8000/api/users/", {
+          fetch(`${API_BASE_URL}/users/`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:8000/api/orders/", {
+          fetch(`${API_BASE_URL}/orders/`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -1345,7 +1346,7 @@ const AdminDashboard = () => {
       // Fetch sentiment overview
       try {
         const gRes = await fetch(
-          "http://localhost:8000/api/products/sentiment_overview/"
+          `${API_BASE_URL}/products/sentiment_overview/`
         );
         if (gRes.ok) {
           const overviewData = await gRes.json();

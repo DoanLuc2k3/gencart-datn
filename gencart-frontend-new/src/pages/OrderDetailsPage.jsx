@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../utils/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -146,7 +147,7 @@ const OrderDetailsPage = () => {
         }
 
         // Fetch order details from API
-        const response = await fetch(`http://localhost:8000/api/orders/${id}/`, {
+        const response = await fetch(`${API_BASE_URL}/orders/${id}/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -239,7 +240,7 @@ const OrderDetailsPage = () => {
         if (!item.product_id) return null;
         
         try {
-          const response = await fetch(`http://localhost:8000/api/products/${item.product_id}/can_review/`, {
+          const response = await fetch(`${API_BASE_URL}/products/${item.product_id}/can_review/`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Accept': 'application/json',
@@ -285,7 +286,7 @@ const OrderDetailsPage = () => {
       }
 
       // Call API to cancel order
-      const response = await fetch(`http://localhost:8000/api/orders/${id}/cancel_order/`, {
+      const response = await fetch(`${API_BASE_URL}/orders/${id}/cancel_order/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -302,7 +303,7 @@ const OrderDetailsPage = () => {
       setModalVisible(false);
 
       // Refresh order details
-      const updatedResponse = await fetch(`http://localhost:8000/api/orders/${id}/`, {
+      const updatedResponse = await fetch(`${API_BASE_URL}/orders/${id}/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -340,7 +341,7 @@ const OrderDetailsPage = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:8000/api/products/${selectedProduct.product_id}/add_review/`, {
+      const response = await fetch(`${API_BASE_URL}/products/${selectedProduct.product_id}/add_review/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

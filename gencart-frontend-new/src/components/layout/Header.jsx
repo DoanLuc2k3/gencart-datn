@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from '../../utils/api';
 import { useNavigate } from "react-router-dom";
 import { Layout, Input, message, Badge, Popover } from "antd";
 import { SearchOutlined, MenuOutlined, BellOutlined, EllipsisOutlined, ShoppingCartOutlined } from "@ant-design/icons";
@@ -63,7 +64,7 @@ const Header = () => {
         // Also fetch fresh user data from API
         const fetchUserData = async () => {
           try {
-            const response = await fetch("http://localhost:8000/api/users/me/", {
+            const response = await fetch(`${API_BASE_URL}/users/me/`, {
               headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -118,7 +119,7 @@ const Header = () => {
     const fetchCategories = async () => {
       setCategoriesLoading(true);
       try {
-        const response = await fetch("http://localhost:8000/api/categories/");
+        const response = await fetch(`${API_BASE_URL}/categories/`);
         if (response.ok) {
           const data = await response.json();
           setCategories(data.results || data);

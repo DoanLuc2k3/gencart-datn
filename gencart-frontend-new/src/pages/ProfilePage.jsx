@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -82,7 +83,7 @@ const ProfilePage = () => {
         }
 
         // Fetch user data from API
-        const response = await fetch('http://localhost:8000/api/users/me/', {
+        const response = await fetch(`${API_BASE_URL}/users/me/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -173,7 +174,7 @@ const ProfilePage = () => {
       }
 
       // Update user profile
-      const userResponse = await fetch(`http://localhost:8000/api/users/${userData.id}/`, {
+      const userResponse = await fetch(`${API_BASE_URL}/users/${userData.id}/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -194,10 +195,10 @@ const ProfilePage = () => {
       // Check if user has an address
       let addressId = null;
       let addressMethod = 'POST';
-      let addressUrl = 'http://localhost:8000/api/addresses/';
+      let addressUrl = `${API_BASE_URL}/addresses/`;
 
       // Get updated user data to check for addresses
-      const userDataResponse = await fetch('http://localhost:8000/api/users/me/', {
+      const userDataResponse = await fetch(`${API_BASE_URL}/users/me/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -213,7 +214,7 @@ const ProfilePage = () => {
         // Update existing address
         addressId = currentUserData.addresses[0].id;
         addressMethod = 'PUT';
-        addressUrl = `http://localhost:8000/api/addresses/${addressId}/`;
+        addressUrl = `${API_BASE_URL}/addresses/${addressId}/`;
       }
 
       // Update or create address
@@ -240,7 +241,7 @@ const ProfilePage = () => {
       }
 
       // Refresh user data
-      const updatedUserResponse = await fetch('http://localhost:8000/api/users/me/', {
+      const updatedUserResponse = await fetch(`${API_BASE_URL}/users/me/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -309,7 +310,7 @@ const ProfilePage = () => {
       }
 
       // Change password
-      const response = await fetch(`http://localhost:8000/api/users/${userData.id}/change_password/`, {
+      const response = await fetch(`${API_BASE_URL}/users/${userData.id}/change_password/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -373,7 +374,7 @@ const ProfilePage = () => {
         formData.append('avatar', info.file.originFileObj);
 
         // Upload avatar
-        const response = await fetch(`http://localhost:8000/api/users/${userData.id}/upload_avatar/`, {
+        const response = await fetch(`${API_BASE_URL}/users/${userData.id}/upload_avatar/`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

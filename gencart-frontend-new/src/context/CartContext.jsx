@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../utils/api';
 import { message } from 'antd';
 // Removed inventory refresh trigger to prevent product list reloads on cart updates
 
@@ -24,7 +25,7 @@ export const CartProvider = ({ children }) => {
 
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/cart/my_cart/', {
+      const response = await fetch(`${API_BASE_URL}/cart/my_cart/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -154,7 +155,7 @@ export const CartProvider = ({ children }) => {
           return false;
       }
 
-      const response = await fetch(`http://localhost:8000/api/cart/${endpoint}/`, {
+      const response = await fetch(`${API_BASE_URL}/cart/${endpoint}/`, {
         method,
         headers: {
           'Content-Type': 'application/json',
