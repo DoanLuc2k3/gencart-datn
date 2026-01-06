@@ -8,9 +8,9 @@ const Logo = () => {
         <h1
           style={{
             margin: 0,
-            fontSize: "clamp(20px, 4.5vw, 32px)", // Responsive logo size
+            fontSize: "clamp(18px, 3.5vw, 26px)", // Responsive logo size - smaller
             fontWeight: "800",
-            letterSpacing: "-1px",
+            letterSpacing: "-0.5px",
             background: "linear-gradient(to right, #ffffff 0%, #ffd700 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
