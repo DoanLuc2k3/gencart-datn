@@ -308,6 +308,7 @@ export const transformPostToApi = (frontendPost) => {
     status: frontendPost.status || 'published',
     is_pinned: frontendPost.isPinned || frontendPost.is_pinned || false,
     read_time: frontendPost.readTime || frontendPost.read_time || '5 phút đọc',
+    date: frontendPost.date || new Date().toISOString().split('T')[0],
   };
 };
 
