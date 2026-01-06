@@ -31,7 +31,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com', 'gencart-datn.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
 
 # Render.com sets this environment variable
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -103,8 +103,7 @@ WSGI_APPLICATION = 'gencart_backend.wsgi.application'
 
 import dj_database_url
 
-# Database configuration
-# Use DATABASE_URL from Render or fallback to local PostgreSQL
+# Use DATABASE_URL from Render if available, otherwise use local PostgreSQL
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
@@ -209,8 +208,6 @@ CORS_ALLOW_ALL_ORIGINS = True  # For development only, set specific origins in p
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
-    "https://gencart-datn.onrender.com",
-    "https://gencart-frontend.onrender.com",
 ]
 CORS_ALLOW_HEADERS = [
     'accept',
