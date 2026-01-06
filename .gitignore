@@ -28,6 +28,13 @@ MANIFEST
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+
+# Database dumps and backups
+*.dump
+*.sql
+*_backup.*
+*_export.*
+*_fixture.*
 media/
 
 # Virtual Environment
