@@ -198,6 +198,16 @@ class BlockchainPayment(models.Model):
         self.confirmed_at = timezone.now()
         self.save()
 
+        # Update wallet payment status
+        if self.wallet_payment:
+            self.wallet_payment.status = 'confirmed'
+            self.wallet_payment.save()
+            
+            # Update wallet transaction status if exists
+            if self.wallet_payment.transaction:
+                self.wallet_payment.transaction.status = 'confirmed'
+                self.wallet_payment.transaction.save()
+
         # Update order payment status
         self.order.payment_status = True
         self.order.status = 'processing'  # Move to processing
