@@ -83,6 +83,12 @@ class Order(models.Model):
         username = self.user.username if self.user else "Unknown User"
         return f"Order {self.id} by {username}"
 
+    def save(self, *args, **kwargs):
+        # Auto update payment_status to True when order is delivered
+        if self.status == 'delivered':
+            self.payment_status = True
+        super().save(*args, **kwargs)
+
     @property
     def items_total(self):
         """Calculate total price of all items in order"""
