@@ -499,46 +499,278 @@ const AdminLayout = () => {
             boxShadow: darkMode
               ? "0 4px 12px rgba(0, 0, 0, 0.3)"
               : "0 2px 8px rgba(15, 23, 42, 0.06)",
-            height: 72,
+            height: mobileView ? "auto" : 72,
+            minHeight: mobileView ? 56 : 72,
             borderBottom: darkMode 
               ? "1px solid rgba(148, 163, 184, 0.1)"
               : "1px solid rgba(226, 232, 240, 0.8)",
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: mobileView ? "0 12px" : "0 24px",
-              color: "#fff",
-              flexWrap: "wrap",
-              gap: 12,
-              minHeight: "72px",
-              position: "relative",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              {mobileView && (
-                <Button
+          {mobileView ? (
+            /* Mobile Layout */
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                padding: "8px 12px",
+                gap: 8,
+              }}
+            >
+              {/* Top Row: Menu Button + Title + Actions */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}
+              >
+                {/* Left: Menu Button + Title */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+                  <Button
+                    type="text"
+                    icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                    onClick={() => setCollapsed(!collapsed)}
+                    style={{
+                      color: darkMode ? "#8b5cf6" : "#51309eff",
+                      fontSize: 18,
+                      border: darkMode ? "1px solid #8b5cf6" : "1px solid #51309eff",
+                      borderRadius: 8,
+                      width: 36,
+                      height: 36,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div
+                    className="admin-header-title-mobile"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "5px 12px",
+                      borderRadius: 8,
+                      background: darkMode
+                        ? "linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(109, 40, 217, 0.08) 100%)"
+                        : "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.06) 100%)",
+                      border: darkMode
+                        ? "1px solid rgba(139, 92, 246, 0.2)"
+                        : "1px solid rgba(99, 102, 241, 0.12)",
+                      flex: 1,
+                      minWidth: 0,
+                      maxWidth: 160,
+                    }}
+                  >
+                    <span style={{ color: darkMode ? "#f59e0b" : "#6366f1", fontSize: 16, flexShrink: 0 }}>
+                      {getActiveTabIcon()}
+                    </span>
+                    <span
+                      style={{
+                        color: darkMode ? "#f1f5f9" : "#271a51",
+                        fontWeight: 600,
+                        fontSize: 12,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.3,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {getActiveTabLabel()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right: Quick Actions + Avatar */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                  <Tooltip title={darkMode ? "Chế độ sáng" : "Chế độ tối"}>
+                    <div
+                      onClick={toggleDarkMode}
+                      className="admin-mobile-icon-btn"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 34,
+                        height: 34,
+                        borderRadius: "50%",
+                        background: darkMode ? "rgba(139, 92, 246, 0.12)" : "rgba(99, 102, 241, 0.08)",
+                        border: darkMode ? "1px solid rgba(139, 92, 246, 0.2)" : "1px solid rgba(99, 102, 241, 0.12)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {darkMode ? (
+                        <SunOutlined style={{ fontSize: 15, color: "#fbbf24" }} />
+                      ) : (
+                        <MoonOutlined style={{ fontSize: 15, color: "#6366f1" }} />
+                      )}
+                    </div>
+                  </Tooltip>
+
+                  <Popover
+                    placement="bottomRight"
+                    trigger="click"
+                    getPopupContainer={tooltipContainer}
+                    overlayClassName="admin-review-popover"
+                    overlayStyle={{ maxWidth: 340, zIndex: 2000 }}
+                    content={
+                      <div style={{ width: 300, maxHeight: 320, overflow: "hidden" }}>
+                        <div style={{ maxHeight: 260, overflowY: "auto" }}>
+                          <List
+                            loading={reviewsLoading}
+                            dataSource={reviews}
+                            locale={{ emptyText: "Không có đánh giá gần đây" }}
+                            renderItem={(item) => (
+                              <List.Item key={item.id} style={{ padding: 6 }}>
+                                <List.Item.Meta
+                                  avatar={
+                                    <Avatar
+                                      size={36}
+                                      src={item.user_avatar || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.user_name || item.user}`}
+                                    />
+                                  }
+                                  title={
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                                      <div style={{ minWidth: 0, flex: 1 }}>
+                                        <div style={{ fontWeight: 600, fontSize: 12 }}>{item.user_name || item.user}</div>
+                                      </div>
+                                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                                        <div style={{ fontSize: 10, color: "#9ca3af" }}>{new Date(item.created_at).toLocaleDateString()}</div>
+                                        <div style={{ color: darkMode ? "#fbbf24" : "#f59e0b", fontSize: 11 }}>{item.rating}★</div>
+                                      </div>
+                                    </div>
+                                  }
+                                  description={<div style={{ whiteSpace: "normal", fontSize: 11 }}>{item.comment?.substring(0, 50)}...</div>}
+                                />
+                              </List.Item>
+                            )}
+                          />
+                        </div>
+                        <div style={{ textAlign: "center", marginTop: 6 }}>
+                          <Button type="link" size="small" onClick={() => navigate("/admin/reviews")}>Xem tất cả</Button>
+                        </div>
+                      </div>
+                    }
+                    onVisibleChange={(visible) => {
+                      if (visible) {
+                        localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString());
+                        setUnreadCount(0);
+                      }
+                    }}
+                  >
+                    <Badge count={unreadCount} showZero={false} offset={[-2, 0]} size="small">
+                      <div
+                        className="admin-mobile-icon-btn"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 34,
+                          height: 34,
+                          borderRadius: "50%",
+                          background: darkMode ? "rgba(139, 92, 246, 0.12)" : "rgba(99, 102, 241, 0.08)",
+                          border: darkMode ? "1px solid rgba(139, 92, 246, 0.2)" : "1px solid rgba(99, 102, 241, 0.12)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <BellOutlined style={{ fontSize: 15, color: darkMode ? "#e2e8f0" : "#68729e" }} />
+                      </div>
+                    </Badge>
+                  </Popover>
+
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+
+                  <Dropdown
+                    menu={{
+                      items: [
+                        { key: "home", icon: <HomeOutlined />, label: "Trang chủ", onClick: () => navigate("/") },
+                        { key: "change-avatar", icon: <UploadOutlined />, label: "Đổi ảnh", onClick: () => fileInputRef.current.click() },
+                        { type: "divider" },
+                        { key: "logout", icon: <LogoutOutlined />, label: "Đăng xuất", onClick: handleLogout },
+                      ],
+                    }}
+                    placement="bottomRight"
+                    arrow
+                  >
+                    <Avatar
+                      size={34}
+                      src={avatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=256&q=80"}
+                      alt={adminName}
+                      style={{
+                        cursor: "pointer",
+                        border: "2px solid",
+                        borderColor: darkMode ? "#8b5cf6" : "#6366f1",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+                      }}
+                    >
+                      {_adminInitial}
+                    </Avatar>
+                  </Dropdown>
+                </div>
+              </div>
+
+              {/* Bottom Row: Search Bar */}
+              <div
+                className="admin-search-box"
+                style={{
+                  background: darkMode ? "#1e293b" : "#fff",
+                  borderRadius: "20px",
+                  padding: "6px 12px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  width: "100%",
+                  boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.2)" : "0 2px 8px rgba(0,0,0,0.04)",
+                  border: darkMode ? "1px solid rgba(148, 163, 184, 0.15)" : "1px solid rgba(0,0,0,0.04)",
+                }}
+              >
+                <SearchOutlined style={{ color: darkMode ? "#94a3b8" : "#8c90aa", fontSize: "16px", flexShrink: 0 }} />
+                <input
                   type="text"
-                  icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                  onClick={() => setCollapsed(!collapsed)}
+                  placeholder="Tìm kiếm..."
                   style={{
-                    color: "#51309eff",
-                    fontSize: 20,
-                    border: "1px solid #51309eff",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    width: "100%",
+                    fontSize: "13px",
+                    color: darkMode ? "#e2e8f0" : "#2d3748",
+                    fontFamily: "inherit",
                   }}
+                  className="admin-search-input"
                 />
-              )}
+              </div>
             </div>
+          ) : (
+            /* Desktop Layout */
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "0 24px",
+                color: "#fff",
+                minHeight: "72px",
+                position: "relative",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              </div>
               <div
                 className="admin-header-title-wrapper"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  position: mobileView ? "relative" : "absolute",
+                  position: "absolute",
                   left: "2%",
                   gap: 12,
                   padding: "8px 18px",
@@ -592,7 +824,7 @@ const AdminLayout = () => {
                   {getActiveTabLabel()}
                 </Title>
               </div>
-            <div style={{ display: "flex", alignItems: "center", gap: mobileView ? 8 : 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div
                 className="admin-search-box"
                 style={{
@@ -602,8 +834,7 @@ const AdminLayout = () => {
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  // increased width so the search bar looks longer to the left
-                  width: mobileView ? "200px" : "360px",
+                  width: "360px",
                   boxShadow: darkMode
                     ? "0 4px 12px rgba(0,0,0,0.3)"
                     : "0 4px 12px rgba(0,0,0,0.03)",
@@ -631,12 +862,12 @@ const AdminLayout = () => {
                     fontSize: "14px",
                     color: darkMode ? "#e2e8f0" : "#2d3748",
                     fontFamily: "inherit",
-                    paddingRight: mobileView ? 0 : 70,
+                    paddingRight: 70,
                   }}
                   className="admin-search-input"
                 />
                 {/* Small integrated icons inside the search box */}
-                <div className="admin-search-icons" style={{display: mobileView ? 'none' : 'flex', gap: 8}}>
+                <div className="admin-search-icons" style={{display: 'flex', gap: 8}}>
                   <Popover
                     placement="bottomRight"
                     trigger="click"
@@ -757,7 +988,7 @@ const AdminLayout = () => {
                 </div>
               </div>
 
-              <Space size={mobileView ? 8 : 8} align="center">
+              <Space size={8} align="center">
 
                 <input
                   type="file"
@@ -815,7 +1046,8 @@ const AdminLayout = () => {
                 </Dropdown>
               </Space>
             </div>
-          </div>
+            </div>
+          )}
         </Header>
 
         {/* Decorative flowers overlay (admin only) */}

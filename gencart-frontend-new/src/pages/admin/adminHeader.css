@@ -1784,3 +1784,183 @@
   border-color: #60a5fa !important;
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5) !important;
 }
+
+/* ========================================
+   RESPONSIVE HEADER STYLES
+   ======================================== */
+
+/* Mobile Header Container */
+.admin-header-mobile {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 8px;
+}
+
+.admin-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Mobile Search Bar */
+.admin-search-mobile {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.admin-search-mobile .admin-search-box {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Mobile Quick Actions */
+.admin-mobile-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-mobile-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-mobile-icon-btn:hover,
+.admin-mobile-icon-btn:active {
+  background: rgba(99, 102, 241, 0.15);
+  transform: scale(1.05);
+}
+
+.dark-mode .admin-mobile-icon-btn {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.dark-mode .admin-mobile-icon-btn:hover,
+.dark-mode .admin-mobile-icon-btn:active {
+  background: rgba(139, 92, 246, 0.25);
+}
+
+/* Mobile Title Badge */
+.admin-header-title-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.06) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  max-width: 160px;
+}
+
+.admin-header-title-mobile .admin-header-icon {
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.admin-header-title-mobile .admin-header-title-text {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dark-mode .admin-header-title-mobile {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(109, 40, 217, 0.08) 100%);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+/* Responsive Media Queries */
+@media screen and (max-width: 768px) {
+  .gencart-header {
+    height: auto !important;
+    min-height: 60px !important;
+    padding: 8px 0 !important;
+  }
+
+  .admin-header-title-wrapper {
+    position: relative !important;
+    left: 0 !important;
+    padding: 6px 12px !important;
+    gap: 8px !important;
+  }
+
+  .admin-header-title-text {
+    font-size: 14px !important;
+  }
+
+  .admin-search-box {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 6px 12px !important;
+  }
+
+  .admin-search-input {
+    font-size: 13px !important;
+    padding-right: 0 !important;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .gencart-header {
+    min-height: 56px !important;
+  }
+
+  .admin-header-title-wrapper {
+    padding: 5px 10px !important;
+    border-radius: 8px !important;
+  }
+
+  .admin-header-icon {
+    font-size: 16px !important;
+  }
+
+  .admin-header-title-text {
+    font-size: 12px !important;
+    letter-spacing: 0.2px !important;
+  }
+
+  .admin-search-box {
+    border-radius: 20px !important;
+    padding: 5px 10px !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .admin-header-title-mobile {
+    max-width: 120px;
+    padding: 5px 10px;
+  }
+
+  .admin-header-title-mobile .admin-header-title-text {
+    font-size: 11px !important;
+  }
+
+  .admin-mobile-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .admin-mobile-icon-btn .anticon {
+    font-size: 14px !important;
+  }
+}
