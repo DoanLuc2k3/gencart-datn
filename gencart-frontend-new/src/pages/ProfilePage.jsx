@@ -352,55 +352,55 @@ const ProfilePage = () => {
   };
 
   // Handle avatar upload
-  const handleAvatarUpload = async (info) => {
-    if (info.file.status === 'uploading') {
-      setUploadLoading(true);
-      return;
-    }
+  const handleAvatarUpload = async (file) => {
+    setUploadLoading(true);
+    
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('access_token');
 
-    if (info.file.status === 'done') {
-      try {
-        // Get token from localStorage
-        const token = localStorage.getItem('access_token');
-
-        if (!token) {
-          message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
-          navigate('/login');
-          return;
-        }
-
-        // Create form data for file upload
-        const formData = new FormData();
-        formData.append('avatar', info.file.originFileObj);
-
-        // Upload avatar
-        const response = await fetch(`${API_BASE_URL}/users/${userData.id}/upload_avatar/`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error('Không thể tải ảnh đại diện lên');
-        }
-
-        const data = await response.json();
-
-        // Update user data with new avatar URL
-        setUserData({
-          ...userData,
-          avatar_url: data.avatar_url
-        });
-
-        message.success('Tải ảnh đại diện lên thành công!');
-      } catch (error) {
-        console.error('Error uploading avatar:', error);
-        message.error('Không thể tải ảnh đại diện lên. Vui lòng thử lại.');
-      } finally {
-        setUploadLoading(false);
+      if (!token) {
+        message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
+        navigate('/login');
+        return false;
       }
+
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      // Upload avatar
+      const response = await fetch(`${API_BASE_URL}/users/${userData.id}/upload_avatar/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Upload error response:', errorData);
+        throw new Error(errorData.detail || 'Không thể tải ảnh đại diện lên');
+      }
+
+      const data = await response.json();
+      console.log('Avatar upload response:', data);
+
+      // Update user data with new avatar URL
+      setUserData(prevData => ({
+        ...prevData,
+        avatar_url: data.avatar_url
+      }));
+
+      message.success('Tải ảnh đại diện lên thành công!');
+      return false; // Prevent default upload behavior
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      message.error(error.message || 'Không thể tải ảnh đại diện lên. Vui lòng thử lại.');
+      return false;
+    } finally {
+      setUploadLoading(false);
     }
   };
 
@@ -442,21 +442,21 @@ const ProfilePage = () => {
                 listType="picture-card"
                 className="avatar-uploader"
                 showUploadList={false}
-                customRequest={({ onSuccess }) => {
-                  setTimeout(() => onSuccess("ok"), 0);
-                }}
                 beforeUpload={(file) => {
                   const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
                   if (!isJpgOrPng) {
                     message.error('Chỉ chấp nhận file JPG/PNG!');
+                    return false;
                   }
                   const isLt2M = file.size / 1024 / 1024 < 2;
                   if (!isLt2M) {
                     message.error('Ảnh phải nhỏ hơn 2MB!');
+                    return false;
                   }
-                  return isJpgOrPng && isLt2M;
+                  // Call upload function directly
+                  handleAvatarUpload(file);
+                  return false; // Prevent default upload
                 }}
-                onChange={handleAvatarUpload}
               >
                 {userData.avatar_url ? (
                   <div style={{ position: 'relative' }}>

@@ -3,9 +3,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
-import logging
-
-logger = logging.getLogger(__name__)
 from .models import Address
 from .serializers import UserSerializer, UserCreateSerializer, AddressSerializer
 
@@ -73,36 +70,24 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         Upload user avatar
         """
-        logger.info(f"Upload avatar request for user {pk} by {request.user}")
         user = self.get_object()
 
         # Check if the user is trying to update their own profile
         if request.user.id != user.id and not request.user.is_staff:
-            logger.warning(f"Permission denied for user {request.user.id} to update avatar of {user.id}")
             return Response(
                 {"detail": "You do not have permission to update this user's avatar."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
         if 'avatar' not in request.FILES:
-            logger.warning("No avatar file provided in request")
             return Response(
                 {"detail": "No avatar file provided."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         # Save the avatar
-        logger.info(f"Saving avatar for user {user.id}")
-        try:
-            user.avatar = request.FILES['avatar']
-            user.save()
-            logger.info(f"Avatar saved successfully for user {user.id}")
-        except Exception as e:
-            logger.error(f"Error saving avatar for user {user.id}: {e}")
-            return Response(
-                {"detail": "Error saving avatar."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        user.avatar = request.FILES['avatar']
+        user.save()
 
         # Return the updated user data
         serializer = self.get_serializer(user, context={'request': request})
