@@ -5,6 +5,12 @@ from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 from .models import Address
 from .serializers import UserSerializer, UserCreateSerializer, AddressSerializer
+import cloudinary
+import cloudinary.uploader
+import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -68,7 +74,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='upload_avatar')
     def upload_avatar(self, request, pk=None):
         """
-        Upload user avatar
+        Upload user avatar to Cloudinary
         """
         user = self.get_object()
 
@@ -85,13 +91,39 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Save the avatar
-        user.avatar = request.FILES['avatar']
-        user.save()
+        try:
+            avatar_file = request.FILES['avatar']
+            logger.info(f"Uploading avatar for user {user.id}: {avatar_file.name}, size: {avatar_file.size}")
+            
+            # Upload to Cloudinary
+            upload_result = cloudinary.uploader.upload(
+                avatar_file,
+                folder="nexcart/avatars",
+                public_id=f"avatar_user_{user.id}_{int(time.time())}",
+                overwrite=True,
+                resource_type="image",
+                transformation=[
+                    {'width': 400, 'height': 400, 'crop': 'fill', 'gravity': 'face'}
+                ]
+            )
+            
+            avatar_url = upload_result['secure_url']
+            logger.info(f"Avatar uploaded successfully: {avatar_url}")
+            
+            # Save the Cloudinary URL to user's avatar_url field
+            user.avatar_url = avatar_url
+            user.save()
 
-        # Return the updated user data
-        serializer = self.get_serializer(user, context={'request': request})
-        return Response(serializer.data)
+            # Return the updated user data
+            serializer = self.get_serializer(user, context={'request': request})
+            return Response(serializer.data)
+            
+        except Exception as e:
+            logger.error(f"Avatar upload failed: {str(e)}")
+            return Response(
+                {"detail": f"Avatar upload failed: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=['post'], url_path='change_password')
     def change_password(self, request, pk=None):

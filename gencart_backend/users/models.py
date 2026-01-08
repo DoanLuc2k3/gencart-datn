@@ -9,6 +9,7 @@ class User(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    avatar_url = models.URLField(max_length=500, blank=True, null=True)  # Cloudinary URL
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']

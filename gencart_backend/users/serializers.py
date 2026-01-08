@@ -35,6 +35,10 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['date_joined', 'avatar_url']
 
     def get_avatar_url(self, obj):
+        # Prioritize Cloudinary URL stored in avatar_url field
+        if obj.avatar_url:
+            return obj.avatar_url
+        # Fallback to local avatar file
         if obj.avatar:
             request = self.context.get('request')
             if request:
