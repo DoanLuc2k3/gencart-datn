@@ -51,7 +51,7 @@ const ProfilePage = () => {
     name: '',
     email: '',
     phone: '',
-    avatar: null,
+    avatar_url: null,
     addresses: [],
     address: {
       line1: '',
@@ -265,7 +265,7 @@ const ProfilePage = () => {
         name: `${updatedUserData.first_name} ${updatedUserData.last_name}`.trim() || updatedUserData.username,
         email: updatedUserData.email,
         phone: updatedUserData.phone_number || '',
-        avatar: null,
+        avatar_url: updatedUserData.avatar_url, // Preserve avatar_url
         addresses: updatedUserData.addresses || [],
         address: defaultAddress ? {
           line1: defaultAddress.street_address || '',
@@ -351,57 +351,85 @@ const ProfilePage = () => {
     }
   };
 
-  // Handle avatar upload
+  // Handle avatar upload - FIXED VERSION
   const handleAvatarUpload = async (info) => {
-    if (info.file.status === 'uploading') {
-      setUploadLoading(true);
+    // Start loading immediately
+    setUploadLoading(true);
+
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('access_token');
+
+      if (!token) {
+        message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
+        navigate('/login');
+        setUploadLoading(false);
+        return;
+      }
+
+      // Get the file from the info object
+      const file = info.file.originFileObj || info.file;
+
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      // Upload avatar
+      const response = await fetch(`${API_BASE_URL}/users/${userData.id}/upload_avatar/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Không thể tải ảnh đại diện lên');
+      }
+
+      const data = await response.json();
+
+      // Update user data with new avatar URL
+      // Add cache busting parameter to force image reload
+      const newAvatarUrl = data.avatar_url + '?t=' + new Date().getTime();
+      
+      setUserData(prevData => ({
+        ...prevData,
+        avatar_url: newAvatarUrl
+      }));
+
+      message.success('Tải ảnh đại diện lên thành công!');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      message.error(error.message || 'Không thể tải ảnh đại diện lên. Vui lòng thử lại.');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  // Custom request for Upload component
+  const customRequest = ({ file, onSuccess, onError }) => {
+    // Validate file type
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+    if (!isJpgOrPng) {
+      message.error('Chỉ chấp nhận file JPG/PNG!');
+      onError(new Error('Invalid file type'));
       return;
     }
 
-    if (info.file.status === 'done') {
-      try {
-        // Get token from localStorage
-        const token = localStorage.getItem('access_token');
-
-        if (!token) {
-          message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
-          navigate('/login');
-          return;
-        }
-
-        // Create form data for file upload
-        const formData = new FormData();
-        formData.append('avatar', info.file.originFileObj);
-
-        // Upload avatar
-        const response = await fetch(`${API_BASE_URL}/users/${userData.id}/upload_avatar/`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error('Không thể tải ảnh đại diện lên');
-        }
-
-        const data = await response.json();
-
-        // Update user data with new avatar URL
-        setUserData({
-          ...userData,
-          avatar_url: data.avatar_url
-        });
-
-        message.success('Tải ảnh đại diện lên thành công!');
-      } catch (error) {
-        console.error('Error uploading avatar:', error);
-        message.error('Không thể tải ảnh đại diện lên. Vui lòng thử lại.');
-      } finally {
-        setUploadLoading(false);
-      }
+    // Validate file size
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error('Ảnh phải nhỏ hơn 2MB!');
+      onError(new Error('File too large'));
+      return;
     }
+
+    // Simulate successful upload
+    setTimeout(() => {
+      onSuccess("ok");
+    }, 0);
   };
 
   // Calculate profile completion percentage
@@ -442,20 +470,7 @@ const ProfilePage = () => {
                 listType="picture-card"
                 className="avatar-uploader"
                 showUploadList={false}
-                customRequest={({ onSuccess }) => {
-                  setTimeout(() => onSuccess("ok"), 0);
-                }}
-                beforeUpload={(file) => {
-                  const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-                  if (!isJpgOrPng) {
-                    message.error('Chỉ chấp nhận file JPG/PNG!');
-                  }
-                  const isLt2M = file.size / 1024 / 1024 < 2;
-                  if (!isLt2M) {
-                    message.error('Ảnh phải nhỏ hơn 2MB!');
-                  }
-                  return isJpgOrPng && isLt2M;
-                }}
+                customRequest={customRequest}
                 onChange={handleAvatarUpload}
               >
                 {userData.avatar_url ? (
