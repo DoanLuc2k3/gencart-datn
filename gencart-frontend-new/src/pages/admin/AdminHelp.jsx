@@ -632,7 +632,6 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
   const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
   const [currentPostComments, setCurrentPostComments] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
 
   const defaultCategories = [
     { value: 'Khuyến Mãi', label: 'Khuyến Mãi' },
@@ -750,39 +749,16 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
       okType: 'danger',
       cancelText: 'Hủy',
       async onOk() {
-        const hideLoading = message.loading('Đang xóa bài viết...', 0);
         try {
-          console.log('Deleting post with id:', id);
           await blogPostApi.delete(id);
-          console.log('Delete successful for id:', id);
           setBlogPosts(prev => prev.filter(p => p.id !== id));
           window.dispatchEvent(new Event('blog_posts_updated'));
-          hideLoading();
-          message.success('Đã xóa bài viết thành công!');
+          message.success('Đã xóa bài viết!');
         } catch (error) {
-          hideLoading();
           console.error('Error deleting post:', error);
-          console.error('Error response:', error.response);
-          console.error('Error status:', error.response?.status);
-          console.error('Error data:', error.response?.data);
-          
-          // More specific error message
-          let errorMsg = 'Không thể xóa bài viết. Vui lòng thử lại.';
-          if (error.response?.status === 404) {
-            errorMsg = 'Bài viết không tồn tại hoặc đã bị xóa.';
-          } else if (error.response?.status === 403) {
-            errorMsg = 'Bạn không có quyền xóa bài viết này.';
-          } else if (error.response?.status === 401) {
-            errorMsg = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-          } else if (error.response?.data?.detail) {
-            errorMsg = error.response.data.detail;
-          } else if (error.response?.data?.message) {
-            errorMsg = error.response.data.message;
-          } else if (error.message) {
-            errorMsg = error.message;
-          }
-          message.error(errorMsg);
+          message.error('Không thể xóa bài viết. Vui lòng thử lại.');
         }
+
       },
     });
   };
@@ -961,10 +937,7 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
             <Button
               icon={<DeleteOutlined />}
               danger
-              onClick={() => {
-                console.log('Delete button clicked for:', record.id, record.title);
-                handleDelete(record.id);
-              }}
+              onClick={() => handleDelete(record.id)}
             />
           </Tooltip>
         </Space>
@@ -1092,11 +1065,9 @@ const BlogManagementTab = ({ onPostsLoaded, refreshKey }) => {
                   </Tooltip>,
                   <Tooltip title="Xóa" key="delete">
                     <DeleteOutlined 
-                      style={{ fontSize: 16, color: '#ff4d4f', cursor: 'pointer' }}
+                      style={{ fontSize: 16, color: '#ff4d4f' }}
                       onClick={(e) => {
-                        e.preventDefault();
                         e.stopPropagation();
-                        console.log('Delete clicked for post:', post.id, post.title);
                         handleDelete(post.id);
                       }} 
                     />
