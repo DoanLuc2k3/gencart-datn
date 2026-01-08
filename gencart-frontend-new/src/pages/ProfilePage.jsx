@@ -15,10 +15,7 @@ import {
   message,
   Spin,
   Space,
-  Badge,
   Progress,
-  Tooltip,
-  Divider
 } from 'antd';
 import {
   UserOutlined,
@@ -27,10 +24,8 @@ import {
   PhoneOutlined,
   EditOutlined,
   SaveOutlined,
-  UploadOutlined,
   LockOutlined,
   CameraOutlined,
-  CheckCircleOutlined,
   SafetyOutlined,
   EnvironmentOutlined,
   GlobalOutlined
@@ -41,7 +36,6 @@ const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 
 const ProfilePage = () => {
-  // Scroll to top when page loads
   useScrollToTop();
 
   const navigate = useNavigate();
@@ -66,95 +60,91 @@ const ProfilePage = () => {
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [avatarKey, setAvatarKey] = useState(0);
 
-  // Fetch real user data from the API
   useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true);
-      try {
-        // Get token from localStorage
-        const token = localStorage.getItem('access_token');
-
-        if (!token) {
-          // Redirect to login if not authenticated
-          message.error('Vui lòng đăng nhập để xem hồ sơ của bạn');
-          navigate('/login');
-          return;
-        }
-
-        // Fetch user data from API
-        const response = await fetch(`${API_BASE_URL}/users/me/`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Không thể tải dữ liệu hồ sơ');
-        }
-
-        const userData = await response.json();
-
-        // Get default address if available
-        let defaultAddress = null;
-        if (userData.addresses && userData.addresses.length > 0) {
-          defaultAddress = userData.addresses.find(addr => addr.default) || userData.addresses[0];
-        }
-
-        // Format user data for our component
-        const formattedUserData = {
-          id: userData.id,
-          name: `${userData.first_name} ${userData.last_name}`.trim() || userData.username,
-          email: userData.email,
-          phone: userData.phone_number || '',
-          avatar_url: userData.avatar_url, // Use the avatar_url from the API
-          addresses: userData.addresses || [],
-          address: defaultAddress ? {
-            line1: defaultAddress.street_address || '',
-            line2: defaultAddress.apartment_address || '',
-            city: defaultAddress.city || '',
-            state: defaultAddress.state || '',
-            pincode: defaultAddress.zip_code || '',
-            country: defaultAddress.country || ''
-          } : {
-            line1: '',
-            line2: '',
-            city: '',
-            state: '',
-            pincode: '',
-            country: ''
-          }
-        };
-
-        setUserData(formattedUserData);
-        form.setFieldsValue({
-          name: formattedUserData.name,
-          email: formattedUserData.email,
-          phone: formattedUserData.phone,
-          addressLine1: formattedUserData.address.line1,
-          addressLine2: formattedUserData.address.line2,
-          city: formattedUserData.address.city,
-          state: formattedUserData.address.state,
-          pincode: formattedUserData.address.pincode,
-          country: formattedUserData.address.country
-        });
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        message.error('Không thể tải dữ liệu hồ sơ');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserData();
-  }, [form, navigate]);
+  }, []);
 
-  // Handle form submission
+  const fetchUserData = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+
+      if (!token) {
+        message.error('Vui lòng đăng nhập để xem hồ sơ của bạn');
+        navigate('/login');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/users/me/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Không thể tải dữ liệu hồ sơ');
+      }
+
+      const userData = await response.json();
+      console.log('User data from API:', userData);
+
+      let defaultAddress = null;
+      if (userData.addresses && userData.addresses.length > 0) {
+        defaultAddress = userData.addresses.find(addr => addr.default) || userData.addresses[0];
+      }
+
+      const formattedUserData = {
+        id: userData.id,
+        name: `${userData.first_name} ${userData.last_name}`.trim() || userData.username,
+        email: userData.email,
+        phone: userData.phone_number || '',
+        avatar_url: userData.avatar_url,
+        addresses: userData.addresses || [],
+        address: defaultAddress ? {
+          line1: defaultAddress.street_address || '',
+          line2: defaultAddress.apartment_address || '',
+          city: defaultAddress.city || '',
+          state: defaultAddress.state || '',
+          pincode: defaultAddress.zip_code || '',
+          country: defaultAddress.country || ''
+        } : {
+          line1: '',
+          line2: '',
+          city: '',
+          state: '',
+          pincode: '',
+          country: ''
+        }
+      };
+
+      console.log('Avatar URL:', formattedUserData.avatar_url);
+
+      setUserData(formattedUserData);
+      form.setFieldsValue({
+        name: formattedUserData.name,
+        email: formattedUserData.email,
+        phone: formattedUserData.phone,
+        addressLine1: formattedUserData.address.line1,
+        addressLine2: formattedUserData.address.line2,
+        city: formattedUserData.address.city,
+        state: formattedUserData.address.state,
+        pincode: formattedUserData.address.pincode,
+        country: formattedUserData.address.country
+      });
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      message.error('Không thể tải dữ liệu hồ sơ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (values) => {
     setLoading(true);
 
     try {
-      // Get token from localStorage
       const token = localStorage.getItem('access_token');
 
       if (!token) {
@@ -163,7 +153,6 @@ const ProfilePage = () => {
         return;
       }
 
-      // Split name into first_name and last_name
       let firstName = '';
       let lastName = '';
 
@@ -173,7 +162,6 @@ const ProfilePage = () => {
         lastName = nameParts.slice(1).join(' ') || '';
       }
 
-      // Update user profile
       const userResponse = await fetch(`${API_BASE_URL}/users/${userData.id}/`, {
         method: 'PATCH',
         headers: {
@@ -192,12 +180,9 @@ const ProfilePage = () => {
         throw new Error('Không thể cập nhật hồ sơ');
       }
 
-      // Check if user has an address
-      let addressId = null;
       let addressMethod = 'POST';
       let addressUrl = `${API_BASE_URL}/addresses/`;
 
-      // Get updated user data to check for addresses
       const userDataResponse = await fetch(`${API_BASE_URL}/users/me/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -211,14 +196,11 @@ const ProfilePage = () => {
       const currentUserData = await userDataResponse.json();
 
       if (currentUserData.addresses && currentUserData.addresses.length > 0) {
-        // Update existing address
-        addressId = currentUserData.addresses[0].id;
         addressMethod = 'PUT';
-        addressUrl = `${API_BASE_URL}/addresses/${addressId}/`;
+        addressUrl = `${API_BASE_URL}/addresses/${currentUserData.addresses[0].id}/`;
       }
 
-      // Update or create address
-      const addressResponse = await fetch(addressUrl, {
+      await fetch(addressUrl, {
         method: addressMethod,
         headers: {
           'Content-Type': 'application/json',
@@ -236,55 +218,7 @@ const ProfilePage = () => {
         }),
       });
 
-      if (!addressResponse.ok) {
-        throw new Error('Không thể cập nhật địa chỉ');
-      }
-
-      // Refresh user data
-      const updatedUserResponse = await fetch(`${API_BASE_URL}/users/me/`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!updatedUserResponse.ok) {
-        throw new Error('Không thể tải dữ liệu người dùng');
-      }
-
-      const updatedUserData = await updatedUserResponse.json();
-
-      // Get default address if available
-      let defaultAddress = null;
-      if (updatedUserData.addresses && updatedUserData.addresses.length > 0) {
-        defaultAddress = updatedUserData.addresses.find(addr => addr.default) || updatedUserData.addresses[0];
-      }
-
-      // Format user data for our component
-      const formattedUserData = {
-        id: updatedUserData.id,
-        name: `${updatedUserData.first_name} ${updatedUserData.last_name}`.trim() || updatedUserData.username,
-        email: updatedUserData.email,
-        phone: updatedUserData.phone_number || '',
-        avatar_url: updatedUserData.avatar_url, // Preserve avatar_url
-        addresses: updatedUserData.addresses || [],
-        address: defaultAddress ? {
-          line1: defaultAddress.street_address || '',
-          line2: defaultAddress.apartment_address || '',
-          city: defaultAddress.city || '',
-          state: defaultAddress.state || '',
-          pincode: defaultAddress.zip_code || '',
-          country: defaultAddress.country || ''
-        } : {
-          line1: '',
-          line2: '',
-          city: '',
-          state: '',
-          pincode: '',
-          country: ''
-        }
-      };
-
-      setUserData(formattedUserData);
+      await fetchUserData();
       setEditMode(false);
       message.success('Cập nhật hồ sơ thành công!');
     } catch (error) {
@@ -295,12 +229,10 @@ const ProfilePage = () => {
     }
   };
 
-  // Handle password change
   const handlePasswordChange = async (values) => {
     setLoading(true);
 
     try {
-      // Get token from localStorage
       const token = localStorage.getItem('access_token');
 
       if (!token) {
@@ -309,7 +241,6 @@ const ProfilePage = () => {
         return;
       }
 
-      // Change password
       const response = await fetch(`${API_BASE_URL}/users/${userData.id}/change_password/`, {
         method: 'POST',
         headers: {
@@ -331,8 +262,6 @@ const ProfilePage = () => {
       passwordForm.resetFields();
       message.success('Đổi mật khẩu thành công!');
 
-      // Optionally, you can log the user out and redirect to login page
-      // This is a good practice after password change
       const logoutAfterPasswordChange = window.confirm(
         'Mật khẩu của bạn đã được đổi thành công. Để đảm bảo an toàn, bạn có muốn đăng xuất và đăng nhập lại bằng mật khẩu mới không?'
       );
@@ -351,30 +280,25 @@ const ProfilePage = () => {
     }
   };
 
-  // Handle avatar upload - FIXED VERSION
-  const handleAvatarUpload = async (info) => {
-    // Start loading immediately
+  const handleAvatarUpload = async ({ file, onSuccess, onError }) => {
     setUploadLoading(true);
 
     try {
-      // Get token from localStorage
       const token = localStorage.getItem('access_token');
 
       if (!token) {
         message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
         navigate('/login');
         setUploadLoading(false);
+        if (onError) onError(new Error('Not authenticated'));
         return;
       }
 
-      // Get the file from the info object
-      const file = info.file.originFileObj || info.file;
-
-      // Create form data for file upload
       const formData = new FormData();
       formData.append('avatar', file);
 
-      // Upload avatar
+      console.log('Uploading avatar...');
+
       const response = await fetch(`${API_BASE_URL}/users/${userData.id}/upload_avatar/`, {
         method: 'POST',
         headers: {
@@ -385,54 +309,59 @@ const ProfilePage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Upload error:', errorData);
         throw new Error(errorData.detail || 'Không thể tải ảnh đại diện lên');
       }
 
       const data = await response.json();
+      console.log('Upload response:', data);
 
-      // Update user data with new avatar URL
-      // Add cache busting parameter to force image reload
-      const newAvatarUrl = data.avatar_url + '?t=' + new Date().getTime();
+      let newAvatarUrl = data.avatar_url || data.avatar || null;
       
+      if (newAvatarUrl && !newAvatarUrl.startsWith('http')) {
+        newAvatarUrl = newAvatarUrl.startsWith('/') ? newAvatarUrl.slice(1) : newAvatarUrl;
+        newAvatarUrl = `${API_BASE_URL}/${newAvatarUrl}`;
+      }
+
+      console.log('New avatar URL:', newAvatarUrl);
+
       setUserData(prevData => ({
         ...prevData,
         avatar_url: newAvatarUrl
       }));
+      
+      setAvatarKey(prev => prev + 1);
 
       message.success('Tải ảnh đại diện lên thành công!');
+      if (onSuccess) onSuccess(data);
+
+      setTimeout(() => {
+        fetchUserData();
+      }, 500);
+
     } catch (error) {
       console.error('Error uploading avatar:', error);
       message.error(error.message || 'Không thể tải ảnh đại diện lên. Vui lòng thử lại.');
+      if (onError) onError(error);
     } finally {
       setUploadLoading(false);
     }
   };
 
-  // Custom request for Upload component
-  const customRequest = ({ file, onSuccess, onError }) => {
-    // Validate file type
-    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+  const beforeUpload = (file) => {
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg';
     if (!isJpgOrPng) {
       message.error('Chỉ chấp nhận file JPG/PNG!');
-      onError(new Error('Invalid file type'));
-      return;
+      return false;
     }
-
-    // Validate file size
     const isLt2M = file.size / 1024 / 1024 < 2;
     if (!isLt2M) {
       message.error('Ảnh phải nhỏ hơn 2MB!');
-      onError(new Error('File too large'));
-      return;
+      return false;
     }
-
-    // Simulate successful upload
-    setTimeout(() => {
-      onSuccess("ok");
-    }, 0);
+    return true;
   };
 
-  // Calculate profile completion percentage
   const calculateProfileCompletion = () => {
     const fields = [
       userData.name,
@@ -448,10 +377,8 @@ const ProfilePage = () => {
     return Math.round((filledFields / fields.length) * 100);
   };
 
-  // Render profile information in view mode
   const renderProfileInfo = () => (
     <div style={{ padding: '0' }}>
-      {/* Profile Header */}
       <Card
         style={{
           marginBottom: '24px',
@@ -462,7 +389,6 @@ const ProfilePage = () => {
         }}
       >
         <Row gutter={[32, 32]} align="middle">
-          {/* Avatar Section */}
           <Col xs={24} md={8} style={{ textAlign: 'center' }}>
             <div style={{ display: 'inline-block', position: 'relative' }}>
               <Upload
@@ -470,17 +396,21 @@ const ProfilePage = () => {
                 listType="picture-card"
                 className="avatar-uploader"
                 showUploadList={false}
-                customRequest={customRequest}
-                onChange={handleAvatarUpload}
+                customRequest={handleAvatarUpload}
+                beforeUpload={beforeUpload}
               >
                 {userData.avatar_url ? (
-                  <div style={{ position: 'relative' }}>
+                  <div key={avatarKey} style={{ position: 'relative' }}>
                     <Avatar
                       src={userData.avatar_url}
                       size={120}
                       style={{
                         border: '4px solid #f0f0f0',
                         boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+                      }}
+                      onError={(e) => {
+                        console.error('Avatar load error:', e);
+                        return false;
                       }}
                     />
                     <div
@@ -532,7 +462,6 @@ const ProfilePage = () => {
                 )}
               </Upload>
               
-              {/* Profile Completion */}
               <div style={{ marginTop: '16px' }}>
                 <Text style={{ fontSize: '12px', color: '#8c8c8c', display: 'block', marginBottom: '8px' }}>
                   Hoàn thiện hồ sơ
@@ -549,7 +478,6 @@ const ProfilePage = () => {
             </div>
           </Col>
 
-          {/* User Info Section */}
           <Col xs={24} md={16}>
             <div>
               <Title level={2} style={{ marginBottom: '8px', color: '#262626' }}>
@@ -589,7 +517,7 @@ const ProfilePage = () => {
                       <div>
                         <Text style={{ fontSize: '12px', color: '#8c8c8c', display: 'block' }}>Số điện thoại</Text>
                         <Text style={{ fontSize: '14px', fontWeight: '500' }}>
-                          {userData.phone || 'Chưa cập nhật số điện thoại'}
+                          {userData.phone || 'Chưa cập nhật'}
                         </Text>
                       </div>
                     </Space>
@@ -617,7 +545,6 @@ const ProfilePage = () => {
         </Row>
       </Card>
 
-      {/* Address Information */}
       <Card
         title={
           <Space>
@@ -674,26 +601,13 @@ const ProfilePage = () => {
     </div>
   );
 
-  // Render edit form
   const renderEditForm = () => (
     <div style={{ padding: '0' }}>
       <Form
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        initialValues={{
-          name: userData.name,
-          email: userData.email,
-          phone: userData.phone,
-          addressLine1: userData.address.line1,
-          addressLine2: userData.address.line2,
-          city: userData.address.city,
-          state: userData.address.state,
-          pincode: userData.address.pincode,
-          country: userData.address.country
-        }}
       >
-        {/* Personal Information */}
         <Card 
           title="Thông tin cá nhân"
           style={{ 
@@ -757,7 +671,6 @@ const ProfilePage = () => {
           </Row>
         </Card>
 
-        {/* Address Information */}
         <Card 
           title="Địa chỉ"
           style={{ 
@@ -806,7 +719,7 @@ const ProfilePage = () => {
                 rules={[{ required: true, message: 'Vui lòng nhập thành phố' }]}
               >
                 <Input 
-                  placeholder="Thành phố Hồ Chí Minh"
+                  placeholder="TP Hồ Chí Minh"
                   size="large"
                   style={{ borderRadius: '8px' }}
                 />
@@ -855,7 +768,6 @@ const ProfilePage = () => {
           </Row>
         </Card>
 
-        {/* Action Buttons */}
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
           <Space size="middle">
             <Button 
@@ -890,7 +802,6 @@ const ProfilePage = () => {
     </div>
   );
 
-  // Render password change form
   const renderPasswordForm = () => (
     <div style={{ padding: '0' }}>
       <Card
@@ -916,7 +827,6 @@ const ProfilePage = () => {
           layout="vertical"
           onFinish={handlePasswordChange}
         >
-          {/* Security Notice */}
           <div style={{ 
             background: '#fff7e6',
             padding: '16px',
@@ -997,7 +907,6 @@ const ProfilePage = () => {
             </Col>
           </Row>
 
-          {/* Password Requirements */}
           <div style={{
             background: '#f6ffed',
             border: '1px solid #b7eb8f',
@@ -1016,7 +925,6 @@ const ProfilePage = () => {
             </ul>
           </div>
 
-          {/* Action Buttons */}
           <div style={{ textAlign: 'center' }}>
             <Space size="middle">
               <Button
@@ -1059,7 +967,6 @@ const ProfilePage = () => {
         minHeight: '100vh',
       }}
     >
-      {/* Gradient Header */}
       <div
         style={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
