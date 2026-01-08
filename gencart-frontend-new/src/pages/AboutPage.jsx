@@ -147,7 +147,7 @@ const AboutPage = () => {
                   WebkitTextFillColor: 'transparent'
                 }}>
                   Dẫn đầu phong cách <br/>
-                  <span style={{ color: '#6366f1', WebkitTextFillColor: '#6366f1' }}>Thời trang hiện đại</span>
+                  <span style={{ color: '#6366f1', WebkitTextFillColor: '#6366f1' }}>Nền tảng thương mại điện tử hiện đại</span>
                 </Title>
                 <Paragraph style={{ 
                   color: '#94a3b8', 
@@ -156,7 +156,7 @@ const AboutPage = () => {
                   maxWidth: '500px',
                   lineHeight: 1.8 
                 }}>
-                  Trải nghiệm sự kết hợp hoàn hảo giữa công nghệ và phong cách. GenCart mang đến cho bạn những sản phẩm thời trang cao cấp cùng sự tiện lợi vượt trội.
+                  Trải nghiệm sự kết hợp hoàn hảo giữa công nghệ và mua sắm trực tuyến. GenCart cung cấp đa dạng các mặt hàng chất lượng, mang đến trải nghiệm mua sắm nhanh chóng, tiện lợi và an toàn.
                 </Paragraph>
                 <Button type="primary" size="large" shape="round" icon={<RocketOutlined />} style={{ 
                   height: '56px', 
@@ -365,14 +365,14 @@ const AboutPage = () => {
                 lineHeight: 1.1,
                 color: '#1e293b'
               }}>
-                Bứt phá phong cách <br/>
+                Bứt phá mua sắm <br/>
                 <span style={{ 
                   background: 'linear-gradient(135deg, #4f46e5 0%, #ec4899 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   position: 'relative'
                 }}>
-                  Thời trang mới
+                 Xu hướng tiêu dùng mới
                   <svg style={{ position: 'absolute', bottom: -5, left: 0, width: '100%', height: '10px', zIndex: -1 }} viewBox="0 0 100 10" preserveAspectRatio="none">
                     <path d="M0 5 Q 50 10 100 5" stroke="#fbbf24" strokeWidth="3" fill="none" opacity="0.5" />
                   </svg>
