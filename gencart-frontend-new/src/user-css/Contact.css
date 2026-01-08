@@ -2,22 +2,22 @@
 /* (Tùy chọn) Thêm một font chữ hiện đại từ Google Fonts */
 /* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'); */
 
-/* --- Biến CSS (Nếu bạn muốn) --- */
-:root {
-  --primary-color: #0f172a; /* slate-900 */
-  --primary-color-hover: #1e293b; /* slate-800 */
-  --card-bg: #ffffff;
-  --page-bg: linear-gradient(135deg, #f8fafc, #f1f5f9); /* slate-50 to slate-100 */
-  --text-dark: #1e293b;
-  --text-light: #475569;
-  --text-accent: #f8fafc;
-  --border-color: #e2e8f0; /* slate-200 */
+/* --- Biến CSS (Scoped cho trang Contact) --- */
+.contact-page-wrapper {
+  --contact-primary-color: #0f172a; /* slate-900 */
+  --contact-primary-color-hover: #1e293b; /* slate-800 */
+  --contact-card-bg: #ffffff;
+  --contact-page-bg: linear-gradient(135deg, #f8fafc, #f1f5f9); /* slate-50 to slate-100 */
+  --contact-text-dark: #1e293b;
+  --contact-text-light: #475569;
+  --contact-text-accent: #f8fafc;
+  --contact-border-color: #e2e8f0; /* slate-200 */
 }
 
 /* --- Tổng thể trang --- */
 .contact-page-wrapper {
   /* font-family: 'Inter', sans-serif; */ /* Bỏ comment nếu bạn import font */
-  background: var(--page-bg);
+  background: var(--contact-page-bg);
   min-height: 100vh;
   padding: 4rem 1rem;
   overflow: hidden; /* Ngăn các hiệu ứng animation tràn ra ngoài */
@@ -40,7 +40,7 @@
   font-weight: 800;
   margin-bottom: 1rem;
   letter-spacing: -0.025em;
-  background: linear-gradient(135deg, var(--primary-color), var(--text-light));
+  background: linear-gradient(135deg, var(--contact-primary-color), var(--contact-text-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -86,10 +86,10 @@
 
 /* --- Thẻ (Card) Chung --- */
 .contact-card {
-  background: var(--card-bg);
+  background: var(--contact-card-bg);
   border-radius: 1.5rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--contact-border-color);
   padding: 3rem;
   transition: all 0.3s ease-in-out;
   animation: fadeInUp 0.8s ease-out;
@@ -103,7 +103,7 @@
 .contact-card h2 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: var(--contact-text-dark);
   margin-bottom: 2rem;
 }
 
@@ -124,7 +124,7 @@
   left: 0;
   width: 100%;
   height: 6px;
-  background: linear-gradient(90deg, var(--primary-color), #3b82f6, #06b6d4);
+  background: linear-gradient(90deg, var(--contact-primary-color), #3b82f6, #06b6d4);
 }
 
 .form-header {
@@ -135,7 +135,7 @@
 .form-header h3 {
   font-size: 2rem;
   font-weight: 800;
-  color: var(--text-dark);
+  color: var(--contact-text-dark);
   margin-bottom: 0.5rem;
   letter-spacing: -0.025em;
 }
@@ -178,18 +178,18 @@
 .contact-form .ant-input:focus,
 .contact-form .ant-input-textarea-affix-wrapper:focus-within,
 .contact-form textarea.ant-input:focus {
-  border-color: var(--primary-color) !important;
+  border-color: var(--contact-primary-color) !important;
   background-color: #ffffff;
   box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.1) !important;
 }
 
 .contact-form .ant-input-affix-wrapper:focus-within .input-icon {
-  color: var(--primary-color);
+  color: var(--contact-primary-color);
 }
 
 /* Nút gửi */
 .contact-submit-btn {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #1e293b 100%) !important;
+  background: linear-gradient(135deg, var(--contact-primary-color) 0%, #1e293b 100%) !important;
   border: none !important;
   padding: 0 !important;
   height: 3.5rem !important;
@@ -220,7 +220,7 @@
   transform: translateX(4px) rotate(-10deg);
 }
 
-.ant-btn-primary[disabled] {
+.contact-page-wrapper .ant-btn-primary[disabled] {
   background: #cbd5e1 !important;
   color: #f1f5f9 !important;
   box-shadow: none;
@@ -287,7 +287,7 @@
 }
 
 .contact-value {
-  color: var(--text-dark);
+  color: var(--contact-text-dark);
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.4;
@@ -298,7 +298,7 @@
 }
 
 a.contact-value:hover {
-  color: var(--primary-color);
+  color: var(--contact-primary-color);
   text-decoration: underline;
 }
 
@@ -557,7 +557,7 @@ a.contact-value:hover {
   border-radius: 1.5rem;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--contact-border-color);
 }
 
 .contact-map-iframe {
@@ -596,7 +596,7 @@ a.contact-value:hover {
 
 .contact-map-overlay .map-icon {
   font-size: 2rem;
-  color: var(--primary-color);
+  color: var(--contact-primary-color);
   background: #e2e8f0;
   padding: 0.75rem;
   border-radius: 50%;
@@ -605,13 +605,13 @@ a.contact-value:hover {
 .contact-map-overlay .map-text h3 {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: var(--contact-text-dark);
   margin: 0 0 0.25rem 0;
 }
 
 .contact-map-overlay .map-text p {
   font-size: 0.9rem;
-  color: var(--text-light);
+  color: var(--contact-text-light);
   margin: 0;
   line-height: 1.4;
 }
