@@ -365,12 +365,22 @@ const ProfilePage = () => {
         message.error('Lỗi xác thực. Vui lòng đăng nhập lại.');
         navigate('/login');
         onError(new Error('Authentication error'));
+        setUploadLoading(false);
+        return;
+      }
+
+      if (!userData.id) {
+        message.error('Không tìm thấy thông tin người dùng. Vui lòng tải lại trang.');
+        onError(new Error('User ID not found'));
+        setUploadLoading(false);
         return;
       }
 
       // Create form data for file upload
       const formData = new FormData();
       formData.append('avatar', file);
+
+      console.log('Uploading avatar to:', `${API_BASE_URL}/users/${userData.id}/upload_avatar/`);
 
       // Upload avatar
       const response = await fetch(`${API_BASE_URL}/users/${userData.id}/upload_avatar/`, {
@@ -381,11 +391,16 @@ const ProfilePage = () => {
         body: formData,
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload error response:', errorText);
         throw new Error('Không thể tải ảnh đại diện lên');
       }
 
       const data = await response.json();
+      console.log('Upload response data:', data);
 
       // Update user data with new avatar URL
       setUserData({
