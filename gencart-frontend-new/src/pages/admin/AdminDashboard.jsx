@@ -1158,6 +1158,11 @@ const AdminDashboard = () => {
     allOrders: [], // Store all orders for charts
   });
 
+  // New state for dashboard data from API
+  const [monthlyRevenueData, setMonthlyRevenueData] = useState(Array(12).fill(0));
+  const [productPerformanceData, setProductPerformanceData] = useState([]);
+  const [topCustomersData, setTopCustomersData] = useState([]);
+
   // New state for sentiment analysis
   const [sentimentTrends, setSentimentTrends] = useState([]);
   const [sentimentAlerts, setSentimentAlerts] = useState([]);
@@ -1251,6 +1256,73 @@ const AdminDashboard = () => {
   const fetchDashboardStats = useCallback(async () => {
     try {
       const token = localStorage.getItem("access_token");
+      
+      // First, try to fetch from the new admin dashboard stats API
+      let dashboardStatsLoaded = false;
+      if (token) {
+        try {
+          const dashboardRes = await fetch(
+            `${API_BASE_URL}/admin/dashboard-stats/`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          if (dashboardRes.ok) {
+            const dashboardData = await dashboardRes.json();
+            console.log("Dashboard stats loaded:", dashboardData);
+            
+            // Set stats from API
+            setStats((s) => ({
+              ...s,
+              totalOrders: dashboardData.totalOrders || 0,
+              totalUsers: dashboardData.totalUsers || 0,
+              totalProducts: dashboardData.totalProducts || 0,
+              totalRevenue: dashboardData.totalRevenue || 0,
+              recentOrders: dashboardData.recentOrders || [],
+              allOrders: dashboardData.allOrders || [],
+            }));
+            
+            // Set monthly revenue from API (convert to K VNĐ)
+            if (dashboardData.monthlyRevenue) {
+              // API returns in USD, convert to VND then to K VNĐ
+              const monthlyInKVND = dashboardData.monthlyRevenue.map(v => 
+                Math.round((v * 25000) / 1000) // USD -> VND -> K VNĐ
+              );
+              setMonthlyRevenueData(monthlyInKVND);
+            }
+            
+            // Set product performance from API
+            if (dashboardData.productPerformance) {
+              const perfData = dashboardData.productPerformance.map(p => ({
+                id: p.id,
+                title: p.name || 'Unknown Product',
+                totalRevenue: p.totalRevenue || 0,
+                totalQuantity: p.totalQuantity || 0,
+              }));
+              setProductPerformanceData(perfData);
+            }
+            
+            // Set top customers from API
+            if (dashboardData.topCustomers) {
+              const customersData = dashboardData.topCustomers.map(c => ({
+                id: c.id,
+                firstName: c.firstName || c.username || 'Guest',
+                lastName: c.lastName || '',
+                email: c.email,
+                totalSpending: c.totalSpending || 0,
+                image: null,
+              }));
+              setTopCustomersData(customersData);
+            }
+            
+            dashboardStatsLoaded = true;
+          }
+        } catch (err) {
+          console.warn("Admin dashboard stats API failed, falling back to manual calculation:", err);
+        }
+      }
+      
+      // Fallback: fetch products for sentiment analysis and other features
       const prodRes = await fetch(
         `${API_BASE_URL}/products/?no_pagination=true`,
         {
@@ -1272,16 +1344,19 @@ const AdminDashboard = () => {
             : products.length;
         setProductsList(products);
       }
-      let users = [];
-      let orders = [];
-      let usersTotalCount = 0;
-      let ordersTotalCount = 0;
-      if (token) {
+      
+      // If dashboard stats weren't loaded from API, calculate manually
+      if (!dashboardStatsLoaded && token) {
+        let users = [];
+        let orders = [];
+        let usersTotalCount = 0;
+        let ordersTotalCount = 0;
+        
         const [userRes, orderRes] = await Promise.all([
           fetch(`${API_BASE_URL}/users/`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`${API_BASE_URL}/orders/`, {
+          fetch(`${API_BASE_URL}/orders/?no_pagination=true`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -1309,26 +1384,32 @@ const AdminDashboard = () => {
               ? orderData.results.length
               : orders.length;
         }
+        
+        const totalRevenue = orders.reduce(
+          (s, o) => s + parseFloat(o.total_amount || 0),
+          0
+        );
+
+        setStats((s) => ({
+          ...s,
+          totalOrders: ordersTotalCount,
+          totalUsers: usersTotalCount,
+          totalProducts: productsTotalCount,
+          totalRevenue,
+          recentOrders: orders.slice(0, 5),
+          allOrders: orders,
+        }));
       }
-      const totalRevenue = orders.reduce(
-        (s, o) => s + parseFloat(o.total_amount || 0),
-        0
-      );
 
       const totalReviews = products.reduce(
         (sum, p) => sum + (Number(p.total_reviews) || 0),
         0
       );
-
+      
       setStats((s) => ({
         ...s,
-        totalOrders: ordersTotalCount,
-        totalUsers: usersTotalCount,
-        totalProducts: productsTotalCount,
-        totalRevenue,
+        totalProducts: productsTotalCount || s.totalProducts,
         totalReviews,
-        recentOrders: orders.slice(0, 5),
-        allOrders: orders,
       }));
 
       // Fetch sentiment overview
@@ -1370,6 +1451,11 @@ const AdminDashboard = () => {
   // --- Calculations for Charts ---
 
   const monthlyRevenue = useMemo(() => {
+    // If we have data from API, use it
+    if (monthlyRevenueData.some(v => v > 0)) {
+      return monthlyRevenueData;
+    }
+    // Otherwise, calculate from orders
     const revenue = Array(12).fill(0);
     const currentYear = new Date().getFullYear();
     stats.allOrders.forEach(order => {
@@ -1383,10 +1469,16 @@ const AdminDashboard = () => {
         }
       }
     });
-    return revenue.map(v => Math.round(v / 1000));
-  }, [stats.allOrders]);
+    // Convert to K VNĐ (assuming amount is in USD, convert to VND then divide by 1000)
+    return revenue.map(v => Math.round((v * 25000) / 1000));
+  }, [stats.allOrders, monthlyRevenueData]);
 
   const productSales = useMemo(() => {
+    // If we have data from API, use it
+    if (productPerformanceData.length > 0) {
+      return productPerformanceData;
+    }
+    // Otherwise, calculate from orders
     const sales = new Map();
     stats.allOrders.forEach(order => {
       const items = order.items || [];
@@ -1410,9 +1502,60 @@ const AdminDashboard = () => {
       });
     });
     return Array.from(sales.values()).sort((a, b) => b.totalRevenue - a.totalRevenue);
-  }, [stats.allOrders]);
+  }, [stats.allOrders, productPerformanceData]);
 
   const topCustomers = useMemo(() => {
+    // If we have data from API, use it
+    if (topCustomersData.length > 0) {
+      let results = [...topCustomersData];
+      
+      // Add mock data for demo if less than 3 customers
+      if (results.length < 3) {
+        const baseSpending = results.length > 0 ? results[0].totalSpending : 600; // ~600 USD = 15M VND
+        
+        const mockData = [
+          {
+            id: 'mock-2',
+            firstName: 'Sarah',
+            lastName: 'Nguyen',
+            email: 'sarah.n@example.com',
+            image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
+            totalSpending: baseSpending * 0.85
+          },
+          {
+            id: 'mock-3',
+            firstName: 'John',
+            lastName: 'Smith',
+            email: 'john.smith@example.com',
+            image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
+            totalSpending: baseSpending * 0.65
+          },
+          {
+            id: 'mock-4',
+            firstName: 'Emma',
+            lastName: 'Wilson',
+            email: 'emma.w@example.com',
+            image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
+            totalSpending: baseSpending * 0.45
+          },
+          {
+            id: 'mock-5',
+            firstName: 'Michael',
+            lastName: 'Brown',
+            email: 'michael.b@example.com',
+            image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
+            totalSpending: baseSpending * 0.3
+          }
+        ];
+        
+        results = [...results, ...mockData];
+        results.sort((a, b) => b.totalSpending - a.totalSpending);
+      }
+      
+      return results.slice(0, 5);
+    }
+    
+    // Fallback: calculate from orders
     const customerMap = new Map();
     stats.allOrders.forEach(order => {
       const user = order.user || {};
@@ -1423,7 +1566,7 @@ const AdminDashboard = () => {
           firstName: user.first_name || user.username || 'Guest',
           lastName: user.last_name || '',
           email: email,
-          image: null, // Add avatar if available
+          image: null,
           totalSpending: 0,
         });
       }
@@ -1435,9 +1578,8 @@ const AdminDashboard = () => {
       .sort((a, b) => b.totalSpending - a.totalSpending);
 
     // --- MOCK DATA FOR DEMO (If less than 3 customers) ---
-    // Tự động thêm dữ liệu giả để hiển thị đẹp mắt nếu chưa đủ khách hàng
     if (results.length < 3) {
-      const baseSpending = results.length > 0 ? results[0].totalSpending : 15000000;
+      const baseSpending = results.length > 0 ? results[0].totalSpending : 600;
       
       const mockData = [
         {
@@ -1474,13 +1616,12 @@ const AdminDashboard = () => {
         }
       ];
       
-      // Thêm mock data vào và sắp xếp lại
       results = [...results, ...mockData];
       results.sort((a, b) => b.totalSpending - a.totalSpending);
     }
 
     return results.slice(0, 5);
-  }, [stats.allOrders]);
+  }, [stats.allOrders, topCustomersData]);
 
   const recentOrdersData = useMemo(() => {
     const items = [];

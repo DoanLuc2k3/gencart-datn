@@ -4,6 +4,7 @@ from products.views import ProductViewSet, CategoryViewSet, ReviewViewSet
 from orders.views import OrderViewSet, CartViewSet
 from users.views import UserViewSet, AddressViewSet
 from .views import cloudinary_signature
+from .admin_views import dashboard_stats
 
 router = DefaultRouter()
 router.register(r'products', ProductViewSet)
@@ -19,4 +20,9 @@ urlpatterns = [
     path('auth/', include('users.urls')),
     path('sentiment/', include('sentiment_analysis.urls')),
     path('cloudinary/signature/', cloudinary_signature, name='cloudinary-signature'),
+    path('admin/dashboard-stats/', dashboard_stats, name='admin-dashboard-stats'),
 ]
+
+
+
+
