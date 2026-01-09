@@ -1283,37 +1283,48 @@ const AdminDashboard = () => {
       let usersTotalCount = 0;
       let ordersTotalCount = 0;
       if (token) {
-        const [userRes, orderRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/users/`, {
+        // Fetch users (first page is usually sufficient for counts)
+        try {
+          const userRes = await fetch(`${API_BASE_URL}/users/`, {
             headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_BASE_URL}/orders/`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          users = userData.results || userData || [];
-          usersTotalCount =
-            typeof userData?.count === "number"
-              ? userData.count
-              : Array.isArray(userData)
-              ? userData.length
-              : Array.isArray(userData?.results)
-              ? userData.results.length
-              : users.length;
+          });
+          if (userRes.ok) {
+            const userData = await userRes.json();
+            users = userData.results || userData || [];
+            usersTotalCount =
+              typeof userData?.count === "number"
+                ? userData.count
+                : Array.isArray(userData)
+                ? userData.length
+                : Array.isArray(userData?.results)
+                ? userData.results.length
+                : users.length;
+          }
+        } catch (err) {
+          console.warn('User fetch failed', err);
         }
-        if (orderRes.ok) {
-          const orderData = await orderRes.json();
-          orders = orderData.results || orderData || [];
-          ordersTotalCount =
-            typeof orderData?.count === "number"
-              ? orderData.count
-              : Array.isArray(orderData)
-              ? orderData.length
-              : Array.isArray(orderData?.results)
-              ? orderData.results.length
-              : orders.length;
+
+        // Fetch all orders following pagination so revenue charts reflect full data
+        try {
+          let nextUrl = `${API_BASE_URL}/orders/`;
+          const fetched = [];
+          while (nextUrl) {
+            const res = await fetch(nextUrl, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) break;
+            const payload = await res.json();
+            const pageItems = payload.results || payload || [];
+            fetched.push(...pageItems);
+            // DRF pagination provides 'next' as absolute URL or null
+            nextUrl = payload.next || null;
+            // Safety: break if same URL loops
+            if (fetched.length > 5000) break; // prevent infinite loops
+          }
+          orders = fetched;
+          ordersTotalCount = orders.length;
+        } catch (err) {
+          console.warn('Order pagination fetch failed', err);
         }
       }
       const totalRevenue = orders.reduce(
