@@ -301,7 +301,7 @@ const RegisterPage = () => {
                 letterSpacing: "-0.5px",
               }}
             >
-              Already a Member?
+              Đã có tài khoản?
             </Title>
             
             <Text
@@ -314,7 +314,7 @@ const RegisterPage = () => {
                 fontWeight: "400",
               }}
             >
-              Welcome back! Sign in to continue your amazing journey with us
+              Chào mừng trở lại! Đăng nhập để tiếp tục hành trình tuyệt vời của bạn với chúng tôi
             </Text>
             
             <Button
@@ -356,7 +356,7 @@ const RegisterPage = () => {
               justifyContent: "center",
               flexWrap: "wrap",
             }}>
-              {["⚡ Quick", "💎 Premium", "🛡️ Safe"].map((feature, i) => (
+              {["⚡ Nhanh", "💎 Cao cấp", "🛡️ An toàn"].map((feature, i) => (
                 <div
                   key={i}
                   style={{
@@ -433,7 +433,7 @@ const RegisterPage = () => {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                Create Account
+                Tạo Tài Khoản
               </Title>
             </div>
             <Text
@@ -457,7 +457,7 @@ const RegisterPage = () => {
             <div style={{ display: "flex", gap: 10 }}>
               <Form.Item
                 name="firstName"
-                rules={[{ required: true, message: "First name required" }]}
+                rules={[{ required: true, message: "Tên là bắt buộc" }]}
                 style={{ marginBottom: 12, flex: 1 }}
               >
                 <Input
@@ -466,7 +466,7 @@ const RegisterPage = () => {
                       style={{ color: "#764ba2", fontSize: "14px" }}
                     />
                   }
-                  placeholder="First Name"
+                  placeholder="Tên"
                   size="large"
                   style={{
                     height: "44px",
@@ -490,7 +490,7 @@ const RegisterPage = () => {
 
               <Form.Item
                 name="lastName"
-                rules={[{ required: true, message: "Last name required" }]}
+                rules={[{ required: true, message: "Họ là bắt buộc" }]}
                 style={{ marginBottom: 16, flex: 1 }}
               >
                 <Input
@@ -499,7 +499,7 @@ const RegisterPage = () => {
                       style={{ color: "#764ba2", fontSize: "14px" }}
                     />
                   }
-                  placeholder="Last Name"
+                  placeholder="Họ"
                   size="large"
                   style={{
                     height: "44px",
@@ -525,8 +525,8 @@ const RegisterPage = () => {
             <Form.Item
               name="username"
               rules={[
-                { required: true, message: "Please enter a username" },
-                { min: 3, message: "Username must be at least 3 characters" },
+                { required: true, message: "Vui lòng nhập tên đăng nhập" },
+                { min: 3, message: "Tên đăng nhập phải có ít nhất 3 ký tự" },
               ]}
               style={{ marginBottom: 12 }}
             >
@@ -536,7 +536,7 @@ const RegisterPage = () => {
                     style={{ color: "#764ba2", fontSize: "14px" }}
                   />
                 }
-                placeholder="Username"
+                placeholder="Tên đăng nhập"
                 size="large"
                 style={{
                   height: "44px",
@@ -561,8 +561,8 @@ const RegisterPage = () => {
             <Form.Item
               name="email"
               rules={[
-                { required: true, message: "Please enter your email" },
-                { type: "email", message: "Please enter a valid email" },
+                { required: true, message: "Vui lòng nhập email" },
+                { type: "email", message: "Vui lòng nhập email hợp lệ" },
               ]}
               style={{ marginBottom: 12 }}
             >
@@ -597,7 +597,7 @@ const RegisterPage = () => {
             <Form.Item
               name="phone"
               rules={[
-                { required: true, message: "Please enter your phone number" },
+                { required: true, message: "Vui lòng nhập số điện thoại" },
               ]}
               style={{ marginBottom: 12 }}
             >
@@ -607,7 +607,7 @@ const RegisterPage = () => {
                     style={{ color: "#764ba2", fontSize: "14px" }}
                   />
                 }
-                placeholder="Phone Number"
+                placeholder="Số điện thoại"
                 size="large"
                 style={{
                   height: "44px",
@@ -633,8 +633,8 @@ const RegisterPage = () => {
               <Form.Item
                 name="password"
                 rules={[
-                  { required: true, message: "Password required" },
-                  { min: 8, message: "Min 8 characters" },
+                  { required: true, message: "Mật khẩu là bắt buộc" },
+                  { min: 8, message: "Tối thiểu 8 ký tự" },
                 ]}
                 style={{ marginBottom: 12, flex: 1 }}
               >
@@ -644,7 +644,7 @@ const RegisterPage = () => {
                       style={{ color: "#764ba2", fontSize: "14px" }}
                     />
                   }
-                  placeholder="Password"
+                  placeholder="Mật khẩu"
                   size="large"
                   style={{
                     height: "44px",
@@ -670,7 +670,7 @@ const RegisterPage = () => {
                 name="confirmPassword"
                 dependencies={["password"]}
                 rules={[
-                  { required: true, message: "Confirm required" },
+                  { required: true, message: "Xác nhận là bắt buộc" },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || getFieldValue("password") === value) {
@@ -690,7 +690,7 @@ const RegisterPage = () => {
                       style={{ color: "#764ba2", fontSize: "14px" }}
                     />
                   }
-                  placeholder="Confirm Password"
+                  placeholder="Xác nhận mật khẩu"
                   size="large"
                   style={{
                     height: "44px",
@@ -722,7 +722,7 @@ const RegisterPage = () => {
                     value
                       ? Promise.resolve()
                       : Promise.reject(
-                          new Error("You must agree to the terms")
+                          new Error("Bạn phải đồng ý với các điều khoản")
                         ),
                 },
               ]}
@@ -735,13 +735,13 @@ const RegisterPage = () => {
                   fontWeight: "500",
                 }}
               >
-                I agree to{" "}
+                Tôi đồng ý với{" "}
                 <Link to="/terms" style={{ color: "#764ba2", fontWeight: "600" }}>
-                  Terms
+                  Điều khoản
                 </Link>{" "}
-                and{" "}
+                và{" "}
                 <Link to="/privacy" style={{ color: "#764ba2", fontWeight: "600" }}>
-                  Privacy Policy
+                  Chính sách Bảo mật
                 </Link>
               </Checkbox>
             </Form.Item>
@@ -774,7 +774,7 @@ const RegisterPage = () => {
                     "0 8px 24px rgba(118, 75, 162, 0.35)";
                 }}
               >
-                Create Account
+                Tạo Tài Khoản
               </Button>
             </Form.Item>
 
@@ -801,7 +801,7 @@ const RegisterPage = () => {
                   fontWeight: "500",
                 }}
               >
-                OR SIGN UP WITH
+                HOẶC ĐĂNG KÝ VỚI
               </span>
               <div
                 style={{
@@ -817,7 +817,7 @@ const RegisterPage = () => {
               <Button
                 size="large"
                 onClick={() =>
-                  message.info("Google registration not implemented in this demo")
+                    message.info("Đăng ký Google chưa được triển khai trong bản demo này")
                 }
                 style={{
                   flex: 1,
@@ -856,7 +856,7 @@ const RegisterPage = () => {
               <Button
                 size="large"
                 onClick={() =>
-                  message.info("Facebook registration not implemented in this demo")
+                    message.info("Đăng ký Facebook chưa được triển khai trong bản demo này")
                 }
                 style={{
                   flex: 1,

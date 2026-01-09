@@ -215,7 +215,7 @@ const LoginPage = () => {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                Welcome Back
+                Chào Mừng Trở Lại
               </Title>
             </div>
             <Text
@@ -247,7 +247,7 @@ const LoginPage = () => {
                       style={{ color: "#667eea", fontSize: "14px" }}
                     />
                   }
-                  placeholder="Username"
+                  placeholder="Tên đăng nhập"
                   size="large"
                   style={{
                     height: "44px",
@@ -279,7 +279,7 @@ const LoginPage = () => {
                       style={{ color: "#667eea", fontSize: "14px" }}
                     />
                   }
-                  placeholder="Password"
+                  placeholder="Mật khẩu"
                   size="large"
                   style={{
                     height: "44px",
@@ -327,7 +327,7 @@ const LoginPage = () => {
                       textDecoration: "none",
                     }}
                   >
-                    Forgot password?
+                    Quên mật khẩu?
                   </Link>
                 </div>
               </div>
@@ -360,7 +360,7 @@ const LoginPage = () => {
                       "0 8px 24px rgba(102, 126, 234, 0.35)";
                   }}
                 >
-                  Sign In
+                  Đăng Nhập
                 </Button>
               </div>
 
@@ -387,7 +387,7 @@ const LoginPage = () => {
                     fontWeight: "500",
                   }}
                 >
-                  OR CONTINUE WITH
+                  HOẶC TIẾP TỤC VỚI
                 </span>
                 <div
                   style={{
@@ -403,7 +403,7 @@ const LoginPage = () => {
                 <Button
                   size="large"
                   onClick={() =>
-                    message.info("Google login not implemented in this demo")
+                    message.info("Đăng nhập Google chưa được triển khai trong bản demo này")
                   }
                   style={{
                     flex: 1,
@@ -442,7 +442,7 @@ const LoginPage = () => {
                 <Button
                   size="large"
                   onClick={() =>
-                    message.info("Facebook login not implemented in this demo")
+                    message.info("Đăng nhập Facebook chưa được triển khai trong bản demo này")
                   }
                   style={{
                     flex: 1,
@@ -628,7 +628,7 @@ const LoginPage = () => {
                 letterSpacing: "-0.5px",
               }}
             >
-              New Here?
+              Mới ở đây?
             </Title>
             
             <Text
@@ -641,7 +641,7 @@ const LoginPage = () => {
                 fontWeight: "400",
               }}
             >
-              Create an account and discover a world of possibilities. Join our community today!
+              Tạo tài khoản và khám phá thế giới đầy khả năng. Tham gia cộng đồng của chúng tôi ngay hôm nay!
             </Text>
             
             <Button
@@ -672,7 +672,7 @@ const LoginPage = () => {
                 e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.15)";
               }}
             >
-              Create Account →
+              Tạo Tài Khoản →
             </Button>
 
             {/* Feature Pills */}
@@ -683,7 +683,7 @@ const LoginPage = () => {
               justifyContent: "center",
               flexWrap: "wrap",
             }}>
-              {["✨ Free", "🚀 Fast", "🔒 Secure"].map((feature, i) => (
+              {["✨ Miễn phí", "🚀 Nhanh chóng", "🔒 Bảo mật"].map((feature, i) => (
                 <div
                   key={i}
                   style={{
