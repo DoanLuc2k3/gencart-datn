@@ -98,6 +98,62 @@ const formatSpending = (amount) => {
   return vndAmount.toLocaleString('vi-VN') + ' VNĐ';
 };
 
+// Generate mock orders for demonstration when no real data exists
+const generateMockOrders = () => {
+  const products = [
+    { id: 1, name: 'iPhone 15 Pro', price: 999 },
+    { id: 2, name: 'Samsung Galaxy S24', price: 799 },
+    { id: 3, name: 'MacBook Air M3', price: 1099 },
+    { id: 4, name: 'Dell XPS 13', price: 1299 },
+    { id: 5, name: 'Sony WH-1000XM5', price: 349 },
+  ];
+
+  const users = [
+    { id: 1, email: 'user1@example.com', first_name: 'Nguyen', last_name: 'Van A' },
+    { id: 2, email: 'user2@example.com', first_name: 'Tran', last_name: 'Thi B' },
+    { id: 3, email: 'user3@example.com', first_name: 'Le', last_name: 'Van C' },
+  ];
+
+  const mockOrders = [];
+  const now = new Date();
+
+  for (let i = 0; i < 50; i++) {
+    const daysAgo = Math.floor(Math.random() * 365);
+    const createdAt = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
+
+    const numItems = Math.floor(Math.random() * 3) + 1;
+    const items = [];
+    let totalAmount = 0;
+
+    for (let j = 0; j < numItems; j++) {
+      const product = products[Math.floor(Math.random() * products.length)];
+      const quantity = Math.floor(Math.random() * 3) + 1;
+      const price = product.price;
+      items.push({
+        product: product,
+        product_id: product.id,
+        title: product.name,
+        quantity: quantity,
+        price: price,
+      });
+      totalAmount += quantity * price;
+    }
+
+    const user = users[Math.floor(Math.random() * users.length)];
+
+    mockOrders.push({
+      id: i + 1,
+      user: user,
+      items: items,
+      total_amount: totalAmount.toString(),
+      created_at: createdAt,
+      status: ['pending', 'processing', 'shipped', 'delivered'][Math.floor(Math.random() * 4)],
+    });
+  }
+
+  return mockOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+};
+
 // Compute a delta percentage comparing last 7 days vs previous 7 days for a sentiment key
 const computeDeltaPercent = (trends, key) => {
   try {
@@ -1330,6 +1386,32 @@ const AdminDashboard = () => {
         recentOrders: orders.slice(0, 5),
         allOrders: orders,
       }));
+
+      // If no real data, add mock data for demonstration
+      if (ordersTotalCount === 0) {
+        const mockOrders = generateMockOrders();
+        setStats((s) => ({
+          ...s,
+          totalOrders: mockOrders.length,
+          totalRevenue: mockOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0),
+          recentOrders: mockOrders.slice(0, 5),
+          allOrders: mockOrders,
+        }));
+      }
+
+      if (usersTotalCount === 0) {
+        setStats((s) => ({
+          ...s,
+          totalUsers: 150, // Mock user count
+        }));
+      }
+
+      if (productsTotalCount === 0) {
+        setStats((s) => ({
+          ...s,
+          totalProducts: 25, // Mock product count
+        }));
+      }
 
       // Fetch sentiment overview
       try {
