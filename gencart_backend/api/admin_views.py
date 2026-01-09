@@ -28,9 +28,6 @@ def check_admin_status(request):
 @permission_classes([IsAdminUser])
 def dashboard_stats(request):
     """Get dashboard statistics for admin"""
-    from django.db.models.functions import TruncMonth, ExtractMonth
-    from collections import defaultdict
-    
     # Count total orders
     total_orders = Order.objects.count()
 
@@ -40,90 +37,22 @@ def dashboard_stats(request):
     # Count total products
     total_products = Product.objects.count()
 
-    # Calculate total revenue (from completed orders)
-    completed_statuses = ['processing', 'shipped', 'delivered']
-    total_revenue = Order.objects.filter(status__in=completed_statuses).aggregate(
+    # Calculate total revenue
+    total_revenue = Order.objects.filter(status__in=['processing', 'shipped', 'delivered']).aggregate(
         total=Sum('total_amount')
     )['total'] or 0
 
-    # Get recent orders with items
-    recent_orders = Order.objects.select_related('user').prefetch_related(
-        'items__product'
-    ).order_by('-created_at')[:10]
+    # Get recent orders
+    recent_orders = Order.objects.order_by('-created_at')[:10]
     recent_orders_data = OrderSerializer(recent_orders, many=True, context={'request': request}).data
-
-    # Monthly revenue for current year
-    current_year = timezone.now().year
-    monthly_revenue_qs = Order.objects.filter(
-        created_at__year=current_year,
-        status__in=completed_statuses
-    ).annotate(
-        month=ExtractMonth('created_at')
-    ).values('month').annotate(
-        revenue=Sum('total_amount')
-    ).order_by('month')
-    
-    # Initialize all 12 months with 0
-    monthly_revenue = [0] * 12
-    for item in monthly_revenue_qs:
-        month_idx = item['month'] - 1  # Convert to 0-indexed
-        monthly_revenue[month_idx] = float(item['revenue'] or 0)
-
-    # Product performance - top selling products
-    product_performance = OrderItem.objects.select_related('product').values(
-        'product__id', 'product__name'
-    ).annotate(
-        total_quantity=Sum('quantity'),
-        total_revenue=Sum('total_price')
-    ).order_by('-total_revenue')[:10]
-    
-    product_performance_data = [
-        {
-            'id': item['product__id'],
-            'name': item['product__name'] or 'Unknown Product',
-            'totalQuantity': item['total_quantity'] or 0,
-            'totalRevenue': float(item['total_revenue'] or 0)
-        }
-        for item in product_performance
-    ]
-
-    # Top spending customers
-    top_customers = Order.objects.filter(
-        status__in=completed_statuses
-    ).values(
-        'user__id', 'user__username', 'user__email', 'user__first_name', 'user__last_name'
-    ).annotate(
-        total_spending=Sum('total_amount')
-    ).order_by('-total_spending')[:10]
-    
-    top_customers_data = [
-        {
-            'id': item['user__id'],
-            'username': item['user__username'],
-            'email': item['user__email'],
-            'firstName': item['user__first_name'] or item['user__username'] or 'Guest',
-            'lastName': item['user__last_name'] or '',
-            'totalSpending': float(item['total_spending'] or 0)
-        }
-        for item in top_customers
-    ]
-
-    # All orders for frontend calculations (with pagination option)
-    all_orders = Order.objects.select_related('user').prefetch_related(
-        'items__product'
-    ).order_by('-created_at')
-    all_orders_data = OrderSerializer(all_orders, many=True, context={'request': request}).data
+    print("Recent orders data:", recent_orders_data)
 
     return Response({
         'totalOrders': total_orders,
         'totalUsers': total_users,
         'totalProducts': total_products,
-        'totalRevenue': float(total_revenue),
-        'recentOrders': recent_orders_data,
-        'monthlyRevenue': monthly_revenue,
-        'productPerformance': product_performance_data,
-        'topCustomers': top_customers_data,
-        'allOrders': all_orders_data
+        'totalRevenue': total_revenue,
+        'recentOrders': recent_orders_data
     })
 
 # Admin Product ViewSet

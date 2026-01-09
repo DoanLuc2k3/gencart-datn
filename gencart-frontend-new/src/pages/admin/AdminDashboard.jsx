@@ -1158,11 +1158,6 @@ const AdminDashboard = () => {
     allOrders: [], // Store all orders for charts
   });
 
-  // New state for dashboard data from API
-  const [monthlyRevenueData, setMonthlyRevenueData] = useState(Array(12).fill(0));
-  const [productPerformanceData, setProductPerformanceData] = useState([]);
-  const [topCustomersData, setTopCustomersData] = useState([]);
-
   // New state for sentiment analysis
   const [sentimentTrends, setSentimentTrends] = useState([]);
   const [sentimentAlerts, setSentimentAlerts] = useState([]);
@@ -1172,6 +1167,12 @@ const AdminDashboard = () => {
   const [sentimentStats, setSentimentStats] = useState(null);
   const [chartMode, setChartMode] = useState("percent"); // 'percent' | 'counts'
   const [minDailyTotal, setMinDailyTotal] = useState(0);
+
+  // Revenue & product performance helpers (for demo fallback when no orders / no auth)
+  // revenueByMonth: array of 12 numbers (each value is K VNĐ)
+  const [revenueByMonth, setRevenueByMonth] = useState(null);
+  const [isDemoRevenue, setIsDemoRevenue] = useState(false);
+  const [isDemoProductSales, setIsDemoProductSales] = useState(false);
 
   // Fetch sentiment data
   const loadSentimentData = useCallback(
@@ -1256,73 +1257,6 @@ const AdminDashboard = () => {
   const fetchDashboardStats = useCallback(async () => {
     try {
       const token = localStorage.getItem("access_token");
-      
-      // First, try to fetch from the new admin dashboard stats API
-      let dashboardStatsLoaded = false;
-      if (token) {
-        try {
-          const dashboardRes = await fetch(
-            `${API_BASE_URL}/admin/dashboard-stats/`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          if (dashboardRes.ok) {
-            const dashboardData = await dashboardRes.json();
-            console.log("Dashboard stats loaded:", dashboardData);
-            
-            // Set stats from API
-            setStats((s) => ({
-              ...s,
-              totalOrders: dashboardData.totalOrders || 0,
-              totalUsers: dashboardData.totalUsers || 0,
-              totalProducts: dashboardData.totalProducts || 0,
-              totalRevenue: dashboardData.totalRevenue || 0,
-              recentOrders: dashboardData.recentOrders || [],
-              allOrders: dashboardData.allOrders || [],
-            }));
-            
-            // Set monthly revenue from API (convert to K VNĐ)
-            if (dashboardData.monthlyRevenue) {
-              // API returns in USD, convert to VND then to K VNĐ
-              const monthlyInKVND = dashboardData.monthlyRevenue.map(v => 
-                Math.round((v * 25000) / 1000) // USD -> VND -> K VNĐ
-              );
-              setMonthlyRevenueData(monthlyInKVND);
-            }
-            
-            // Set product performance from API
-            if (dashboardData.productPerformance) {
-              const perfData = dashboardData.productPerformance.map(p => ({
-                id: p.id,
-                title: p.name || 'Unknown Product',
-                totalRevenue: p.totalRevenue || 0,
-                totalQuantity: p.totalQuantity || 0,
-              }));
-              setProductPerformanceData(perfData);
-            }
-            
-            // Set top customers from API
-            if (dashboardData.topCustomers) {
-              const customersData = dashboardData.topCustomers.map(c => ({
-                id: c.id,
-                firstName: c.firstName || c.username || 'Guest',
-                lastName: c.lastName || '',
-                email: c.email,
-                totalSpending: c.totalSpending || 0,
-                image: null,
-              }));
-              setTopCustomersData(customersData);
-            }
-            
-            dashboardStatsLoaded = true;
-          }
-        } catch (err) {
-          console.warn("Admin dashboard stats API failed, falling back to manual calculation:", err);
-        }
-      }
-      
-      // Fallback: fetch products for sentiment analysis and other features
       const prodRes = await fetch(
         `${API_BASE_URL}/products/?no_pagination=true`,
         {
@@ -1344,19 +1278,16 @@ const AdminDashboard = () => {
             : products.length;
         setProductsList(products);
       }
-      
-      // If dashboard stats weren't loaded from API, calculate manually
-      if (!dashboardStatsLoaded && token) {
-        let users = [];
-        let orders = [];
-        let usersTotalCount = 0;
-        let ordersTotalCount = 0;
-        
+      let users = [];
+      let orders = [];
+      let usersTotalCount = 0;
+      let ordersTotalCount = 0;
+      if (token) {
         const [userRes, orderRes] = await Promise.all([
           fetch(`${API_BASE_URL}/users/`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`${API_BASE_URL}/orders/?no_pagination=true`, {
+          fetch(`${API_BASE_URL}/orders/`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -1384,33 +1315,74 @@ const AdminDashboard = () => {
               ? orderData.results.length
               : orders.length;
         }
-        
-        const totalRevenue = orders.reduce(
-          (s, o) => s + parseFloat(o.total_amount || 0),
-          0
-        );
-
-        setStats((s) => ({
-          ...s,
-          totalOrders: ordersTotalCount,
-          totalUsers: usersTotalCount,
-          totalProducts: productsTotalCount,
-          totalRevenue,
-          recentOrders: orders.slice(0, 5),
-          allOrders: orders,
-        }));
       }
+      const totalRevenue = orders.reduce(
+        (s, o) => s + parseFloat(o.total_amount || 0),
+        0
+      );
 
       const totalReviews = products.reduce(
         (sum, p) => sum + (Number(p.total_reviews) || 0),
         0
       );
-      
+
       setStats((s) => ({
         ...s,
-        totalProducts: productsTotalCount || s.totalProducts,
+        totalOrders: ordersTotalCount,
+        totalUsers: usersTotalCount,
+        totalProducts: productsTotalCount,
+        totalRevenue,
         totalReviews,
+        recentOrders: orders.slice(0, 5),
+        allOrders: orders,
       }));
+
+      // Try to fetch aggregated revenue statistics (public endpoint if available)
+      try {
+        const currentYear = new Date().getFullYear();
+        const revRes = await fetch(`${API_BASE_URL}/statistics/revenue/?year=${currentYear}`);
+        if (revRes.ok) {
+          const revJson = await revRes.json();
+          let months = Array(12).fill(0);
+          // Accept multiple possible shapes (array, {data: [...]}, or keyed by month)
+          if (Array.isArray(revJson)) {
+            revJson.forEach((item, idx) => {
+              const amt = item.revenue ?? item.amount ?? item;
+              const vnd = Number(amt) > 1000000 ? Number(amt) : convertUsdToVnd(Number(amt || 0));
+              months[idx] = Math.round(vnd / 1000);
+            });
+          } else if (revJson && Array.isArray(revJson.data)) {
+            revJson.data.forEach((item) => {
+              const m = (item.month || item.m || 1) - 1;
+              const amt = item.revenue ?? item.amount ?? 0;
+              const vnd = Number(amt) > 1000000 ? Number(amt) : convertUsdToVnd(Number(amt || 0));
+              if (m >= 0 && m < 12) months[m] = Math.round(vnd / 1000);
+            });
+          } else if (revJson && typeof revJson === 'object') {
+            for (let m = 1; m <= 12; m++) {
+              const amt = revJson[m] ?? revJson[`m${m}`] ?? 0;
+              const vnd = Number(amt) > 1000000 ? Number(amt) : convertUsdToVnd(Number(amt || 0));
+              months[m - 1] = Math.round(vnd / 1000);
+            }
+          }
+          // If we have at least one non-zero month, use it
+          if (months.some((v) => v > 0)) {
+            setRevenueByMonth(months);
+            setIsDemoRevenue(false);
+          }
+        }
+      } catch (err) {
+        // best-effort, proceed to compute/fallback below
+        console.warn('Revenue statistics fetch failed', err);
+      }
+
+      // If we didn't get revenue from endpoint and there are no orders, synthesize demo data
+      if ((orders.length === 0 || ordersTotalCount === 0) && (!revenueByMonth || revenueByMonth.every(v => v === 0))) {
+        const base = Math.max( (productsTotalCount || 10) * 2000000, 15000000 ); // VND
+        const mockMonths = Array.from({length:12}).map(() => Math.round((base * (0.7 + Math.random() * 1.6)) / 1000));
+        setRevenueByMonth(mockMonths);
+        setIsDemoRevenue(true);
+      }
 
       // Fetch sentiment overview
       try {
@@ -1441,7 +1413,7 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadSentimentData]);
+  }, [loadSentimentData, revenueByMonth, selectedProductId]);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -1451,12 +1423,7 @@ const AdminDashboard = () => {
   // --- Calculations for Charts ---
 
   const monthlyRevenue = useMemo(() => {
-    // If we have data from API, use it
-    if (monthlyRevenueData.some(v => v > 0)) {
-      return monthlyRevenueData;
-    }
-    // Otherwise, calculate from orders
-    const revenue = Array(12).fill(0);
+    const revenueUsd = Array(12).fill(0);
     const currentYear = new Date().getFullYear();
     stats.allOrders.forEach(order => {
       const createdAt = order.created_at;
@@ -1465,34 +1432,28 @@ const AdminDashboard = () => {
         if (date.getFullYear() === currentYear) {
           const month = date.getMonth();
           const total = parseFloat(order.total_amount || 0);
-          revenue[month] += total;
+          revenueUsd[month] += total;
         }
       }
     });
-    // Convert to K VNĐ (assuming amount is in USD, convert to VND then divide by 1000)
-    return revenue.map(v => Math.round((v * 25000) / 1000));
-  }, [stats.allOrders, monthlyRevenueData]);
+    // Convert from USD -> VND and then to K VNĐ (thousands)
+    return revenueUsd.map(v => Math.round(convertUsdToVnd(v) / 1000));
+  }, [stats.allOrders]);
 
   const productSales = useMemo(() => {
-    // If we have data from API, use it
-    if (productPerformanceData.length > 0) {
-      return productPerformanceData;
-    }
-    // Otherwise, calculate from orders
     const sales = new Map();
     stats.allOrders.forEach(order => {
       const items = order.items || [];
       items.forEach(item => {
-        // item.product might be an object or ID depending on serializer
         const product = item.product || {};
-        const productId = product.id || item.product_id || 'unknown';
-        const title = product.name || item.title || 'Sản phẩm không rõ';
+        const productId = product.id || item.product_id || item.id || 'unknown';
+        const title = product.name || item.title || product.title || 'Sản phẩm không rõ';
         
         if (!sales.has(productId)) {
           sales.set(productId, {
             id: productId,
             title: title,
-            totalRevenue: 0,
+            totalRevenue: 0, // accumulated in USD initially
           });
         }
         const p = sales.get(productId);
@@ -1501,61 +1462,30 @@ const AdminDashboard = () => {
         p.totalRevenue += qty * price;
       });
     });
-    return Array.from(sales.values()).sort((a, b) => b.totalRevenue - a.totalRevenue);
-  }, [stats.allOrders, productPerformanceData]);
+
+    // Convert revenue (USD) -> VND
+    let results = Array.from(sales.values()).map(p => ({
+      ...p,
+      totalRevenue: convertUsdToVnd(p.totalRevenue),
+    }));
+
+    // If there's no real sales data, synthesize demo product performance using productsList
+    if (results.length === 0 && productsList && productsList.length > 0) {
+      const mock = productsList.slice(0, 5).map((p, i) => ({
+        id: p.id || `mock-${i}`,
+        title: p.name || p.title || `Sản phẩm ${i + 1}`,
+        totalRevenue: (5 - i) * 12000000, // descending mock VND numbers
+      }));
+      if (!isDemoProductSales) setIsDemoProductSales(true);
+      return mock;
+    } else {
+      if (isDemoProductSales) setIsDemoProductSales(false);
+    }
+
+    return results.sort((a, b) => b.totalRevenue - a.totalRevenue);
+  }, [stats.allOrders, productsList, isDemoProductSales]);
 
   const topCustomers = useMemo(() => {
-    // If we have data from API, use it
-    if (topCustomersData.length > 0) {
-      let results = [...topCustomersData];
-      
-      // Add mock data for demo if less than 3 customers
-      if (results.length < 3) {
-        const baseSpending = results.length > 0 ? results[0].totalSpending : 600; // ~600 USD = 15M VND
-        
-        const mockData = [
-          {
-            id: 'mock-2',
-            firstName: 'Sarah',
-            lastName: 'Nguyen',
-            email: 'sarah.n@example.com',
-            image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-            totalSpending: baseSpending * 0.85
-          },
-          {
-            id: 'mock-3',
-            firstName: 'John',
-            lastName: 'Smith',
-            email: 'john.smith@example.com',
-            image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-            totalSpending: baseSpending * 0.65
-          },
-          {
-            id: 'mock-4',
-            firstName: 'Emma',
-            lastName: 'Wilson',
-            email: 'emma.w@example.com',
-            image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
-            totalSpending: baseSpending * 0.45
-          },
-          {
-            id: 'mock-5',
-            firstName: 'Michael',
-            lastName: 'Brown',
-            email: 'michael.b@example.com',
-            image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
-            totalSpending: baseSpending * 0.3
-          }
-        ];
-        
-        results = [...results, ...mockData];
-        results.sort((a, b) => b.totalSpending - a.totalSpending);
-      }
-      
-      return results.slice(0, 5);
-    }
-    
-    // Fallback: calculate from orders
     const customerMap = new Map();
     stats.allOrders.forEach(order => {
       const user = order.user || {};
@@ -1566,7 +1496,7 @@ const AdminDashboard = () => {
           firstName: user.first_name || user.username || 'Guest',
           lastName: user.last_name || '',
           email: email,
-          image: null,
+          image: null, // Add avatar if available
           totalSpending: 0,
         });
       }
@@ -1578,8 +1508,9 @@ const AdminDashboard = () => {
       .sort((a, b) => b.totalSpending - a.totalSpending);
 
     // --- MOCK DATA FOR DEMO (If less than 3 customers) ---
+    // Tự động thêm dữ liệu giả để hiển thị đẹp mắt nếu chưa đủ khách hàng
     if (results.length < 3) {
-      const baseSpending = results.length > 0 ? results[0].totalSpending : 600;
+      const baseSpending = results.length > 0 ? results[0].totalSpending : 15000000;
       
       const mockData = [
         {
@@ -1616,12 +1547,13 @@ const AdminDashboard = () => {
         }
       ];
       
+      // Thêm mock data vào và sắp xếp lại
       results = [...results, ...mockData];
       results.sort((a, b) => b.totalSpending - a.totalSpending);
     }
 
     return results.slice(0, 5);
-  }, [stats.allOrders, topCustomersData]);
+  }, [stats.allOrders]);
 
   const recentOrdersData = useMemo(() => {
     const items = [];
@@ -1755,13 +1687,23 @@ const AdminDashboard = () => {
         <Col xs={24} sm={24} md={14} lg={14} style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}>
             <GreetingCard />
-            <MonthlyRevenueChart data={monthlyRevenue} />
+            <MonthlyRevenueChart data={revenueByMonth || monthlyRevenue} />
+            {isDemoRevenue && (
+              <div style={{ marginTop: 6 }}>
+                <Text type="secondary">⚠️ Dữ liệu mô phỏng được hiển thị vì không có dữ liệu đơn hàng thực tế.</Text>
+              </div>
+            )}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <BestSellingProductsChart 
                     data={productSales} 
                     style={{ flex: 1, display: 'flex', flexDirection: 'column' }} 
                     bodyStyle={{ flex: 1, position: 'relative' }} 
                 />
+                {isDemoProductSales && (
+                  <div style={{ marginTop: 6 }}>
+                    <Text type="secondary">⚠️ Dữ liệu sản phẩm là mẫu để demo.</Text>
+                  </div>
+                )}
             </div>
           </div>
         </Col>
