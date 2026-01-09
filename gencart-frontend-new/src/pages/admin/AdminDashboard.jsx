@@ -1168,12 +1168,6 @@ const AdminDashboard = () => {
   const [chartMode, setChartMode] = useState("percent"); // 'percent' | 'counts'
   const [minDailyTotal, setMinDailyTotal] = useState(0);
 
-  // Revenue & product performance helpers (for demo fallback when no orders / no auth)
-  // revenueByMonth: array of 12 numbers (each value is K VNĐ)
-  const [revenueByMonth, setRevenueByMonth] = useState(null);
-  const [isDemoRevenue, setIsDemoRevenue] = useState(false);
-  const [isDemoProductSales, setIsDemoProductSales] = useState(false);
-
   // Fetch sentiment data
   const loadSentimentData = useCallback(
     async (productId, targetMode) => {
@@ -1337,53 +1331,6 @@ const AdminDashboard = () => {
         allOrders: orders,
       }));
 
-      // Try to fetch aggregated revenue statistics (public endpoint if available)
-      try {
-        const currentYear = new Date().getFullYear();
-        const revRes = await fetch(`${API_BASE_URL}/statistics/revenue/?year=${currentYear}`);
-        if (revRes.ok) {
-          const revJson = await revRes.json();
-          let months = Array(12).fill(0);
-          // Accept multiple possible shapes (array, {data: [...]}, or keyed by month)
-          if (Array.isArray(revJson)) {
-            revJson.forEach((item, idx) => {
-              const amt = item.revenue ?? item.amount ?? item;
-              const vnd = Number(amt) > 1000000 ? Number(amt) : convertUsdToVnd(Number(amt || 0));
-              months[idx] = Math.round(vnd / 1000);
-            });
-          } else if (revJson && Array.isArray(revJson.data)) {
-            revJson.data.forEach((item) => {
-              const m = (item.month || item.m || 1) - 1;
-              const amt = item.revenue ?? item.amount ?? 0;
-              const vnd = Number(amt) > 1000000 ? Number(amt) : convertUsdToVnd(Number(amt || 0));
-              if (m >= 0 && m < 12) months[m] = Math.round(vnd / 1000);
-            });
-          } else if (revJson && typeof revJson === 'object') {
-            for (let m = 1; m <= 12; m++) {
-              const amt = revJson[m] ?? revJson[`m${m}`] ?? 0;
-              const vnd = Number(amt) > 1000000 ? Number(amt) : convertUsdToVnd(Number(amt || 0));
-              months[m - 1] = Math.round(vnd / 1000);
-            }
-          }
-          // If we have at least one non-zero month, use it
-          if (months.some((v) => v > 0)) {
-            setRevenueByMonth(months);
-            setIsDemoRevenue(false);
-          }
-        }
-      } catch (err) {
-        // best-effort, proceed to compute/fallback below
-        console.warn('Revenue statistics fetch failed', err);
-      }
-
-      // If we didn't get revenue from endpoint and there are no orders, synthesize demo data
-      if ((orders.length === 0 || ordersTotalCount === 0) && (!revenueByMonth || revenueByMonth.every(v => v === 0))) {
-        const base = Math.max( (productsTotalCount || 10) * 2000000, 15000000 ); // VND
-        const mockMonths = Array.from({length:12}).map(() => Math.round((base * (0.7 + Math.random() * 1.6)) / 1000));
-        setRevenueByMonth(mockMonths);
-        setIsDemoRevenue(true);
-      }
-
       // Fetch sentiment overview
       try {
         const gRes = await fetch(
@@ -1413,7 +1360,7 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadSentimentData, revenueByMonth, selectedProductId]);
+  }, [loadSentimentData]);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -1423,7 +1370,7 @@ const AdminDashboard = () => {
   // --- Calculations for Charts ---
 
   const monthlyRevenue = useMemo(() => {
-    const revenueUsd = Array(12).fill(0);
+    const revenue = Array(12).fill(0);
     const currentYear = new Date().getFullYear();
     stats.allOrders.forEach(order => {
       const createdAt = order.created_at;
@@ -1432,12 +1379,11 @@ const AdminDashboard = () => {
         if (date.getFullYear() === currentYear) {
           const month = date.getMonth();
           const total = parseFloat(order.total_amount || 0);
-          revenueUsd[month] += total;
+          revenue[month] += total;
         }
       }
     });
-    // Convert from USD -> VND and then to K VNĐ (thousands)
-    return revenueUsd.map(v => Math.round(convertUsdToVnd(v) / 1000));
+    return revenue.map(v => Math.round(v / 1000));
   }, [stats.allOrders]);
 
   const productSales = useMemo(() => {
@@ -1445,15 +1391,16 @@ const AdminDashboard = () => {
     stats.allOrders.forEach(order => {
       const items = order.items || [];
       items.forEach(item => {
+        // item.product might be an object or ID depending on serializer
         const product = item.product || {};
-        const productId = product.id || item.product_id || item.id || 'unknown';
-        const title = product.name || item.title || product.title || 'Sản phẩm không rõ';
+        const productId = product.id || item.product_id || 'unknown';
+        const title = product.name || item.title || 'Sản phẩm không rõ';
         
         if (!sales.has(productId)) {
           sales.set(productId, {
             id: productId,
             title: title,
-            totalRevenue: 0, // accumulated in USD initially
+            totalRevenue: 0,
           });
         }
         const p = sales.get(productId);
@@ -1462,28 +1409,8 @@ const AdminDashboard = () => {
         p.totalRevenue += qty * price;
       });
     });
-
-    // Convert revenue (USD) -> VND
-    let results = Array.from(sales.values()).map(p => ({
-      ...p,
-      totalRevenue: convertUsdToVnd(p.totalRevenue),
-    }));
-
-    // If there's no real sales data, synthesize demo product performance using productsList
-    if (results.length === 0 && productsList && productsList.length > 0) {
-      const mock = productsList.slice(0, 5).map((p, i) => ({
-        id: p.id || `mock-${i}`,
-        title: p.name || p.title || `Sản phẩm ${i + 1}`,
-        totalRevenue: (5 - i) * 12000000, // descending mock VND numbers
-      }));
-      if (!isDemoProductSales) setIsDemoProductSales(true);
-      return mock;
-    } else {
-      if (isDemoProductSales) setIsDemoProductSales(false);
-    }
-
-    return results.sort((a, b) => b.totalRevenue - a.totalRevenue);
-  }, [stats.allOrders, productsList, isDemoProductSales]);
+    return Array.from(sales.values()).sort((a, b) => b.totalRevenue - a.totalRevenue);
+  }, [stats.allOrders]);
 
   const topCustomers = useMemo(() => {
     const customerMap = new Map();
@@ -1687,23 +1614,13 @@ const AdminDashboard = () => {
         <Col xs={24} sm={24} md={14} lg={14} style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}>
             <GreetingCard />
-            <MonthlyRevenueChart data={revenueByMonth || monthlyRevenue} />
-            {isDemoRevenue && (
-              <div style={{ marginTop: 6 }}>
-                <Text type="secondary">⚠️ Dữ liệu mô phỏng được hiển thị vì không có dữ liệu đơn hàng thực tế.</Text>
-              </div>
-            )}
+            <MonthlyRevenueChart data={monthlyRevenue} />
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <BestSellingProductsChart 
                     data={productSales} 
                     style={{ flex: 1, display: 'flex', flexDirection: 'column' }} 
                     bodyStyle={{ flex: 1, position: 'relative' }} 
                 />
-                {isDemoProductSales && (
-                  <div style={{ marginTop: 6 }}>
-                    <Text type="secondary">⚠️ Dữ liệu sản phẩm là mẫu để demo.</Text>
-                  </div>
-                )}
             </div>
           </div>
         </Col>
